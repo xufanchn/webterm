@@ -167,7 +167,6 @@ export default function Sidebar() {
             onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>删除</div>
         </div>
       </ClickAway>}
-      )}
       {showConnForm && (
         <ConnectionForm
           connection={editingConn}
