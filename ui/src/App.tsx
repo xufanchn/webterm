@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/auth';
+import LoginPage from './components/auth/LoginPage';
+import Workspace from './components/layout/Workspace';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token);
@@ -11,15 +13,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<div>Login Page (TODO)</div>} />
-        <Route
-          path="/*"
-          element={
-            <ProtectedRoute>
-              <div>Workspace (TODO)</div>
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/*" element={<ProtectedRoute><Workspace /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   );
