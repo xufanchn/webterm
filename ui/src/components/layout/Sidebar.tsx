@@ -115,9 +115,14 @@ export default function Sidebar() {
         {showGroupInput ? (
           <div style={{ display: 'flex', gap: 4, padding: '4px 0' }}>
             <input value={newGroupName} onChange={(e) => setNewGroupName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleCreateGroup(isSsh ? 'ssh' : 'database')}
-              placeholder="分组名称" style={{ flex: 1, padding: '2px 6px', background: '#3c3c3c', border: '1px solid #555', borderRadius: 3, color: '#fff', fontSize: 10 }} />
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleCreateGroup(isSsh ? 'ssh' : 'database');
+                if (e.key === 'Escape') { setShowGroupInput(false); setNewGroupName(''); }
+              }}
+              onBlur={() => { setShowGroupInput(false); setNewGroupName(''); }}
+              placeholder="分组名称" autoFocus style={{ flex: 1, padding: '2px 6px', background: '#3c3c3c', border: '1px solid #555', borderRadius: 3, color: '#fff', fontSize: 10 }} />
             <button onClick={() => handleCreateGroup(isSsh ? 'ssh' : 'database')} style={{ background: '#007acc', border: 'none', color: '#fff', borderRadius: 3, padding: '2px 6px', cursor: 'pointer', fontSize: 10 }}>创建</button>
+            <button onClick={() => { setShowGroupInput(false); setNewGroupName(''); }} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: 10, padding: '2px 4px' }}>✕</button>
           </div>
         ) : (
           <div onClick={() => setShowGroupInput(true)}
