@@ -76,6 +76,19 @@ func main() {
 	mux.Handle("POST /api/sftp/upload", auth.Middleware(http.HandlerFunc(sftpRestH.Upload)))
 	mux.Handle("GET /api/sftp/download/{id}", auth.Middleware(http.HandlerFunc(sftpRestH.Download)))
 
+	dbConnH := &handler.DbConnHandler{Store: st, AESCipher: aesCipher}
+	groupH := &handler.GroupHandler{Store: st}
+
+	mux.Handle("GET /api/db_connections", auth.Middleware(http.HandlerFunc(dbConnH.List)))
+	mux.Handle("POST /api/db_connections", auth.Middleware(http.HandlerFunc(dbConnH.Create)))
+	mux.Handle("PUT /api/db_connections/{id}", auth.Middleware(http.HandlerFunc(dbConnH.Update)))
+	mux.Handle("DELETE /api/db_connections/{id}", auth.Middleware(http.HandlerFunc(dbConnH.Delete)))
+
+	mux.Handle("GET /api/groups", auth.Middleware(http.HandlerFunc(groupH.List)))
+	mux.Handle("POST /api/groups", auth.Middleware(http.HandlerFunc(groupH.Create)))
+	mux.Handle("PUT /api/groups/{id}", auth.Middleware(http.HandlerFunc(groupH.Update)))
+	mux.Handle("DELETE /api/groups/{id}", auth.Middleware(http.HandlerFunc(groupH.Delete)))
+
 	mux.Handle("/ws/ssh/{conn_id}", websocket.Handler(wsH.HandleSSH))
 	mux.Handle("/ws/sftp/{conn_id}", websocket.Handler(wsH.HandleSFTP))
 	mux.Handle("/ws/db/{conn_id}", websocket.Handler(wsH.HandleDB))
