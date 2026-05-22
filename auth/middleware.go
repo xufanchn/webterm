@@ -43,3 +43,29 @@ func GetUser(r *http.Request) *Claims {
 	claims, _ := r.Context().Value(UserContextKey).(*Claims)
 	return claims
 }
+
+// GetUserWS extracts JWT from Authorization header or "token" query param (for WebSocket).
+func GetUserWS(r *http.Request) *Claims {
+	// Try context first (set by Middleware)
+	if claims, ok := r.Context().Value(UserContextKey).(*Claims); ok {
+		return claims
+	}
+	// Try Authorization header
+	authHeader := r.Header.Get("Authorization")
+	if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
+		token := strings.TrimPrefix(authHeader, "Bearer ")
+		claims, err := ValidateToken(token)
+		if err == nil {
+			return claims
+		}
+	}
+	// Try query parameter (for WebSocket connections)
+	token := r.URL.Query().Get("token")
+	if token != "" {
+		claims, err := ValidateToken(token)
+		if err == nil {
+			return claims
+		}
+	}
+	return nil
+}

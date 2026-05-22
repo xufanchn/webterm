@@ -24,7 +24,7 @@ type WSHandler struct {
 
 func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 	connID, _ := strconv.ParseInt(conn.Request().PathValue("conn_id"), 10, 64)
-	user := auth.GetUser(conn.Request())
+	user := auth.GetUserWS(conn.Request())
 
 	connInfo, err := h.Store.GetConnection(connID)
 	if err != nil {
@@ -134,7 +134,7 @@ func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 
 func (h *WSHandler) HandleDB(conn *websocket.Conn) {
 	connID, _ := strconv.ParseInt(conn.Request().PathValue("conn_id"), 10, 64)
-	user := auth.GetUser(conn.Request())
+	user := auth.GetUserWS(conn.Request())
 
 	dbInfo, err := h.Store.GetDbConnection(connID)
 	if err != nil {
@@ -214,7 +214,7 @@ func (w *wsWriter) Write(p []byte) (int, error) {
 
 func (h *WSHandler) HandleSFTP(conn *websocket.Conn) {
 	connID, _ := strconv.ParseInt(conn.Request().PathValue("conn_id"), 10, 64)
-	user := auth.GetUser(conn.Request())
+	user := auth.GetUserWS(conn.Request())
 
 	connInfo, err := h.Store.GetConnection(connID)
 	if err != nil {
