@@ -21,8 +21,19 @@ function newNode(): SplitNode {
 }
 
 // Simple split state persisted at module level
-let rootNode: SplitNode = { id: 'root' };
+const STORAGE_KEY = 'wshell-split';
+let rootNode: SplitNode = (() => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch {}
+  return { id: 'root' };
+})();
 let listeners: Array<() => void> = [];
+
+function saveRoot(node: SplitNode) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(node)); } catch {}
+}
 
 function getRoot(): SplitNode { return rootNode; }
 function subscribe(fn: () => void) {
@@ -31,6 +42,7 @@ function subscribe(fn: () => void) {
 }
 function updateRoot(node: SplitNode) {
   rootNode = node;
+  saveRoot(node);
   listeners.forEach(fn => fn());
 }
 
@@ -125,7 +137,7 @@ function LeafPane({ nodeId }: { nodeId: string }) {
         )}
         {!activeTab && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#666', fontSize: 12, flexDirection: 'column', gap: 4 }}>
-            <div>右键 -> 分屏</div>
+            <div>右键 → 分屏</div>
             <div style={{ fontSize: 10, color: '#888' }}>双击左侧连接打开终端</div>
           </div>
         )}
