@@ -13,15 +13,24 @@ interface AuthState {
   logout: () => void;
 }
 
+function loadUser(): User | null {
+  try {
+    const saved = localStorage.getItem('wshell-user');
+    return saved ? JSON.parse(saved) : null;
+  } catch { return null; }
+}
+
 export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
+  user: loadUser(),
   token: localStorage.getItem('token'),
   setAuth: (user, token) => {
     localStorage.setItem('token', token);
+    localStorage.setItem('wshell-user', JSON.stringify(user));
     set({ user, token });
   },
   logout: () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('wshell-user');
     set({ user: null, token: null });
   },
 }));

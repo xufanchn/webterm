@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"log"
 	"io"
 	"strconv"
 	"time"
@@ -113,6 +114,7 @@ func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 			if err := websocket.JSON.Receive(conn, &msg); err != nil {
 				return
 			}
+				log.Printf("SSH stdin: %q", msg.Data)
 			stdinPipe.Write([]byte(msg.Data))
 		}
 	}()

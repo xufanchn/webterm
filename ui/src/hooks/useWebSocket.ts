@@ -13,6 +13,7 @@ export function useWebSocket({ url, onMessage, onClose, onOpen }: UseWsOptions) 
   const wsRef = useRef<WebSocket | null>(null);
   const retryCountRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const bufferRef = useRef<string[]>([]);
 
   const connect = useCallback(() => {
     const ws = new WebSocket(url);
@@ -20,6 +21,13 @@ export function useWebSocket({ url, onMessage, onClose, onOpen }: UseWsOptions) 
 
     ws.onopen = () => {
       retryCountRef.current = 0;
+      // Flush buffered messages
+      if (bufferRef.current.length > 0) {
+        for (const msg of bufferRef.current) {
+          ws.send(msg);
+        }
+        bufferRef.current = [];
+      }
       onOpen?.();
     };
 
@@ -54,6 +62,9 @@ export function useWebSocket({ url, onMessage, onClose, onOpen }: UseWsOptions) 
   const send = useCallback((data: string) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(data);
+    } else {
+      // Buffer messages until connected
+      bufferRef.current.push(data);
     }
   }, []);
 
