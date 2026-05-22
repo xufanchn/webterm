@@ -29,7 +29,7 @@ func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 
 	connInfo, err := h.Store.GetConnection(connID)
 	if err != nil {
-		websocket.JSON.Send(conn, map[string]string{"error": "connection not found"})
+		sendErr(conn, "connection not found")
 		return
 	}
 
@@ -55,7 +55,7 @@ func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 
 		client, err = sshmgr.NewClient(connInfo.Host, connInfo.Port, connInfo.Username, password, privateKey, passphrase)
 		if err != nil {
-			websocket.JSON.Send(conn, map[string]string{"error": "failed to create client: " + err.Error()})
+			sendErr(conn, "failed to create client: " + err.Error())
 			return
 		}
 		var connectErr error
@@ -69,7 +69,7 @@ func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 			}
 		}
 		if connectErr != nil {
-			websocket.JSON.Send(conn, map[string]string{"error": fmt.Sprintf("连接失败（已重试3次）: %s", connectErr.Error())})
+			sendErr(conn, fmt.Sprintf("连接失败（已重试3次）: %s", connectErr.Error()))
 			return
 		}
 		h.Pool.Set(connID, client)
@@ -78,7 +78,7 @@ func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 	defer h.Pool.Remove(connID)
 	session, err := client.NewSession()
 	if err != nil {
-		websocket.JSON.Send(conn, map[string]string{"error": "session failed: " + err.Error()})
+		sendErr(conn, "session failed: " + err.Error())
 		return
 	}
 	defer session.Close()
@@ -89,7 +89,7 @@ func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 		ssh.TTY_OP_OSPEED: 14400,
 	}
 	if err := session.RequestPty("xterm-256color", 80, 24, modes); err != nil {
-		websocket.JSON.Send(conn, map[string]string{"error": "pty failed: " + err.Error()})
+		sendErr(conn, "pty failed: " + err.Error())
 		return
 	}
 
@@ -98,7 +98,7 @@ func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 	stderrPipe, _ := session.StderrPipe()
 
 	if err := session.Shell(); err != nil {
-		websocket.JSON.Send(conn, map[string]string{"error": "shell failed: " + err.Error()})
+		sendErr(conn, "shell failed: " + err.Error())
 		return
 	}
 
@@ -140,7 +140,7 @@ func (h *WSHandler) HandleDB(conn *websocket.Conn) {
 
 	dbInfo, err := h.Store.GetDbConnection(connID)
 	if err != nil {
-		websocket.JSON.Send(conn, map[string]string{"error": "db connection not found"})
+		sendErr(conn, "db connection not found")
 		return
 	}
 
@@ -148,7 +148,7 @@ func (h *WSHandler) HandleDB(conn *websocket.Conn) {
 
 	client, err := dbmgr.NewClient(dbInfo.Host, dbInfo.Port, dbInfo.Username, password, dbInfo.DatabaseName)
 	if err != nil {
-		websocket.JSON.Send(conn, map[string]string{"error": "db connect failed: " + err.Error()})
+		sendErr(conn, "db connect failed: " + err.Error())
 		return
 	}
 	defer client.Close()
@@ -220,7 +220,7 @@ func (h *WSHandler) HandleSFTP(conn *websocket.Conn) {
 
 	connInfo, err := h.Store.GetConnection(connID)
 	if err != nil {
-		websocket.JSON.Send(conn, map[string]string{"error": "connection not found"})
+		sendErr(conn, "connection not found")
 		return
 	}
 
@@ -244,11 +244,11 @@ func (h *WSHandler) HandleSFTP(conn *websocket.Conn) {
 
 		sshClient, err = sshmgr.NewClient(connInfo.Host, connInfo.Port, connInfo.Username, password, privateKey, passphrase)
 		if err != nil {
-			websocket.JSON.Send(conn, map[string]string{"error": "ssh client failed: " + err.Error()})
+			sendErr(conn, "ssh client failed: " + err.Error())
 			return
 		}
 		if err := sshClient.Connect(); err != nil {
-			websocket.JSON.Send(conn, map[string]string{"error": "ssh connect failed: " + err.Error()})
+			sendErr(conn, "ssh connect failed: " + err.Error())
 			return
 		}
 		h.Pool.Set(connID, sshClient)
@@ -256,7 +256,7 @@ func (h *WSHandler) HandleSFTP(conn *websocket.Conn) {
 
 	sftpClient, err := sftpmgr.NewClient(sshClient.RawConn())
 	if err != nil {
-		websocket.JSON.Send(conn, map[string]string{"error": "sftp init failed: " + err.Error()})
+		sendErr(conn, "sftp init failed: " + err.Error())
 		return
 	}
 	defer sftpClient.Close()
@@ -329,4 +329,9 @@ func (h *WSHandler) HandleSFTP(conn *websocket.Conn) {
 			websocket.JSON.Send(conn, map[string]interface{}{"type": "error", "error": "unknown action: " + msg.Action})
 		}
 	}
+}
+
+func sendErr(conn *websocket.Conn, msg string) {
+	sendErr(conn, msg)
+	time.Sleep(500 * time.Millisecond)
 }
