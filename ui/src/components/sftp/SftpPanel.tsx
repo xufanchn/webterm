@@ -27,6 +27,21 @@ export default function SftpPanel({ connId, currentPath, onPathChange, style }: 
   const [error, setError] = useState('');
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [editFile, setEditFile] = useState<{ path: string; name: string } | null>(null);
+  const [showNewFolder, setShowNewFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
+
+  const uploadFile = (file: File) => {
+    const token = localStorage.getItem('token') || '';
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('conn_id', String(connId));
+    formData.append('path', path + '/' + file.name);
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/sftp/upload');
+    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+    xhr.onload = () => fetchDir(path);
+    xhr.send(formData);
+  };
 
   const fetchDir = useCallback((dirPath: string) => {
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
@@ -97,10 +112,47 @@ export default function SftpPanel({ connId, currentPath, onPathChange, style }: 
 
   return (
     <div style={{ background: '#252526', fontSize: 11, display: 'flex', flexDirection: 'column', height: '100%', ...style }}>
-      <div style={{ padding: '4px 8px', background: '#333', color: '#888', fontSize: 10, display: 'flex', justifyContent: 'space-between' }}>
-        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>◧ {path}</span>
-        <button onClick={() => handleNavigate('..')} style={{ background: 'none', border: 'none', color: '#ccc', cursor: 'pointer', fontSize: 10 }}>⟰</button>
+      {/* XFTP-style address bar */}
+      <div style={{ padding: '4px 6px', background: '#2d2d2d', display: 'flex', gap: 4, alignItems: 'center', borderBottom: '1px solid #383838', flexShrink: 0 }}>
+        <button onClick={() => handleNavigate('..')} title="上级目录"
+          style={{ background: 'none', border: 'none', color: '#ccc', cursor: 'pointer', fontSize: 14, padding: '0 4px' }}>⟰</button>
+        <input value={path} onChange={(e) => setPath(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') fetchDir(path); }}
+          style={{ flex: 1, padding: '3px 8px', background: '#3c3c3c', border: '1px solid #555', borderRadius: 3, color: '#fff', fontSize: 11, fontFamily: 'Consolas, monospace' }} />
+        <button onClick={() => fetchDir(path)} title="刷新"
+          style={{ background: 'none', border: 'none', color: '#4fc3f7', cursor: 'pointer', fontSize: 12 }}>⟳</button>
       </div>
+      {/* XFTP-style toolbar */}
+      <div style={{ display: 'flex', gap: 2, padding: '2px 4px', background: '#2d2d2d', borderBottom: '1px solid #383838', flexShrink: 0 }}>
+        <ToolBtn title="上传" onClick={() => {
+          const input = document.createElement('input');
+          input.type = 'file'; input.multiple = true;
+          input.onchange = (e) => {
+            const files = (e.target as HTMLInputElement).files;
+            if (files) { for (let i = 0; i < files.length; i++) uploadFile(files[i]); }
+          };
+          input.click();
+        }}>⬆</ToolBtn>
+        <ToolBtn title="新建文件夹" onClick={() => setShowNewFolder(true)}>📁+</ToolBtn>
+        <span style={{ flex: 1 }} />
+        <span style={{ color: '#888', fontSize: 10, padding: '2px 6px', alignSelf: 'center' }}>{files.length} 项</span>
+      </div>
+      {/* New folder inline input */}
+      {showNewFolder && (
+        <div style={{ display: 'flex', gap: 4, padding: '4px 8px', background: '#333' }}>
+          <input value={newFolderName} onChange={(e) => setNewFolderName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') { handleMkdir(newFolderName); setNewFolderName(''); setShowNewFolder(false); }
+              if (e.key === 'Escape') { setNewFolderName(''); setShowNewFolder(false); }
+            }}
+            autoFocus placeholder="文件夹名称"
+            style={{ flex: 1, padding: '3px 8px', background: '#3c3c3c', border: '1px solid #555', borderRadius: 3, color: '#fff', fontSize: 11 }} />
+          <button onClick={() => { handleMkdir(newFolderName); setNewFolderName(''); setShowNewFolder(false); }}
+            style={{ background: '#007acc', border: 'none', color: '#fff', borderRadius: 3, padding: '3px 10px', cursor: 'pointer', fontSize: 11 }}>创建</button>
+          <button onClick={() => { setNewFolderName(''); setShowNewFolder(false); }}
+            style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: 11 }}>✕</button>
+        </div>
+      )}
       {error && <div style={{ padding: '4px 8px', color: '#f44747', fontSize: 10 }}>{error}</div>}
       <FileList
         files={files}
@@ -108,11 +160,11 @@ export default function SftpPanel({ connId, currentPath, onPathChange, style }: 
         onNavigate={handleNavigate}
         onDelete={handleDelete}
         onRename={handleRename}
-        onMkdir={handleMkdir}
         connId={connId}
         currentPath={path}
         onUpload={() => fetchDir(path)}
         onEdit={handleEditFile}
+        onMkdir={(name) => handleMkdir(name)}
       />
       {editFile && (
         <FileEditor
@@ -124,5 +176,16 @@ export default function SftpPanel({ connId, currentPath, onPathChange, style }: 
         />
       )}
     </div>
+  );
+}
+
+function ToolBtn({ title, onClick, children }: { title: string; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button onClick={onClick} title={title}
+      style={{ background: 'none', border: '1px solid transparent', color: '#ccc', cursor: 'pointer', fontSize: 12, padding: '2px 6px', borderRadius: 3 }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = '#444'; e.currentTarget.style.borderColor = '#555'; }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; e.currentTarget.style.borderColor = 'transparent'; }}>
+      {children}
+    </button>
   );
 }

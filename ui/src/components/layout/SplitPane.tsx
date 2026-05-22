@@ -135,12 +135,7 @@ function LeafPane({ nodeId }: { nodeId: string }) {
         {activeTab && activeTab.type === 'database' && activeTab.connId && (
           <QueryEditor connId={activeTab.connId} />
         )}
-        {!activeTab && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#666', fontSize: 12, flexDirection: 'column', gap: 4 }}>
-            <div>右键 → 分屏</div>
-            <div style={{ fontSize: 10, color: '#888' }}>双击左侧连接打开终端</div>
-          </div>
-        )}
+        {!activeTab && <SessionWelcome />}
       </div>
       {menu && (
         <ContextMenu x={menu.x} y={menu.y} items={menuItems} onClose={() => setMenu(null)} />
@@ -203,6 +198,18 @@ function SplitContainer({ node }: { node: SplitNode }) {
       />
       <div style={{ flex: 1 - percent / 100, overflow: 'hidden', display: 'flex', minWidth: 0, minHeight: 0 }}>
         <SplitContainer node={child1} />
+      </div>
+    </div>
+  );
+}
+
+function SessionWelcome() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', flexDirection: 'column', gap: 8 }}>
+      <div style={{ fontSize: 48, opacity: 0.15 }}>▣</div>
+      <div style={{ color: '#888', fontSize: 14 }}>没有打开的会话</div>
+      <div style={{ color: '#666', fontSize: 11 }}>
+        双击左侧面板中的连接开始，或右键此处分屏
       </div>
     </div>
   );
