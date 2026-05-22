@@ -1,16 +1,17 @@
 import { useEffect, useRef, useCallback } from 'react';
 
+const MAX_RETRIES = 3;
+
 interface UseWsOptions {
   url: string;
   onMessage: (data: string) => void;
-  onClose?: () => void;
+  onClose?: (final?: boolean) => void;
   onOpen?: () => void;
 }
 
 export function useWebSocket({ url, onMessage, onClose, onOpen }: UseWsOptions) {
   const wsRef = useRef<WebSocket | null>(null);
   const retryCountRef = useRef(0);
-  const maxRetryDelay = 30000;
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const connect = useCallback(() => {
@@ -27,8 +28,12 @@ export function useWebSocket({ url, onMessage, onClose, onOpen }: UseWsOptions) 
     };
 
     ws.onclose = () => {
+      if (retryCountRef.current >= MAX_RETRIES) {
+        onClose?.(true);
+        return;
+      }
       onClose?.();
-      const delay = Math.min(1000 * Math.pow(2, retryCountRef.current), maxRetryDelay);
+      const delay = Math.min(1000 * Math.pow(2, retryCountRef.current), 30000);
       retryCountRef.current++;
       timerRef.current = setTimeout(connect, delay);
     };

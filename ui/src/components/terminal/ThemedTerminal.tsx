@@ -41,6 +41,7 @@ export default function ThemedTerminal({ connId, themeName: _themeName }: Props)
   const termRef = useRef<Terminal | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const rules = useHighlightRules();
+  const sendRef = useRef<(data: string) => void>(() => {});
   const themeName = usePreferencesStore((s) => s.themeName);
   const fontSize = usePreferencesStore((s) => s.fontSize);
 
@@ -77,8 +78,24 @@ export default function ThemedTerminal({ connId, themeName: _themeName }: Props)
     term.loadAddon(fitAddon);
     term.loadAddon(searchAddon);
 
-    // Ctrl+F to trigger search
+    // Ctrl+C: send SIGINT (0x03)
     term.attachCustomKeyEventHandler((e) => {
+      if (e.ctrlKey && e.key === 'c' && !e.shiftKey && !e.altKey) {
+        if (e.type === 'keydown') {
+          sendRef.current(JSON.stringify({ data: '\x03' }));
+        }
+        return false;
+      }
+
+      // Ctrl+Z: send SIGTSTP (0x1a)
+      if (e.ctrlKey && e.key === 'z' && !e.shiftKey && !e.altKey) {
+        if (e.type === 'keydown') {
+          sendRef.current(JSON.stringify({ data: '\x1a' }));
+        }
+        return false;
+      }
+
+      // Ctrl+F: search (existing behavior)
       if (e.ctrlKey && e.key === 'f') {
         e.preventDefault();
         const searchInput = document.getElementById('xterm-search-input');
@@ -156,6 +173,8 @@ export default function ThemedTerminal({ connId, themeName: _themeName }: Props)
       termRef.current?.write('\r\n\x1b[32m[已重新连接]\x1b[0m\r\n');
     },
   });
+
+  sendRef.current = send;
 
   const broadcastMode = useLayoutStore((s) => s.broadcastMode);
   const broadcastSourceId = useLayoutStore((s) => s.broadcastSourceId);
