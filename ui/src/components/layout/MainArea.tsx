@@ -2,6 +2,7 @@ import { useLayoutStore } from '../../store/layout';
 import { useConnectionStore } from '../../store/connections';
 import SplitPane from './SplitPane';
 import DualPaneSftp from '../sftp/DualPaneSftp';
+import SftpPanel from '../sftp/SftpPanel';
 import ConfigPage from '../config/ConfigPage';
 import QueryEditor from '../database/QueryEditor';
 import TabBar from './TabBar';
@@ -43,10 +44,18 @@ export default function MainArea() {
     );
   }
 
-  // SSH mode (default)
+  // SSH mode: split panes on left, SFTP panel fixed on right
+  const sshConnId = activeTab?.type === 'ssh' ? activeTab.connId : undefined;
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <SplitPane />
+    <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+        <SplitPane />
+      </div>
+      {sshConnId && (
+        <div style={{ width: 260, flexShrink: 0, borderLeft: '1px solid #383838' }}>
+          <SftpPanel connId={sshConnId} />
+        </div>
+      )}
     </div>
   );
 }
