@@ -7,6 +7,7 @@ import (
 
 	"github.com/xf/wshell/auth"
 	"github.com/xf/wshell/crypto"
+	"github.com/xf/wshell/dbmgr"
 	"github.com/xf/wshell/sftpmgr"
 	"github.com/xf/wshell/sshmgr"
 	"github.com/xf/wshell/store"
@@ -117,6 +118,74 @@ func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 
 	go io.Copy(&wsWriter{conn}, stdoutPipe)
 	io.Copy(&wsWriter{conn}, stderrPipe)
+}
+
+func (h *WSHandler) HandleDB(conn *websocket.Conn) {
+	connID, _ := strconv.ParseInt(conn.Request().PathValue("conn_id"), 10, 64)
+	user := auth.GetUser(conn.Request())
+
+	dbInfo, err := h.Store.GetDbConnection(connID)
+	if err != nil {
+		websocket.JSON.Send(conn, map[string]string{"error": "db connection not found"})
+		return
+	}
+
+	password, _ := h.AESCipher.Decrypt(dbInfo.PasswordEncrypted)
+
+	client, err := dbmgr.NewClient(dbInfo.Host, dbInfo.Port, dbInfo.Username, password, dbInfo.DatabaseName)
+	if err != nil {
+		websocket.JSON.Send(conn, map[string]string{"error": "db connect failed: " + err.Error()})
+		return
+	}
+	defer client.Close()
+
+	h.Store.CreateSessionLog(&store.SessionLog{
+		UserID: user.UserID, ConnectionID: connID, Type: "db",
+	})
+
+	var msg struct {
+		Action   string `json:"action"`
+		Query    string `json:"query"`
+		Database string `json:"database"`
+		Table    string `json:"table"`
+	}
+	for {
+		if err := websocket.JSON.Receive(conn, &msg); err != nil {
+			return
+		}
+		switch msg.Action {
+		case "query":
+			result, err := client.Execute(msg.Query)
+			if err != nil {
+				websocket.JSON.Send(conn, map[string]interface{}{"type": "error", "error": err.Error()})
+			} else {
+				websocket.JSON.Send(conn, map[string]interface{}{"type": "query_result", "result": result})
+			}
+		case "databases":
+			dbs, err := client.ListDatabases()
+			if err != nil {
+				websocket.JSON.Send(conn, map[string]interface{}{"type": "error", "error": err.Error()})
+			} else {
+				websocket.JSON.Send(conn, map[string]interface{}{"type": "database_list", "databases": dbs})
+			}
+		case "tables":
+			tables, err := client.ListTables(msg.Database)
+			if err != nil {
+				websocket.JSON.Send(conn, map[string]interface{}{"type": "error", "error": err.Error()})
+			} else {
+				websocket.JSON.Send(conn, map[string]interface{}{"type": "table_list", "database": msg.Database, "tables": tables})
+			}
+		case "describe":
+			cols, err := client.DescribeTable(msg.Database, msg.Table)
+			if err != nil {
+				websocket.JSON.Send(conn, map[string]interface{}{"type": "error", "error": err.Error()})
+			} else {
+				websocket.JSON.Send(conn, map[string]interface{}{"type": "describe_result", "database": msg.Database, "table": msg.Table, "columns": cols})
+			}
+		default:
+			websocket.JSON.Send(conn, map[string]interface{}{"type": "error", "error": "unknown action"})
+		}
+	}
 }
 
 type wsWriter struct {
