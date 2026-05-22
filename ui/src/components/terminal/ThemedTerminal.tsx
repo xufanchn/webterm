@@ -4,9 +4,11 @@ import { FitAddon } from '@xterm/addon-fit';
 import { SearchAddon } from '@xterm/addon-search';
 import { useHighlightRules, HighlightRule } from '../../hooks/useTerminalTheme';
 import '@xterm/xterm/css/xterm.css';
+import { TerminalTheme, getTheme } from '../../themes/presets';
 
 interface Props {
   connId: number;
+  themeName?: string;
 }
 
 function hexToRgb(hex: string): string {
@@ -29,14 +31,37 @@ function highlightText(text: string, rules: HighlightRule[]): string {
   return text;
 }
 
-export default function ThemedTerminal({ connId }: Props) {
+export default function ThemedTerminal({ connId, themeName }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const rules = useHighlightRules();
 
   useEffect(() => {
+    const themeConfig = getTheme(themeName || 'Dracula');
     const term = new Terminal({
       cursorBlink: true, fontSize: 13, fontFamily: 'Menlo, Monaco, monospace',
-      theme: { background: '#0c0c0c', foreground: '#d4d4d4' },
+      theme: {
+        background: themeConfig.background,
+        foreground: themeConfig.foreground,
+        cursor: themeConfig.cursor,
+        cursorAccent: themeConfig.cursorAccent,
+        selectionBackground: themeConfig.selectionBackground,
+        black: themeConfig.black,
+        red: themeConfig.red,
+        green: themeConfig.green,
+        yellow: themeConfig.yellow,
+        blue: themeConfig.blue,
+        magenta: themeConfig.magenta,
+        cyan: themeConfig.cyan,
+        white: themeConfig.white,
+        brightBlack: themeConfig.brightBlack,
+        brightRed: themeConfig.brightRed,
+        brightGreen: themeConfig.brightGreen,
+        brightYellow: themeConfig.brightYellow,
+        brightBlue: themeConfig.brightBlue,
+        brightMagenta: themeConfig.brightMagenta,
+        brightCyan: themeConfig.brightCyan,
+        brightWhite: themeConfig.brightWhite,
+      },
     });
     const fitAddon = new FitAddon();
     const searchAddon = new SearchAddon();
@@ -78,7 +103,7 @@ export default function ThemedTerminal({ connId }: Props) {
       term.dispose();
       window.removeEventListener('resize', handleResize);
     };
-  }, [connId]);
+  }, [connId, themeName]);
 
   return <div ref={ref} style={{ width: '100%', height: '100%' }} />;
 }
