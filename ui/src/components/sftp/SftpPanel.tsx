@@ -103,6 +103,9 @@ export default function SftpPanel({ connId, currentPath, onPathChange, style }: 
         onDelete={handleDelete}
         onRename={handleRename}
         onMkdir={handleMkdir}
+        connId={connId}
+        currentPath={path}
+        onUpload={() => fetchDir(path)}
       />
     </div>
   );

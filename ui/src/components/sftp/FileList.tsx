@@ -1,13 +1,16 @@
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type { SftpFile } from './SftpPanel';
 
 interface Props {
   files: SftpFile[];
   loading: boolean;
+  connId: number;
+  currentPath: string;
   onNavigate: (path: string) => void;
   onDelete: (path: string) => void;
   onRename: (path: string, newName: string) => void;
   onMkdir: (name: string) => void;
+  onUpload: () => void;
 }
 
 const sizeFormat = (bytes: number): string => {
@@ -23,7 +26,7 @@ const modeStr = (mode: number): string => {
   return (mode & 0o40000 ? 'd' : mode & 0o120000 ? 'l' : '-') + r + w + x + r + w + x + r + w + x;
 };
 
-export default function FileList({ files, loading, onNavigate, onDelete: _onDelete, onRename: _onRename, onMkdir }: Props) {
+export default function FileList({ files, loading, connId, currentPath, onNavigate, onDelete: _onDelete, onRename: _onRename, onMkdir, onUpload }: Props) {
   const [showNewFolder, setShowNewFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
 
@@ -33,6 +36,51 @@ export default function FileList({ files, loading, onNavigate, onDelete: _onDele
       setNewFolderName('');
       setShowNewFolder(false);
     }
+  };
+
+  const [dragOver, setDragOver] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const files = e.dataTransfer.files;
+    if (files.length === 0) return;
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      setUploading(true);
+      setUploadProgress(0);
+
+      const token = localStorage.getItem('token') || '';
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('conn_id', String(connId));
+      formData.append('path', currentPath + '/' + file.name);
+
+      const xhr = new XMLHttpRequest();
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100));
+      };
+      xhr.onload = () => {
+        setUploading(false);
+        setUploadProgress(0);
+        onUpload(); // trigger refresh
+      };
+      xhr.open('POST', '/api/sftp/upload');
+      xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+      xhr.send(formData);
+    }
+  }, [connId, currentPath, onUpload]);
+
+  const handleDownload = (filePath: string, fileName: string) => {
+    const token = localStorage.getItem('token') || '';
+    const a = document.createElement('a');
+    a.href = `/api/sftp/download/${connId}?path=${encodeURIComponent(filePath)}&token=${token}`;
+    a.download = fileName;
+    a.click();
   };
 
   return (
@@ -52,11 +100,32 @@ export default function FileList({ files, loading, onNavigate, onDelete: _onDele
         </div>
       )}
       {loading && <div style={{ padding: 8, color: '#888' }}>加载中...</div>}
+      <div
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={handleDrop}
+        style={{
+          margin: 4, padding: 8, border: `2px dashed ${dragOver ? '#4fc3f7' : '#555'}`,
+          borderRadius: 4, textAlign: 'center', color: dragOver ? '#4fc3f7' : '#888',
+          fontSize: 10, cursor: 'pointer',
+          background: dragOver ? 'rgba(79,195,247,0.1)' : 'transparent',
+        }}
+        onClick={() => fileInputRef.current?.click()}>
+        {uploading ? `上传中... ${uploadProgress}%` : dragOver ? '释放以上传' : '拖拽文件到此处上传 / 点击选择'}
+        <input ref={fileInputRef} type="file" style={{ display: 'none' }}
+          onChange={(e) => {
+            const files = e.target.files;
+            if (files && files[0]) {
+              const fakeEvent = { dataTransfer: { files } } as any;
+              handleDrop(fakeEvent as React.DragEvent);
+            }
+          }} />
+      </div>
       {files.map((f) => (
         <div key={f.path}
-          onClick={() => f.is_dir ? onNavigate(f.path) : undefined}
+          onClick={() => f.is_dir ? onNavigate(f.path) : handleDownload(f.path, f.name)}
           style={{
-            padding: '2px 8px', color: '#ccc', cursor: f.is_dir ? 'pointer' : 'default',
+            padding: '2px 8px', color: '#ccc', cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: 4,
           }}
           onMouseEnter={(e) => (e.currentTarget.style.background = '#2a2d2e')}
