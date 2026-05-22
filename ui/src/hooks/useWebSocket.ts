@@ -14,33 +14,46 @@ export function useWebSocket({ url, onMessage, onClose, onOpen }: UseWsOptions) 
   const retryCountRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const bufferRef = useRef<string[]>([]);
+  const wasOpenRef = useRef(false);
+
+  // Keep latest callbacks in refs to avoid reconnect on re-render
+  const onMessageRef = useRef(onMessage);
+  const onCloseRef = useRef(onClose);
+  const onOpenRef = useRef(onOpen);
+  onMessageRef.current = onMessage;
+  onCloseRef.current = onClose;
+  onOpenRef.current = onOpen;
 
   const connect = useCallback(() => {
     const ws = new WebSocket(url);
     wsRef.current = ws;
 
     ws.onopen = () => {
+      wasOpenRef.current = true;
       retryCountRef.current = 0;
-      // Flush buffered messages
       if (bufferRef.current.length > 0) {
         for (const msg of bufferRef.current) {
           ws.send(msg);
         }
         bufferRef.current = [];
       }
-      onOpen?.();
+      onOpenRef.current?.();
     };
 
     ws.onmessage = (event) => {
-      onMessage(typeof event.data === 'string' ? event.data : '');
+      onMessageRef.current(typeof event.data === 'string' ? event.data : '');
     };
 
     ws.onclose = () => {
-      if (retryCountRef.current >= MAX_RETRIES) {
-        onClose?.(true);
+      if (wasOpenRef.current) {
+        onCloseRef.current?.(true);
         return;
       }
-      onClose?.();
+      if (retryCountRef.current >= MAX_RETRIES) {
+        onCloseRef.current?.(true);
+        return;
+      }
+      onCloseRef.current?.();
       const delay = Math.min(1000 * Math.pow(2, retryCountRef.current), 30000);
       retryCountRef.current++;
       timerRef.current = setTimeout(connect, delay);
@@ -49,7 +62,7 @@ export function useWebSocket({ url, onMessage, onClose, onOpen }: UseWsOptions) 
     ws.onerror = () => {
       ws.close();
     };
-  }, [url, onMessage, onClose, onOpen]);
+  }, [url]);
 
   useEffect(() => {
     connect();
@@ -63,7 +76,6 @@ export function useWebSocket({ url, onMessage, onClose, onOpen }: UseWsOptions) 
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(data);
     } else {
-      // Buffer messages until connected
       bufferRef.current.push(data);
     }
   }, []);

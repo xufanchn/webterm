@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 export type ModuleType = 'ssh' | 'sftp' | 'database' | 'config';
+export type BroadcastScope = 'off' | 'pane' | 'all';
 
 export interface Tab {
   id: string;
@@ -11,47 +12,63 @@ export interface Tab {
 
 interface LayoutState {
   activeModule: ModuleType;
-  tabs: Tab[];
-  activeTabId: string | null;
-  broadcastMode: boolean;
+  newTabQueue: Tab[];
+  sftpCdPath: string | null;
+  focusedPaneId: string | null;
+  broadcastScope: BroadcastScope;
   broadcastSourceId: string | null;
-  broadcastTargetIds: string[];
+  terminalRegistry: string[];
+  registeredTabs: string[];
+  removedTabQueue: string[];
   setActiveModule: (m: ModuleType) => void;
-  openTab: (tab: Tab) => void;
-  closeTab: (id: string) => void;
-  setActiveTab: (id: string) => void;
-  setBroadcastMode: (on: boolean) => void;
+  requestTab: (tab: Tab) => void;
+  drainTabQueue: () => Tab[];
+  drainRemovedTabs: () => string[];
+  notifyTabMoved: (tabId: string) => void;
+  setSftpCdPath: (path: string | null) => void;
+  setFocusedPane: (paneId: string | null) => void;
+  setBroadcastScope: (scope: BroadcastScope) => void;
   setBroadcastSource: (id: string | null) => void;
-  addBroadcastTarget: (id: string) => void;
-  removeBroadcastTarget: (id: string) => void;
-  clearBroadcastTargets: () => void;
+  registerTerminal: (tabId: string) => void;
+  unregisterTerminal: (tabId: string) => void;
+  sftpDisconnectSignal: number;
+  signalSftpDisconnect: () => void;
 }
 
-export const useLayoutStore = create<LayoutState>((set) => ({
+export const useLayoutStore = create<LayoutState>((set, get) => ({
       activeModule: 'ssh',
-      tabs: [],
-      activeTabId: null,
-      broadcastMode: false,
+      newTabQueue: [],
+      sftpCdPath: null,
+      focusedPaneId: 'root',
+      broadcastScope: 'off',
       broadcastSourceId: null,
-      broadcastTargetIds: [],
+      terminalRegistry: [],
+      registeredTabs: [],
+      removedTabQueue: [],
+      sftpDisconnectSignal: 0,
+      signalSftpDisconnect: () => set((s) => ({ sftpDisconnectSignal: s.sftpDisconnectSignal + 1 })),
       setActiveModule: (m) => set({ activeModule: m }),
-      openTab: (tab) => set((s) => {
-        const exists = s.tabs.find((t) => t.id === tab.id);
-        if (exists) return { activeTabId: tab.id };
-        return { tabs: [...s.tabs, tab], activeTabId: tab.id };
-      }),
-      closeTab: (id) => set((s) => {
-        const tabs = s.tabs.filter((t) => t.id !== id);
-        let activeTabId = s.activeTabId;
-        if (activeTabId === id) {
-          activeTabId = tabs.length > 0 ? tabs[tabs.length - 1].id : null;
-        }
-        return { tabs, activeTabId };
-      }),
-      setActiveTab: (id) => set({ activeTabId: id }),
-      setBroadcastMode: (on) => set((s) => ({ broadcastMode: on, broadcastTargetIds: on ? s.broadcastTargetIds : [] })),
+      requestTab: (tab) => set((s) => ({ newTabQueue: [...s.newTabQueue, tab] })),
+      drainTabQueue: () => {
+        const queue = get().newTabQueue;
+        if (queue.length > 0) set({ newTabQueue: [] });
+        return queue;
+      },
+      drainRemovedTabs: () => {
+        const queue = get().removedTabQueue;
+        if (queue.length > 0) set({ removedTabQueue: [] });
+        return queue;
+      },
+      notifyTabMoved: (tabId) => set((s) => ({ removedTabQueue: [...s.removedTabQueue, tabId] })),
+      setFocusedPane: (paneId) => set({ focusedPaneId: paneId }),
+      setSftpCdPath: (path) => set({ sftpCdPath: path }),
+      setBroadcastScope: (scope) => set({ broadcastScope: scope, broadcastSourceId: scope !== 'off' ? get().broadcastSourceId : null }),
       setBroadcastSource: (id) => set({ broadcastSourceId: id }),
-      addBroadcastTarget: (id) => set((s) => ({ broadcastTargetIds: [...s.broadcastTargetIds, id] })),
-      removeBroadcastTarget: (id) => set((s) => ({ broadcastTargetIds: s.broadcastTargetIds.filter(t => t !== id) })),
-      clearBroadcastTargets: () => set({ broadcastTargetIds: [] }),
+      registerTerminal: (tabId) => set((s) => {
+        if (s.terminalRegistry.includes(tabId)) return s;
+        return { terminalRegistry: [...s.terminalRegistry, tabId] };
+      }),
+      unregisterTerminal: (tabId) => set((s) => ({
+        terminalRegistry: s.terminalRegistry.filter((id) => id !== tabId),
+      })),
 }));

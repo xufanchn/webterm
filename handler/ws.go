@@ -1,9 +1,10 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
-	"log"
 	"io"
+	"log"
 	"strconv"
 	"time"
 
@@ -26,6 +27,10 @@ type WSHandler struct {
 func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 	connID, _ := strconv.ParseInt(conn.Request().PathValue("conn_id"), 10, 64)
 	user := auth.GetUserWS(conn.Request())
+	if user == nil {
+		sendErr(conn, "unauthorized")
+		return
+	}
 
 	connInfo, err := h.Store.GetConnection(connID)
 	if err != nil {
@@ -35,13 +40,9 @@ func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 
 	// Reuse existing client from pool if alive
 	var client *sshmgr.Client
-	if existing, ok := h.Pool.Get(connID); ok && existing.IsAlive() {
+	if existing, ok := h.Pool.Acquire(connID); ok {
 		client = existing
 	} else {
-		if ok {
-			h.Pool.Remove(connID)
-		}
-
 		var password, privateKey, passphrase string
 		if connInfo.PasswordEncrypted != "" {
 			password, _ = h.AESCipher.Decrypt(connInfo.PasswordEncrypted)
@@ -72,10 +73,10 @@ func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 			sendErr(conn, fmt.Sprintf("连接失败（已重试3次）: %s", connectErr.Error()))
 			return
 		}
-		h.Pool.Set(connID, client)
+		h.Pool.Add(connID, client)
 	}
 
-	defer h.Pool.Remove(connID)
+	defer h.Pool.Release(connID)
 	session, err := client.NewSession()
 	if err != nil {
 		sendErr(conn, "session failed: " + err.Error())
@@ -88,7 +89,7 @@ func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 		ssh.TTY_OP_ISPEED: 14400,
 		ssh.TTY_OP_OSPEED: 14400,
 	}
-	if err := session.RequestPty("xterm-256color", 80, 24, modes); err != nil {
+	if err := session.RequestPty("xterm-256color", 120, 40, modes); err != nil {
 		sendErr(conn, "pty failed: " + err.Error())
 		return
 	}
@@ -102,20 +103,34 @@ func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 		return
 	}
 
-	h.Store.CreateSessionLog(&store.SessionLog{
+		// Configure shell to report PWD via OSC 7 for SFTP sync
+		stdinPipe.Write([]byte("stty -echo; PROMPT_COMMAND='printf \"\\033]7;file://%s%s\\033\\\\\" \"$HOSTNAME\" \"$PWD\"'; stty echo\n"))
+
+		h.Store.CreateSessionLog(&store.SessionLog{
 		UserID: user.UserID, ConnectionID: connID, Type: "ssh",
 	})
 
 	go func() {
-		var msg struct {
-			Data string `json:"data"`
-		}
 		for {
-			if err := websocket.JSON.Receive(conn, &msg); err != nil {
+			var raw json.RawMessage
+			if err := websocket.JSON.Receive(conn, &raw); err != nil {
 				return
 			}
-				log.Printf("SSH stdin: %q", msg.Data)
-			stdinPipe.Write([]byte(msg.Data))
+			var resizeMsg struct {
+				Cols int `json:"cols"`
+				Rows int `json:"rows"`
+			}
+			if err := json.Unmarshal(raw, &resizeMsg); err == nil && resizeMsg.Cols > 0 {
+				if err := session.WindowChange(resizeMsg.Rows, resizeMsg.Cols); err != nil { log.Printf("SSH resize failed: %v", err) }
+				continue
+			}
+			var dataMsg struct {
+				Data string `json:"data"`
+			}
+			if err := json.Unmarshal(raw, &dataMsg); err == nil && dataMsg.Data != "" {
+				log.Printf("SSH stdin: %q", dataMsg.Data)
+				stdinPipe.Write([]byte(dataMsg.Data))
+			}
 		}
 	}()
 
@@ -137,6 +152,10 @@ func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 func (h *WSHandler) HandleDB(conn *websocket.Conn) {
 	connID, _ := strconv.ParseInt(conn.Request().PathValue("conn_id"), 10, 64)
 	user := auth.GetUserWS(conn.Request())
+	if user == nil {
+		sendErr(conn, "unauthorized")
+		return
+	}
 
 	dbInfo, err := h.Store.GetDbConnection(connID)
 	if err != nil {
@@ -217,6 +236,10 @@ func (w *wsWriter) Write(p []byte) (int, error) {
 func (h *WSHandler) HandleSFTP(conn *websocket.Conn) {
 	connID, _ := strconv.ParseInt(conn.Request().PathValue("conn_id"), 10, 64)
 	user := auth.GetUserWS(conn.Request())
+	if user == nil {
+		sendErr(conn, "unauthorized")
+		return
+	}
 
 	connInfo, err := h.Store.GetConnection(connID)
 	if err != nil {
@@ -225,12 +248,8 @@ func (h *WSHandler) HandleSFTP(conn *websocket.Conn) {
 	}
 
 	// Get or create SSH client
-	sshClient, ok := h.Pool.Get(connID)
-	if !ok || !sshClient.IsAlive() {
-		if ok {
-			h.Pool.Remove(connID)
-		}
-
+	sshClient, ok := h.Pool.Acquire(connID)
+	if !ok {
 		var password, privateKey, passphrase string
 		if connInfo.PasswordEncrypted != "" {
 			password, _ = h.AESCipher.Decrypt(connInfo.PasswordEncrypted)
@@ -251,8 +270,10 @@ func (h *WSHandler) HandleSFTP(conn *websocket.Conn) {
 			sendErr(conn, "ssh connect failed: " + err.Error())
 			return
 		}
-		h.Pool.Set(connID, sshClient)
+		h.Pool.Add(connID, sshClient)
 	}
+
+	defer h.Pool.Release(connID)
 
 	sftpClient, err := sftpmgr.NewClient(sshClient.RawConn())
 	if err != nil {
@@ -332,6 +353,6 @@ func (h *WSHandler) HandleSFTP(conn *websocket.Conn) {
 }
 
 func sendErr(conn *websocket.Conn, msg string) {
-	sendErr(conn, msg)
+	websocket.JSON.Send(conn, map[string]interface{}{"type": "error", "error": msg})
 	time.Sleep(500 * time.Millisecond)
 }

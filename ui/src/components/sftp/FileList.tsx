@@ -1,5 +1,6 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SftpFile } from './SftpPanel';
+import ContextMenu from '../common/ContextMenu';
 
 interface Props {
   files: SftpFile[];
@@ -12,6 +13,7 @@ interface Props {
   onMkdir: (name: string) => void;
   onUpload: () => void;
   onEdit: (path: string, name: string) => void;
+  onGoParent?: () => void;
 }
 
 const sizeFormat = (bytes: number): string => {
@@ -27,9 +29,45 @@ const modeStr = (mode: number): string => {
   return (mode & 0o40000 ? 'd' : mode & 0o120000 ? 'l' : '-') + r + w + x + r + w + x + r + w + x;
 };
 
-export default function FileList({ files, loading, connId, currentPath, onNavigate, onDelete: _onDelete, onRename: _onRename, onMkdir, onUpload, onEdit }: Props) {
+function NewFolderInput({ value, onChange, onConfirm, onCancel, confirmLabel = '创建' }: {
+  value: string;
+  onChange: (v: string) => void;
+  onConfirm: () => void;
+  onCancel: () => void;
+  confirmLabel?: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onCancel();
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [onCancel]);
+
+  return (
+    <div ref={ref} style={{ padding: '4px 8px', display: 'flex', gap: 4 }}>
+      <input value={value} onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') onConfirm();
+          if (e.key === 'Escape') onCancel();
+        }}
+        autoFocus placeholder="文件夹名"
+        style={{ flex: 1, padding: '2px 6px', background: '#3c3c3c', border: '1px solid #555', borderRadius: 3, color: '#fff', fontSize: 10 }} />
+      <button onClick={onConfirm}
+        style={{ background: '#007acc', border: 'none', color: '#fff', borderRadius: 3, padding: '2px 8px', cursor: 'pointer', fontSize: 10 }}>{confirmLabel}</button>
+      <button onClick={onCancel}
+        style={{ background: '#555', border: 'none', color: '#ccc', borderRadius: 3, padding: '2px 8px', cursor: 'pointer', fontSize: 10 }}>取消</button>
+    </div>
+  );
+}
+
+export default function FileList({ files, loading, connId, currentPath, onNavigate, onDelete, onRename, onMkdir, onUpload, onEdit, onGoParent }: Props) {
   const [showNewFolder, setShowNewFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
+  const [contextMenu, setContextMenu] = useState<{x: number; y: number; file: SftpFile} | null>(null);
+  const [blankMenu, setBlankMenu] = useState<{x: number; y: number} | null>(null);
+  const [renaming, setRenaming] = useState<{path: string; name: string} | null>(null);
 
   const handleMkdir = () => {
     if (newFolderName.trim()) {
@@ -42,90 +80,129 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const uploadTargetRef = useRef<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleDrop = useCallback(async (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-    const files = e.dataTransfer.files;
-    if (files.length === 0) return;
+  const doUpload = useCallback((files: FileList | File[]) => {
+    if (!connId || files.length === 0) return;
+    const targetPath = uploadTargetRef.current || currentPath;
+    uploadTargetRef.current = null;
+    setUploading(true);
+    setUploadProgress(0);
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      setUploading(true);
-      setUploadProgress(0);
-
-      const token = localStorage.getItem('token') || '';
+    const token = localStorage.getItem('token') || '';
+    const uploadNext = (index: number) => {
+      if (index >= files.length) {
+        setUploading(false);
+        setUploadProgress(0);
+        onUpload();
+        return;
+      }
+      const file = files[index];
       const formData = new FormData();
       formData.append('file', file);
       formData.append('conn_id', String(connId));
-      formData.append('path', currentPath + '/' + file.name);
+      formData.append('path', targetPath + '/' + file.name);
 
       const xhr = new XMLHttpRequest();
       xhr.upload.onprogress = (e) => {
         if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100));
       };
       xhr.onload = () => {
-        setUploading(false);
-        setUploadProgress(0);
-        onUpload(); // trigger refresh
+        if (xhr.status >= 200 && xhr.status < 300) {
+          uploadNext(index + 1);
+        } else {
+          setUploading(false);
+        }
       };
+      xhr.onerror = () => setUploading(false);
       xhr.open('POST', '/api/sftp/upload');
       xhr.setRequestHeader('Authorization', 'Bearer ' + token);
       xhr.send(formData);
-    }
+    };
+    uploadNext(0);
   }, [connId, currentPath, onUpload]);
 
-  const handleDownload = (filePath: string, fileName: string) => {
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    doUpload(e.dataTransfer.files);
+  }, [doUpload]);
+
+  const handleDownload = async (filePath: string, fileName: string) => {
     const token = localStorage.getItem('token') || '';
-    const a = document.createElement('a');
-    a.href = `/api/sftp/download/${connId}?path=${encodeURIComponent(filePath)}&token=${token}`;
-    a.download = fileName;
-    a.click();
+    try {
+      const resp = await fetch(`/api/sftp/download/${connId}?path=${encodeURIComponent(filePath)}&token=${token}`);
+      if (!resp.ok) throw new Error('Download failed');
+      const blob = await resp.blob();
+      // Try native save picker, fallback to link download
+      if ('showSaveFilePicker' in window) {
+        try {
+          const handle = await (window as any).showSaveFilePicker({ suggestedName: fileName });
+          const writable = await handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          return;
+        } catch { /* user cancelled or not supported, fallback */ }
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch { /* ignore */ }
   };
 
   return (
-    <div style={{ flex: 1, overflow: 'auto' }}>
-      <div style={{ padding: '2px 8px', borderBottom: '1px solid #383838', display: 'flex', justifyContent: 'space-between', color: '#888', fontSize: 10 }}>
-        <button onClick={() => setShowNewFolder(!showNewFolder)}
-          style={{ background: 'none', border: 'none', color: '#4fc3f7', cursor: 'pointer', fontSize: 10 }}>+ 新文件夹</button>
+    <div style={{ flex: 1, overflow: 'auto', outline: dragOver ? '2px solid #4fc3f7' : 'none', outlineOffset: -2 }}
+      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={(e) => { setDragOver(false); handleDrop(e); }}
+      onDoubleClick={(e) => {
+        if ((e.target as HTMLElement).closest('[data-file-row]')) return;
+        onGoParent?.();
+      }}
+      onContextMenu={(e) => {
+        if ((e.target as HTMLElement).closest('[data-file-row]')) return;
+        e.preventDefault();
+        setBlankMenu({ x: e.clientX, y: e.clientY });
+      }}>
+      <div style={{ padding: '2px 8px', borderBottom: '1px solid #383838', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#888', fontSize: 10 }}>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button onClick={() => setShowNewFolder(!showNewFolder)}
+            style={{ background: 'none', border: 'none', color: '#4fc3f7', cursor: 'pointer', fontSize: 10 }}>+ 新文件夹</button>
+          <button onClick={() => fileInputRef.current?.click()}
+            style={{ background: 'none', border: 'none', color: '#4fc3f7', cursor: 'pointer', fontSize: 10 }}>⬆ 上传</button>
+          <input ref={fileInputRef} type="file" multiple style={{ display: 'none' }}
+            onChange={(e) => {
+              if (e.target.files && e.target.files.length > 0) doUpload(e.target.files);
+              e.target.value = '';
+            }} />
+        </div>
+        {uploading && <span style={{ color: '#4fc3f7' }}>上传中... {uploadProgress}%</span>}
       </div>
       {showNewFolder && (
-        <div style={{ padding: '4px 8px', display: 'flex', gap: 4 }}>
-          <input value={newFolderName} onChange={(e) => setNewFolderName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleMkdir()}
-            placeholder="文件夹名"
-            style={{ flex: 1, padding: '2px 6px', background: '#3c3c3c', border: '1px solid #555', borderRadius: 3, color: '#fff', fontSize: 10 }} />
-          <button onClick={handleMkdir}
-            style={{ background: '#007acc', border: 'none', color: '#fff', borderRadius: 3, padding: '2px 8px', cursor: 'pointer', fontSize: 10 }}>创建</button>
-        </div>
+        <NewFolderInput
+          value={newFolderName}
+          onChange={setNewFolderName}
+          onConfirm={handleMkdir}
+          onCancel={() => { setShowNewFolder(false); setNewFolderName(''); }}
+        />
       )}
       {loading && <div style={{ padding: 8, color: '#888' }}>加载中...</div>}
-      <div
-        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={handleDrop}
-        style={{
-          margin: 4, padding: 8, border: `2px dashed ${dragOver ? '#4fc3f7' : '#555'}`,
-          borderRadius: 4, textAlign: 'center', color: dragOver ? '#4fc3f7' : '#888',
-          fontSize: 10, cursor: 'pointer',
-          background: dragOver ? 'rgba(79,195,247,0.1)' : 'transparent',
-        }}
-        onClick={() => fileInputRef.current?.click()}>
-        {uploading ? `上传中... ${uploadProgress}%` : dragOver ? '释放以上传' : '拖拽文件到此处上传 / 点击选择'}
-        <input ref={fileInputRef} type="file" style={{ display: 'none' }}
-          onChange={(e) => {
-            const files = e.target.files;
-            if (files && files[0]) {
-              const fakeEvent = { dataTransfer: { files } } as any;
-              handleDrop(fakeEvent as React.DragEvent);
-            }
-          }} />
-      </div>
+      {!loading && currentPath !== '/' && (
+        <div data-file-row onDoubleClick={onGoParent}
+          style={{ padding: '2px 8px', color: '#4fc3f7', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+          onMouseEnter={(e) => e.currentTarget.style.background = '#2a2d2e'}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+          <span style={{ width: 16, textAlign: 'center', flexShrink: 0 }}>📁</span>
+          <span style={{ flex: 1 }}>..</span>
+        </div>
+      )}
       {files.map((f) => (
-        <div key={f.path}
-          onClick={() => f.is_dir ? onNavigate(f.path) : handleDownload(f.path, f.name)}
-          onDoubleClick={() => f.is_dir ? undefined : onEdit(f.path, f.name)}
+        <div key={f.path} data-file-row
+          onDoubleClick={() => f.is_dir ? onNavigate(f.path) : onEdit(f.path, f.name)}
+          onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, file: f }); }}
           style={{
             padding: '2px 8px', color: '#ccc', cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: 4,
@@ -140,6 +217,55 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
           <span style={{ color: '#666', fontSize: 9, width: 70, textAlign: 'right', flexShrink: 0 }}>{modeStr(f.mode)}</span>
         </div>
       ))}
+      {renaming && (
+        <NewFolderInput
+          value={renaming.name}
+          onChange={(v) => setRenaming({ ...renaming, name: v })}
+          onConfirm={() => { onRename(renaming.path, renaming.name); setRenaming(null); }}
+          onCancel={() => setRenaming(null)}
+          confirmLabel="确定"
+        />
+      )}
+      {contextMenu && (
+        <ContextMenu x={contextMenu.x} y={contextMenu.y} onClose={() => setContextMenu(null)}
+          items={[
+            ...(contextMenu.file.is_dir ? [{
+              label: '上传到此处',
+              action: () => { uploadTargetRef.current = contextMenu.file.path; fileInputRef.current?.click(); setContextMenu(null); },
+            }] : [{
+              label: '下载',
+              action: () => { handleDownload(contextMenu.file.path, contextMenu.file.name); setContextMenu(null); },
+            }, {
+              label: '编辑',
+              action: () => { onEdit(contextMenu.file.path, contextMenu.file.name); setContextMenu(null); },
+            }]),
+            { label: '重命名',
+              action: () => {
+                setRenaming({ path: contextMenu.file.path, name: contextMenu.file.name });
+                setContextMenu(null);
+              },
+            },
+            { label: '删除',
+              action: () => { onDelete(contextMenu.file.path); setContextMenu(null); },
+            },
+            { label: '刷新',
+              action: () => { onNavigate(currentPath); setContextMenu(null); },
+            },
+          ]}
+        />
+      )}
+      {blankMenu && (
+        <ContextMenu x={blankMenu.x} y={blankMenu.y} onClose={() => setBlankMenu(null)}
+          items={[
+            { label: '上传',
+              action: () => { fileInputRef.current?.click(); setBlankMenu(null); },
+            },
+            { label: '刷新',
+              action: () => { onNavigate(currentPath); setBlankMenu(null); },
+            },
+          ]}
+        />
+      )}
     </div>
   );
 }

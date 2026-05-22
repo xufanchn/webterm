@@ -23,7 +23,7 @@ export default function Modal({ title, onClose, children, width = 600, height = 
       position: 'fixed', inset: 0, zIndex: 10000,
       background: 'rgba(0,0,0,0.6)', display: 'flex',
       alignItems: 'center', justifyContent: 'center',
-    }} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    }} onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div style={{
         background: '#1e1e1e', borderRadius: 8, width, height,
         display: 'flex', flexDirection: 'column', overflow: 'hidden',

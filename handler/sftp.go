@@ -41,7 +41,7 @@ func (h *SftpHandler) Upload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sshClient, ok := h.Pool.Get(connID)
+	sshClient, ok := h.Pool.Acquire(connID)
 	if !ok || !sshClient.IsAlive() {
 		var password, privateKey, passphrase string
 		if connInfo.PasswordEncrypted != "" {
@@ -62,8 +62,9 @@ func (h *SftpHandler) Upload(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf(`{"error":"ssh connect: %s"}`, err.Error()), http.StatusInternalServerError)
 			return
 		}
-		h.Pool.Set(connID, sshClient)
+		h.Pool.Add(connID, sshClient)
 	}
+	defer h.Pool.Release(connID)
 
 	sftpClient, err := sftpmgr.NewClient(sshClient.RawConn())
 	if err != nil {
@@ -94,7 +95,7 @@ func (h *SftpHandler) Download(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sshClient, ok := h.Pool.Get(connID)
+	sshClient, ok := h.Pool.Acquire(connID)
 	if !ok || !sshClient.IsAlive() {
 		var password, privateKey, passphrase string
 		if connInfo.PasswordEncrypted != "" {
@@ -115,8 +116,9 @@ func (h *SftpHandler) Download(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf(`{"error":"ssh connect: %s"}`, err.Error()), http.StatusInternalServerError)
 			return
 		}
-		h.Pool.Set(connID, sshClient)
+		h.Pool.Add(connID, sshClient)
 	}
+	defer h.Pool.Release(connID)
 
 	sftpClient, err := sftpmgr.NewClient(sshClient.RawConn())
 	if err != nil {

@@ -32,6 +32,13 @@ func HandleLocalFS(conn *websocket.Conn) {
 			return
 		}
 		switch msg.Action {
+		case "getwd":
+			wd, err := os.Getwd()
+			if err != nil {
+				websocket.JSON.Send(conn, map[string]interface{}{"type": "error", "error": err.Error()})
+			} else {
+				websocket.JSON.Send(conn, map[string]interface{}{"type": "pwd", "path": wd})
+			}
 		case "list":
 			path := msg.Path
 			if path == "" {

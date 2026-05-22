@@ -149,6 +149,22 @@ func (h *ConnectionHandler) Update(w http.ResponseWriter, r *http.Request) {
 		PrivateKeyPassphraseEncrypted: passEnc,
 		Shared:                       req.Shared,
 	}
+	// Merge with existing: keep old values for fields not provided
+	existing, err := h.Store.GetConnection(id)
+	if err != nil {
+		http.Error(w, `{"error":"connection not found"}`, http.StatusNotFound)
+		return
+	}
+	if req.Name == "" { c.Name = existing.Name }
+	if req.Host == "" { c.Host = existing.Host }
+	if req.Port == 0 { c.Port = existing.Port }
+	if req.Username == "" { c.Username = existing.Username }
+	if req.AuthMethod == "" { c.AuthMethod = existing.AuthMethod }
+	if pwdEnc == "" { c.PasswordEncrypted = existing.PasswordEncrypted }
+	if keyEnc == "" { c.PrivateKeyEncrypted = existing.PrivateKeyEncrypted }
+	if passEnc == "" { c.PrivateKeyPassphraseEncrypted = existing.PrivateKeyPassphraseEncrypted }
+	if req.GroupID == 0 { c.GroupID = existing.GroupID }
+	c.Shared = req.Shared || existing.Shared
 	_ = user
 	if err := h.Store.UpdateConnection(c); err != nil {
 		http.Error(w, `{"error":"update failed"}`, http.StatusInternalServerError)

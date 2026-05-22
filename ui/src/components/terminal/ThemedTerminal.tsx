@@ -14,6 +14,11 @@ import ContextMenu from '../common/ContextMenu';
 interface Props {
   connId: number;
   themeName?: string;
+  onStatus?: (connected: boolean) => void;
+  onResizeDim?: (cols: number, rows: number) => void;
+  extraMenuItems?: { label: string; action: () => void }[];
+  tabs?: import('../../store/layout').Tab[];
+  myTabId?: string;
 }
 
 function hexToRgb(hex: string): string {
@@ -36,12 +41,16 @@ function highlightText(text: string, rules: HighlightRule[]): string {
   return text;
 }
 
-export default function ThemedTerminal({ connId, themeName: _themeName }: Props) {
+export default function ThemedTerminal({ connId, themeName: _themeName, onStatus, onResizeDim, extraMenuItems, tabs,  myTabId }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const rules = useHighlightRules();
   const sendRef = useRef<(data: string) => void>(() => {});
+  const onStatusRef = useRef(onStatus);
+  const onResizeDimRef = useRef(onResizeDim);
+  onStatusRef.current = onStatus;
+  onResizeDimRef.current = onResizeDim;
   const themeName = usePreferencesStore((s) => s.themeName);
   const fontSize = usePreferencesStore((s) => s.fontSize);
 
@@ -134,19 +143,43 @@ export default function ThemedTerminal({ connId, themeName: _themeName }: Props)
       return true;
     });
 
+    // OSC 7 handler: track shell directory changes for SFTP sync
+    term.parser.registerOscHandler(7, (data) => {
+      // Format: file://hostname/path
+      const match = /file:\/\/[^/]+(.+)/.exec(data);
+      if (match) setSftpCdPath(match[1]);
+      return false; // don't display in terminal
+    });
+
+    term.onResize(({ cols, rows }) => {
+      sendRef.current(JSON.stringify({ cols, rows }));
+      onResizeDimRef.current?.(cols, rows);
+    });
+
     if (ref.current) {
+      ref.current.style.backgroundColor = themeConfig.background;
       term.open(ref.current);
-      fitAddon.fit();
-      term.focus();
+      termRef.current = term;
+
+      requestAnimationFrame(() => {
+        fitAddon.fit();
+        term.focus();
+        // Retry focus after layout settles (important for split panes)
+        setTimeout(() => term.focus(), 100);
+      });
     }
 
-    termRef.current = term;
+    const resizeObserver = new ResizeObserver(() => {
+      fitAddon.fit();
+    });
+    if (ref.current) resizeObserver.observe(ref.current);
 
     const handleResize = () => fitAddon.fit();
     window.addEventListener('resize', handleResize);
 
     return () => {
       term.dispose();
+      resizeObserver.disconnect();
       window.removeEventListener('resize', handleResize);
     };
   }, [themeName, fontSize]);
@@ -167,61 +200,78 @@ export default function ThemedTerminal({ connId, themeName: _themeName }: Props)
         term.write(data);
       }
     },
-    onClose: () => {
-      termRef.current?.write('\r\n\x1b[33m[连接已断开，正在重连...]\x1b[0m\r\n');
+    onClose: (final) => {
+      if (final) {
+        onStatusRef.current?.(false);
+        signalSftpDisconnect();
+        termRef.current?.write('\r\n\x1b[33m[连接已断开]\x1b[0m\r\n');
+      } else {
+        termRef.current?.write('\r\n\x1b[33m[连接已断开，正在重连...]\x1b[0m\r\n');
+      }
     },
     onOpen: () => {
-      termRef.current?.write('\r\n\x1b[32m[已重新连接]\x1b[0m\r\n');
+      onStatusRef.current?.(true);
+      termRef.current?.write('\r\n\x1b[32m[已连接]\x1b[0m\r\n');
     },
   });
 
   sendRef.current = send;
 
-  const broadcastMode = useLayoutStore((s) => s.broadcastMode);
+  const broadcastScope = useLayoutStore((s) => s.broadcastScope);
   const broadcastSourceId = useLayoutStore((s) => s.broadcastSourceId);
   const setBroadcastSource = useLayoutStore((s) => s.setBroadcastSource);
-  const tabs = useLayoutStore((s) => s.tabs);
-  const activeTabId = useLayoutStore((s) => s.activeTabId);
+  const terminalRegistry = useLayoutStore((s) => s.terminalRegistry);
+  const registerTerminal = useLayoutStore((s) => s.registerTerminal);
+  const unregisterTerminal = useLayoutStore((s) => s.unregisterTerminal);
+  const setSftpCdPath = useLayoutStore((s) => s.setSftpCdPath);
+  const signalSftpDisconnect = useLayoutStore((s) => s.signalSftpDisconnect);
 
   // Register this terminal's send function globally for broadcast
   useEffect(() => {
-    if (!activeTabId) return;
-    const key = `wshell-ws-${activeTabId}`;
+    if (!myTabId) return;
+    const key = `wshell-ws-${myTabId}`;
     (window as any)[key] = send;
-    return () => { delete (window as any)[key]; };
-  }, [activeTabId, send]);
+    registerTerminal(myTabId);
+    return () => {
+      delete (window as any)[key];
+      unregisterTerminal(myTabId);
+    };
+  }, [myTabId, send, registerTerminal, unregisterTerminal]);
 
-  // Auto-register as broadcast source if broadcast is on and no source set
+  // Auto-register as broadcast source
   useEffect(() => {
-    if (broadcastMode && !broadcastSourceId && activeTabId) {
-      setBroadcastSource(activeTabId);
+    if (broadcastScope !== 'off' && !broadcastSourceId && myTabId) {
+      setBroadcastSource(myTabId);
     }
-  }, [broadcastMode, broadcastSourceId, activeTabId, setBroadcastSource]);
+  }, [broadcastScope, broadcastSourceId, myTabId, setBroadcastSource]);
 
   useEffect(() => {
     const term = termRef.current;
     if (!term) return;
     const disposable = term.onData((data) => {
-      if (broadcastMode && broadcastSourceId && activeTabId !== broadcastSourceId) {
-        // This is a target terminal - don't send keystrokes
-        return;
-      }
+      const isSource = myTabId === broadcastSourceId;
+      const isTarget = broadcastScope !== 'off' && !isSource;
+
+      if (isTarget) return; // Target terminal - input comes from broadcast
+
       send(JSON.stringify({ data }));
-      // If this is the source in broadcast mode, forward to all targets
-      if (broadcastMode && activeTabId === broadcastSourceId) {
-        tabs.forEach((tab) => {
-          if (tab.id !== activeTabId && tab.type === 'ssh') {
-            const targetSend = (window as any)[`wshell-ws-${tab.id}`];
+
+      // Broadcast to other terminals
+      if (isSource && broadcastScope !== 'off') {
+        const targets = broadcastScope === 'all' ? terminalRegistry : tabs?.map((t) => t.id) || [];
+        targets.forEach((tid) => {
+          if (tid !== myTabId) {
+            const targetSend = (window as any)[`wshell-ws-${tid}`];
             if (targetSend) targetSend(JSON.stringify({ data }));
           }
         });
       }
     });
     return () => disposable.dispose();
-  }, [send, broadcastMode, broadcastSourceId, activeTabId, tabs]);
+  }, [send, broadcastScope, broadcastSourceId, myTabId, tabs, terminalRegistry]);
 
   return (
-    <div ref={ref} style={{ width: '100%', height: '100%' }}
+    <div ref={ref} style={{ flex: 1, overflow: 'hidden' }}
       onContextMenu={(e) => {
         e.preventDefault();
         setContextMenu({ x: e.clientX, y: e.clientY });
@@ -258,6 +308,7 @@ export default function ThemedTerminal({ connId, themeName: _themeName }: Props)
                 termRef.current?.clear();
               },
             },
+            ...(extraMenuItems || []),
           ]}
           onClose={() => setContextMenu(null)}
         />
