@@ -1,10 +1,22 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLayoutStore } from '../../store/layout';
 import { useConnectionStore } from '../../store/connections';
 import type { Connection, DbConnection } from '../../store/connections';
 import ConnectionForm from '../config/ConnectionForm';
 import DbConnectionForm from '../config/DbConnectionForm';
 import { apiPost, apiDelete } from '../../api/client';
+
+function ClickAway({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [onClose]);
+  return <div ref={ref}>{children}</div>;
+}
 
 export default function Sidebar() {
   const activeModule = useLayoutStore((s) => s.activeModule);
@@ -132,21 +144,29 @@ export default function Sidebar() {
         )}
       </div>
       )}
-      {contextMenu && (
-        <div style={{ position: 'fixed', left: contextMenu.x, top: contextMenu.y, zIndex: 1000, background: '#2d2d2d', border: '1px solid #555', borderRadius: 4, padding: '4px 0', minWidth: 120 }}
-          onClick={() => setContextMenu(null)}>
+      {contextMenu && <ClickAway onClose={() => setContextMenu(null)}>
+        <div style={{
+          position: 'fixed', left: contextMenu.x, top: contextMenu.y, zIndex: 10000,
+          background: '#2d2d2d', border: '1px solid #555', borderRadius: 4,
+          padding: '4px 0', minWidth: 120, boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+        }}>
           <div onClick={() => {
             const isDbConn = 'database_name' in contextMenu.conn;
             if (isDbConn) { setEditingDbConn(contextMenu.conn); setShowDbForm(true); }
             else { setEditingConn(contextMenu.conn); setShowConnForm(true); }
             setContextMenu(null);
-          }} style={{ padding: '6px 12px', cursor: 'pointer', color: '#ccc', fontSize: 12 }}>编辑</div>
+          }} style={{ padding: '6px 12px', cursor: 'pointer', color: '#ccc', fontSize: 12 }}
+            onMouseEnter={(e) => e.currentTarget.style.background = '#094771'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>编辑</div>
           <div onClick={() => {
             const isDbConn = 'database_name' in contextMenu.conn;
             if (isDbConn) handleDeleteDbConn(contextMenu.conn.id);
             else handleDeleteConn(contextMenu.conn.id);
-          }} style={{ padding: '6px 12px', cursor: 'pointer', color: '#f44747', fontSize: 12 }}>删除</div>
+          }} style={{ padding: '6px 12px', cursor: 'pointer', color: '#f44747', fontSize: 12 }}
+            onMouseEnter={(e) => e.currentTarget.style.background = '#094771'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>删除</div>
         </div>
+      </ClickAway>}
       )}
       {showConnForm && (
         <ConnectionForm

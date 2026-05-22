@@ -116,7 +116,6 @@ export default function SftpPanel({ connId, currentPath, onPathChange, style }: 
       />
       {editFile && (
         <FileEditor
-          connId={connId}
           filePath={editFile.path}
           fileName={editFile.name}
           ws={ws}

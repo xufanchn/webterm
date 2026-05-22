@@ -9,7 +9,6 @@ import { python } from '@codemirror/lang-python';
 import Modal from './Modal';
 
 interface Props {
-  connId: number;
   filePath: string;
   fileName: string;
   ws: WebSocket | null;
@@ -32,7 +31,7 @@ function detectLanguage(fileName: string): any {
   }
 }
 
-export default function FileEditor({ connId, filePath, fileName, ws, onClose, onSaved }: Props) {
+export default function FileEditor({ filePath, fileName, ws, onClose, onSaved }: Props) {
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const [content, setContent] = useState('');
