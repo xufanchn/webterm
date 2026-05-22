@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import FileList from './FileList';
+import FileEditor from '../common/FileEditor';
 
 export interface SftpFile {
   name: string;
@@ -25,6 +26,7 @@ export default function SftpPanel({ connId, currentPath, onPathChange, style }: 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [ws, setWs] = useState<WebSocket | null>(null);
+  const [editFile, setEditFile] = useState<{ path: string; name: string } | null>(null);
 
   const fetchDir = useCallback((dirPath: string) => {
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
@@ -89,6 +91,10 @@ export default function SftpPanel({ connId, currentPath, onPathChange, style }: 
     if (ws) ws.send(JSON.stringify({ action: 'mkdir', path: path + '/' + name }));
   };
 
+  const handleEditFile = (filePath: string, fileName: string) => {
+    setEditFile({ path: filePath, name: fileName });
+  };
+
   return (
     <div style={{ background: '#252526', fontSize: 11, display: 'flex', flexDirection: 'column', height: '100%', ...style }}>
       <div style={{ padding: '4px 8px', background: '#333', color: '#888', fontSize: 10, display: 'flex', justifyContent: 'space-between' }}>
@@ -106,7 +112,18 @@ export default function SftpPanel({ connId, currentPath, onPathChange, style }: 
         connId={connId}
         currentPath={path}
         onUpload={() => fetchDir(path)}
+        onEdit={handleEditFile}
       />
+      {editFile && (
+        <FileEditor
+          connId={connId}
+          filePath={editFile.path}
+          fileName={editFile.name}
+          ws={ws}
+          onClose={() => setEditFile(null)}
+          onSaved={() => fetchDir(path)}
+        />
+      )}
     </div>
   );
 }

@@ -11,6 +11,7 @@ interface Props {
   onRename: (path: string, newName: string) => void;
   onMkdir: (name: string) => void;
   onUpload: () => void;
+  onEdit: (path: string, name: string) => void;
 }
 
 const sizeFormat = (bytes: number): string => {
@@ -26,7 +27,7 @@ const modeStr = (mode: number): string => {
   return (mode & 0o40000 ? 'd' : mode & 0o120000 ? 'l' : '-') + r + w + x + r + w + x + r + w + x;
 };
 
-export default function FileList({ files, loading, connId, currentPath, onNavigate, onDelete: _onDelete, onRename: _onRename, onMkdir, onUpload }: Props) {
+export default function FileList({ files, loading, connId, currentPath, onNavigate, onDelete: _onDelete, onRename: _onRename, onMkdir, onUpload, onEdit }: Props) {
   const [showNewFolder, setShowNewFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
 
@@ -124,6 +125,7 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
       {files.map((f) => (
         <div key={f.path}
           onClick={() => f.is_dir ? onNavigate(f.path) : handleDownload(f.path, f.name)}
+          onDoubleClick={() => f.is_dir ? undefined : onEdit(f.path, f.name)}
           style={{
             padding: '2px 8px', color: '#ccc', cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: 4,
