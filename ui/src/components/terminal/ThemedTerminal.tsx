@@ -3,6 +3,7 @@ import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { SearchAddon } from '@xterm/addon-search';
 import { useHighlightRules, HighlightRule } from '../../hooks/useTerminalTheme';
+import { useWebSocket } from '../../hooks/useWebSocket';
 import '@xterm/xterm/css/xterm.css';
 import { TerminalTheme, getTheme } from '../../themes/presets';
 
@@ -33,6 +34,7 @@ function highlightText(text: string, rules: HighlightRule[]): string {
 
 export default function ThemedTerminal({ connId, themeName }: Props) {
   const ref = useRef<HTMLDivElement>(null);
+  const termRef = useRef<Terminal | null>(null);
   const rules = useHighlightRules();
 
   useEffect(() => {
@@ -73,37 +75,49 @@ export default function ThemedTerminal({ connId, themeName }: Props) {
       fitAddon.fit();
     }
 
-    const token = localStorage.getItem('token') || '';
-    const wsUrl = `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws/ssh/${connId}?token=${token}`;
-    const ws = new WebSocket(wsUrl);
-
-    ws.onmessage = (event) => {
-      try {
-        const msg = JSON.parse(event.data);
-        if (msg.data) term.write(highlightText(msg.data, rules));
-        if (msg.error) term.write(`\r\n\x1b[31m${msg.error}\x1b[0m\r\n`);
-      } catch {
-        term.write(event.data);
-      }
-    };
-
-    term.onData((data) => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ data }));
-      }
-    });
-
-    ws.onclose = () => term.write('\r\n\x1b[33m[连接已断开，正在重连...]\x1b[0m\r\n');
+    termRef.current = term;
 
     const handleResize = () => fitAddon.fit();
     window.addEventListener('resize', handleResize);
 
     return () => {
-      ws.close();
       term.dispose();
       window.removeEventListener('resize', handleResize);
     };
-  }, [connId, themeName]);
+  }, [themeName]);
+
+  const token = localStorage.getItem('token') || '';
+  const wsUrl = `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws/ssh/${connId}?token=${token}`;
+
+  const { send } = useWebSocket({
+    url: wsUrl,
+    onMessage: (data) => {
+      const term = termRef.current;
+      if (!term) return;
+      try {
+        const msg = JSON.parse(data);
+        if (msg.data) term.write(highlightText(msg.data, rules));
+        if (msg.error) term.write(`\r\n\x1b[31m${msg.error}\x1b[0m\r\n`);
+      } catch {
+        term.write(data);
+      }
+    },
+    onClose: () => {
+      termRef.current?.write('\r\n\x1b[33m[连接已断开，正在重连...]\x1b[0m\r\n');
+    },
+    onOpen: () => {
+      termRef.current?.write('\r\n\x1b[32m[已重新连接]\x1b[0m\r\n');
+    },
+  });
+
+  useEffect(() => {
+    const term = termRef.current;
+    if (!term) return;
+    const disposable = term.onData((data) => {
+      send(JSON.stringify({ data }));
+    });
+    return () => disposable.dispose();
+  }, [send]);
 
   return <div ref={ref} style={{ width: '100%', height: '100%' }} />;
 }

@@ -3,6 +3,7 @@ package handler
 import (
 	"io"
 	"strconv"
+	"time"
 
 	"github.com/xf/wshell/auth"
 	"github.com/xf/wshell/crypto"
@@ -28,29 +29,37 @@ func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 		return
 	}
 
-	var password, privateKey, passphrase string
-	if connInfo.PasswordEncrypted != "" {
-		password, _ = h.AESCipher.Decrypt(connInfo.PasswordEncrypted)
-	}
-	if connInfo.PrivateKeyEncrypted != "" {
-		privateKey, _ = h.AESCipher.Decrypt(connInfo.PrivateKeyEncrypted)
-	}
-	if connInfo.PrivateKeyPassphraseEncrypted != "" {
-		passphrase, _ = h.AESCipher.Decrypt(connInfo.PrivateKeyPassphraseEncrypted)
-	}
+	// Reuse existing client from pool if alive
+	var client *sshmgr.Client
+	if existing, ok := h.Pool.Get(connID); ok && existing.IsAlive() {
+		client = existing
+	} else {
+		if ok {
+			h.Pool.Remove(connID)
+		}
 
-	client, err := sshmgr.NewClient(connInfo.Host, connInfo.Port, connInfo.Username, password, privateKey, passphrase)
-	if err != nil {
-		websocket.JSON.Send(conn, map[string]string{"error": "failed to create client: " + err.Error()})
-		return
-	}
-	if err := client.Connect(); err != nil {
-		websocket.JSON.Send(conn, map[string]string{"error": "connection failed: " + err.Error()})
-		return
-	}
+		var password, privateKey, passphrase string
+		if connInfo.PasswordEncrypted != "" {
+			password, _ = h.AESCipher.Decrypt(connInfo.PasswordEncrypted)
+		}
+		if connInfo.PrivateKeyEncrypted != "" {
+			privateKey, _ = h.AESCipher.Decrypt(connInfo.PrivateKeyEncrypted)
+		}
+		if connInfo.PrivateKeyPassphraseEncrypted != "" {
+			passphrase, _ = h.AESCipher.Decrypt(connInfo.PrivateKeyPassphraseEncrypted)
+		}
 
-	h.Pool.Set(connID, client)
-	defer h.Pool.Remove(connID)
+		client, err = sshmgr.NewClient(connInfo.Host, connInfo.Port, connInfo.Username, password, privateKey, passphrase)
+		if err != nil {
+			websocket.JSON.Send(conn, map[string]string{"error": "failed to create client: " + err.Error()})
+			return
+		}
+		if err := client.Connect(); err != nil {
+			websocket.JSON.Send(conn, map[string]string{"error": "connection failed: " + err.Error()})
+			return
+		}
+		h.Pool.Set(connID, client)
+	}
 
 	session, err := client.NewSession()
 	if err != nil {
@@ -91,6 +100,17 @@ func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 				return
 			}
 			stdinPipe.Write([]byte(msg.Data))
+		}
+	}()
+
+	// Heartbeat: send ping every 10s
+	go func() {
+		ticker := time.NewTicker(10 * time.Second)
+		defer ticker.Stop()
+		for range ticker.C {
+			if err := websocket.JSON.Send(conn, map[string]string{"type": "ping"}); err != nil {
+				return
+			}
 		}
 	}()
 
