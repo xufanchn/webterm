@@ -71,6 +71,11 @@ func main() {
 	mux.Handle("PUT /api/connections/{id}", auth.Middleware(http.HandlerFunc(connH.Update)))
 	mux.Handle("DELETE /api/connections/{id}", auth.Middleware(http.HandlerFunc(connH.Delete)))
 
+	sftpRestH := &handler.SftpHandler{Store: st, Pool: pool, AESCipher: aesCipher}
+
+	mux.Handle("POST /api/sftp/upload", auth.Middleware(http.HandlerFunc(sftpRestH.Upload)))
+	mux.Handle("GET /api/sftp/download/{id}", auth.Middleware(http.HandlerFunc(sftpRestH.Download)))
+
 	mux.Handle("/ws/ssh/{conn_id}", websocket.Handler(wsH.HandleSSH))
 	mux.Handle("/ws/sftp/{conn_id}", websocket.Handler(wsH.HandleSFTP))
 	mux.Handle("/ws/db/{conn_id}", websocket.Handler(wsH.HandleDB))
