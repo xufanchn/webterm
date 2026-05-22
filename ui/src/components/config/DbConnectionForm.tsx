@@ -60,8 +60,8 @@ export default function DbConnectionForm({ connection, onClose, onSaved }: Props
   const labelStyle: React.CSSProperties = { color: '#ccc', fontSize: 12, display: 'block', marginBottom: 4 };
 
   return (
-    <Modal title={connection ? '编辑数据库连接' : '新建数据库连接'} onClose={onClose} width={480}>
-      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, overflow: 'auto', maxHeight: '60vh' }}>
+    <Modal title={connection ? '编辑数据库连接' : '新建数据库连接'} onClose={onClose} width={600}>
+      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, flex: 1, overflow: 'auto', maxHeight: '65vh' }}>
         {error && <div style={{ color: '#f44747', fontSize: 12, padding: '6px 10px', background: '#2d1b1b', borderRadius: 4 }}>{error}</div>}
 
         <div><label style={labelStyle}>名称</label><input value={form.name} onChange={(e) => update('name', e.target.value)} style={inputStyle} /></div>
@@ -84,7 +84,7 @@ export default function DbConnectionForm({ connection, onClose, onSaved }: Props
           共享连接
         </label>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8, padding: '8px 16px', borderTop: '1px solid #383838', flexShrink: 0, background: '#1e1e1e' }}>
           <button onClick={onClose} style={{ padding: '6px 16px', background: '#555', border: 'none', color: '#fff', borderRadius: 4, cursor: 'pointer', fontSize: 12 }}>取消</button>
           <button onClick={handleSubmit} disabled={saving || !form.name || !form.host}
             style={{ padding: '6px 16px', background: saving ? '#555' : '#007acc', border: 'none', color: '#fff', borderRadius: 4, cursor: saving ? 'default' : 'pointer', fontSize: 12 }}>

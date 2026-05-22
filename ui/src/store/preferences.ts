@@ -9,7 +9,7 @@ interface PreferencesState {
 
 export const usePreferencesStore = create<PreferencesState>((set) => ({
   themeName: localStorage.getItem('wshell-theme') || 'Dracula',
-  fontSize: Number(localStorage.getItem('wshell-fontSize')) || 13,
+  fontSize: Number(localStorage.getItem('wshell-fontSize')) || 14,
   setThemeName: (name) => {
     localStorage.setItem('wshell-theme', name);
     set({ themeName: name });

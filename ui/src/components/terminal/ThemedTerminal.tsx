@@ -48,7 +48,7 @@ export default function ThemedTerminal({ connId, themeName: _themeName }: Props)
   useEffect(() => {
     const themeConfig = getTheme(themeName || 'Dracula');
     const term = new Terminal({
-      cursorBlink: true, fontSize: fontSize, fontFamily: 'Menlo, Monaco, monospace',
+      cursorBlink: true, fontSize: fontSize, fontFamily: 'Consolas, "Cascadia Code", "Courier New", monospace',
       theme: {
         background: themeConfig.background,
         foreground: themeConfig.foreground,

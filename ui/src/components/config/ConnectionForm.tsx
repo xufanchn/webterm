@@ -56,8 +56,8 @@ export default function ConnectionForm({ connection, onClose, onSaved }: Props) 
   const update = (key: string, value: any) => setForm({ ...form, [key]: value });
 
   return (
-    <Modal title={connection ? '编辑连接' : '新建 SSH 连接'} onClose={onClose} width={480}>
-      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, overflow: 'auto', maxHeight: '60vh' }}>
+    <Modal title={connection ? '编辑连接' : '新建 SSH 连接'} onClose={onClose} width={600}>
+      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, flex: 1, overflow: 'auto', maxHeight: '65vh' }}>
         {error && <div style={{ color: '#f44747', fontSize: 12, padding: '6px 10px', background: '#2d1b1b', borderRadius: 4 }}>{error}</div>}
 
         <FormField label="名称" value={form.name} onChange={(v) => update('name', v)} />
@@ -102,7 +102,7 @@ export default function ConnectionForm({ connection, onClose, onSaved }: Props) 
           共享连接（所有用户可见）
         </label>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8, padding: '8px 16px', borderTop: '1px solid #383838', flexShrink: 0, background: '#1e1e1e' }}>
           <button onClick={onClose} style={btnSecondary}>取消</button>
           <button onClick={handleSubmit} disabled={saving || !form.name || !form.host} style={btnPrimary(saving)}>
             {saving ? '保存中...' : '保存'}
