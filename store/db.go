@@ -1,0 +1,102 @@
+package store
+
+import (
+	"database/sql"
+	_ "github.com/mattn/go-sqlite3"
+)
+
+type Store struct {
+	DB *sql.DB
+}
+
+func New(path string) (*Store, error) {
+	db, err := sql.Open("sqlite3", path+"?_journal_mode=WAL&_foreign_keys=on")
+	if err != nil {
+		return nil, err
+	}
+	s := &Store{DB: db}
+	if err := s.migrate(); err != nil {
+		return nil, err
+	}
+	return s, nil
+}
+
+func (s *Store) migrate() error {
+	schema := `
+	CREATE TABLE IF NOT EXISTS users (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		username TEXT NOT NULL UNIQUE,
+		password_hash TEXT NOT NULL,
+		role TEXT NOT NULL DEFAULT 'user',
+		disabled INTEGER NOT NULL DEFAULT 0,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+	);
+
+	CREATE TABLE IF NOT EXISTS groups_t (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL,
+		type TEXT NOT NULL,
+		parent_id INTEGER DEFAULT 0,
+		sort_order INTEGER DEFAULT 0,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+	);
+
+	CREATE TABLE IF NOT EXISTS connections (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		group_id INTEGER DEFAULT 0,
+		name TEXT NOT NULL,
+		host TEXT NOT NULL,
+		port INTEGER DEFAULT 22,
+		username TEXT NOT NULL,
+		auth_method TEXT NOT NULL DEFAULT 'password',
+		password_encrypted TEXT DEFAULT '',
+		private_key_encrypted TEXT DEFAULT '',
+		private_key_passphrase_encrypted TEXT DEFAULT '',
+		created_by INTEGER DEFAULT 0,
+		shared INTEGER DEFAULT 0,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+	);
+
+	CREATE TABLE IF NOT EXISTS db_connections (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		group_id INTEGER DEFAULT 0,
+		name TEXT NOT NULL,
+		host TEXT NOT NULL,
+		port INTEGER DEFAULT 3306,
+		username TEXT NOT NULL,
+		password_encrypted TEXT DEFAULT '',
+		database_name TEXT DEFAULT '',
+		engine TEXT NOT NULL DEFAULT 'mysql',
+		created_by INTEGER DEFAULT 0,
+		shared INTEGER DEFAULT 0,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+	);
+
+	CREATE TABLE IF NOT EXISTS sftp_bookmarks (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		group_id INTEGER DEFAULT 0,
+		connection_id INTEGER DEFAULT 0,
+		name TEXT NOT NULL,
+		remote_path TEXT NOT NULL DEFAULT '/',
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+	);
+
+	CREATE TABLE IF NOT EXISTS session_logs (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id INTEGER NOT NULL,
+		connection_id INTEGER DEFAULT 0,
+		type TEXT NOT NULL DEFAULT 'ssh',
+		started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		ended_at DATETIME
+	);
+	`
+	_, err := s.DB.Exec(schema)
+	return err
+}
+
+func (s *Store) Close() error {
+	return s.DB.Close()
+}
