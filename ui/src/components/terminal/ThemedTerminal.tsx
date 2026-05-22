@@ -70,6 +70,46 @@ export default function ThemedTerminal({ connId, themeName }: Props) {
     term.loadAddon(fitAddon);
     term.loadAddon(searchAddon);
 
+    // Ctrl+F to trigger search
+    term.attachCustomKeyEventHandler((e) => {
+      if (e.ctrlKey && e.key === 'f') {
+        e.preventDefault();
+        const searchInput = document.getElementById('xterm-search-input');
+        if (searchInput) {
+          searchInput.focus();
+        } else {
+          // Create a simple search bar overlay
+          const container = term.element?.parentElement;
+          if (!container) return true;
+          const bar = document.createElement('div');
+          bar.id = 'xterm-search-bar';
+          bar.style.cssText = 'position:absolute;top:0;right:0;z-index:10;display:flex;gap:4px;padding:4px 8px;background:#333;border-radius:0 0 0 6px;';
+          const input = document.createElement('input');
+          input.id = 'xterm-search-input';
+          input.style.cssText = 'width:160px;padding:2px 6px;border:1px solid #555;border-radius:3px;background:#1e1e1e;color:#fff;font-size:12px;outline:none;';
+          input.placeholder = '查找...';
+
+          input.onkeydown = (ke) => {
+            if (ke.key === 'Escape') { bar.remove(); term.focus(); }
+            if (ke.key === 'Enter') {
+              if (ke.shiftKey) searchAddon.findPrevious(input.value);
+              else searchAddon.findNext(input.value);
+            }
+          };
+
+          input.oninput = () => {
+            if (input.value) searchAddon.findNext(input.value);
+          };
+
+          bar.appendChild(input);
+          container.appendChild(bar);
+          input.focus();
+        }
+        return false;
+      }
+      return true;
+    });
+
     if (ref.current) {
       term.open(ref.current);
       fitAddon.fit();
