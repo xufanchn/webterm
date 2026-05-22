@@ -1,3 +1,6 @@
+import ActivityBar from './ActivityBar';
+import Sidebar from './Sidebar';
+import MainArea from './MainArea';
 import { useAuthStore } from '../../store/auth';
 
 export default function Workspace() {
@@ -6,15 +9,17 @@ export default function Workspace() {
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ padding: '8px 16px', background: '#333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ color: '#fff' }}>WShell</span>
-        <span>
-          <span style={{ marginRight: 16, color: '#ccc' }}>{user?.username} ({user?.role})</span>
-          <button onClick={logout} style={{ background: '#555', color: '#fff', border: 'none', padding: '4px 12px', borderRadius: 4, cursor: 'pointer' }}>退出</button>
+      <div style={{ padding: '6px 16px', background: '#007acc', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+        <span style={{ color: '#fff', fontWeight: 600 }}>WShell</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ color: '#ddd', fontSize: 13 }}>{user?.username}</span>
+          <button onClick={logout} style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none', padding: '2px 10px', borderRadius: 3, cursor: 'pointer', fontSize: 12 }}>退出</button>
         </span>
       </div>
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>
-        选择左侧连接开始工作
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+        <ActivityBar />
+        <Sidebar />
+        <MainArea />
       </div>
     </div>
   );
