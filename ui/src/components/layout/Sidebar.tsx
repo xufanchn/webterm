@@ -3,6 +3,7 @@ import { useLayoutStore } from '../../store/layout';
 import { useConnectionStore } from '../../store/connections';
 import type { Connection, DbConnection } from '../../store/connections';
 import ConnectionForm from '../config/ConnectionForm';
+import DbConnectionForm from '../config/DbConnectionForm';
 import { apiPost, apiDelete } from '../../api/client';
 
 export default function Sidebar() {
@@ -14,6 +15,10 @@ export default function Sidebar() {
   const [showGroupInput, setShowGroupInput] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [contextMenu, setContextMenu] = useState<{x: number; y: number; conn: any} | null>(null);
+  const [showDbForm, setShowDbForm] = useState(false);
+  const [editingDbConn, setEditingDbConn] = useState<any>(null);
+  const isSsh = activeModule === 'ssh';
+  const isDb = activeModule === 'database';
 
   useEffect(() => {
     if (activeModule === 'ssh' || activeModule === 'sftp') {
@@ -32,17 +37,24 @@ export default function Sidebar() {
     });
   };
 
-  const handleCreateGroup = async () => {
+  const handleCreateGroup = async (type: string) => {
     if (!newGroupName.trim()) return;
-    await apiPost('/api/groups', { name: newGroupName.trim(), type: 'ssh', parent_id: 0 });
+    await apiPost('/api/groups', { name: newGroupName.trim(), type, parent_id: 0 });
     setNewGroupName('');
     setShowGroupInput(false);
-    fetchGroups('ssh');
+    if (type === 'ssh') fetchGroups('ssh');
+    else if (type === 'database') fetchGroups('database');
   };
 
   const handleDeleteConn = async (id: number) => {
     await apiDelete(`/api/connections/${id}`);
     fetchConnections();
+    setContextMenu(null);
+  };
+
+  const handleDeleteDbConn = async (id: number) => {
+    await apiDelete(`/api/db_connections/${id}`);
+    fetchDbConnections();
     setContextMenu(null);
   };
 
@@ -84,6 +96,7 @@ export default function Sidebar() {
         <>
           {dbConnections.map((c: DbConnection) => (
             <div key={c.id} onDoubleClick={() => openTab({ id: `db-${c.id}`, type: 'database', title: c.name, connId: c.id })}
+              onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, conn: c }); }}
               style={{ padding: '3px 10px 3px 28px', color: '#ccc', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
               <span>🗄</span> {c.name}
             </div>
@@ -91,17 +104,20 @@ export default function Sidebar() {
         </>
       )}
       </div>
+      {(isSsh || isDb) && (
       <div style={{ borderTop: '1px solid #383838', padding: '4px 8px', marginTop: 'auto' }}>
-        <div onClick={() => { setEditingConn(null); setShowConnForm(true); }}
-          style={{ padding: '4px 8px', color: '#4fc3f7', cursor: 'pointer', fontSize: 11 }}>
+        <div onClick={() => {
+          if (isSsh) { setEditingConn(null); setShowConnForm(true); }
+          else if (isDb) { setEditingDbConn(null); setShowDbForm(true); }
+        }} style={{ padding: '4px 8px', color: '#4fc3f7', cursor: 'pointer', fontSize: 11 }}>
           + 新建连接
         </div>
         {showGroupInput ? (
           <div style={{ display: 'flex', gap: 4, padding: '4px 0' }}>
             <input value={newGroupName} onChange={(e) => setNewGroupName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleCreateGroup()}
+              onKeyDown={(e) => e.key === 'Enter' && handleCreateGroup(isSsh ? 'ssh' : 'database')}
               placeholder="分组名称" style={{ flex: 1, padding: '2px 6px', background: '#3c3c3c', border: '1px solid #555', borderRadius: 3, color: '#fff', fontSize: 10 }} />
-            <button onClick={handleCreateGroup} style={{ background: '#007acc', border: 'none', color: '#fff', borderRadius: 3, padding: '2px 6px', cursor: 'pointer', fontSize: 10 }}>创建</button>
+            <button onClick={() => handleCreateGroup(isSsh ? 'ssh' : 'database')} style={{ background: '#007acc', border: 'none', color: '#fff', borderRadius: 3, padding: '2px 6px', cursor: 'pointer', fontSize: 10 }}>创建</button>
           </div>
         ) : (
           <div onClick={() => setShowGroupInput(true)}
@@ -110,13 +126,21 @@ export default function Sidebar() {
           </div>
         )}
       </div>
+      )}
       {contextMenu && (
         <div style={{ position: 'fixed', left: contextMenu.x, top: contextMenu.y, zIndex: 1000, background: '#2d2d2d', border: '1px solid #555', borderRadius: 4, padding: '4px 0', minWidth: 120 }}
           onClick={() => setContextMenu(null)}>
-          <div onClick={() => { setEditingConn(contextMenu.conn); setShowConnForm(true); setContextMenu(null); }}
-            style={{ padding: '6px 12px', cursor: 'pointer', color: '#ccc', fontSize: 12 }}>编辑</div>
-          <div onClick={() => handleDeleteConn(contextMenu.conn.id)}
-            style={{ padding: '6px 12px', cursor: 'pointer', color: '#f44747', fontSize: 12 }}>删除</div>
+          <div onClick={() => {
+            const isDbConn = 'database_name' in contextMenu.conn;
+            if (isDbConn) { setEditingDbConn(contextMenu.conn); setShowDbForm(true); }
+            else { setEditingConn(contextMenu.conn); setShowConnForm(true); }
+            setContextMenu(null);
+          }} style={{ padding: '6px 12px', cursor: 'pointer', color: '#ccc', fontSize: 12 }}>编辑</div>
+          <div onClick={() => {
+            const isDbConn = 'database_name' in contextMenu.conn;
+            if (isDbConn) handleDeleteDbConn(contextMenu.conn.id);
+            else handleDeleteConn(contextMenu.conn.id);
+          }} style={{ padding: '6px 12px', cursor: 'pointer', color: '#f44747', fontSize: 12 }}>删除</div>
         </div>
       )}
       {showConnForm && (
@@ -124,6 +148,13 @@ export default function Sidebar() {
           connection={editingConn}
           onClose={() => { setShowConnForm(false); setEditingConn(null); }}
           onSaved={() => { fetchConnections(); fetchGroups('ssh'); }}
+        />
+      )}
+      {showDbForm && (
+        <DbConnectionForm
+          connection={editingDbConn}
+          onClose={() => { setShowDbForm(false); setEditingDbConn(null); }}
+          onSaved={() => { fetchDbConnections(); fetchGroups('database'); }}
         />
       )}
     </div>
