@@ -2,7 +2,7 @@ import { useLayoutStore } from '../../store/layout';
 import { useConnectionStore } from '../../store/connections';
 import SplitPane from './SplitPane';
 import DualPaneSftp from '../sftp/DualPaneSftp';
-import UserManager from '../config/UserManager';
+import ConfigPage from '../config/ConfigPage';
 import QueryEditor from '../database/QueryEditor';
 import TabBar from './TabBar';
 
@@ -38,7 +38,7 @@ export default function MainArea() {
   if (activeModule === 'config') {
     return (
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <UserManager />
+        <ConfigPage />
       </div>
     );
   }
