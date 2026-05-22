@@ -9,7 +9,7 @@ export default function Sidebar() {
   const openTab = useLayoutStore((s) => s.openTab);
 
   useEffect(() => {
-    if (activeModule === 'ssh') {
+    if (activeModule === 'ssh' || activeModule === 'sftp') {
       fetchGroups('ssh');
       fetchConnections();
     } else if (activeModule === 'database') {
