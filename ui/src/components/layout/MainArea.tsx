@@ -2,6 +2,7 @@ import { useLayoutStore } from '../../store/layout';
 import { useConnectionStore } from '../../store/connections';
 import SplitPane from './SplitPane';
 import DualPaneSftp from '../sftp/DualPaneSftp';
+import UserManager from '../config/UserManager';
 import QueryEditor from '../database/QueryEditor';
 import TabBar from './TabBar';
 
@@ -33,13 +34,11 @@ export default function MainArea() {
     );
   }
 
-  // Config mode - placeholder
+  // Config mode
   if (activeModule === 'config') {
     return (
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>
-          配置管理（开发中）
-        </div>
+        <UserManager />
       </div>
     );
   }
