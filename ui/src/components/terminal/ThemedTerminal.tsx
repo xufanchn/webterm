@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { SearchAddon } from '@xterm/addon-search';
@@ -9,6 +9,7 @@ import { useLayoutStore } from '../../store/layout';
 import { usePreferencesStore } from '../../store/preferences';
 import '@xterm/xterm/css/xterm.css';
 import { getTheme } from '../../themes/presets';
+import ContextMenu from '../common/ContextMenu';
 
 interface Props {
   connId: number;
@@ -38,6 +39,7 @@ function highlightText(text: string, rules: HighlightRule[]): string {
 export default function ThemedTerminal({ connId, themeName: _themeName }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const rules = useHighlightRules();
   const themeName = usePreferencesStore((s) => s.themeName);
   const fontSize = usePreferencesStore((s) => s.fontSize);
@@ -198,5 +200,48 @@ export default function ThemedTerminal({ connId, themeName: _themeName }: Props)
     return () => disposable.dispose();
   }, [send, broadcastMode, broadcastSourceId, activeTabId, tabs]);
 
-  return <div ref={ref} style={{ width: '100%', height: '100%' }} />;
+  return (
+    <div ref={ref} style={{ width: '100%', height: '100%' }}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        setContextMenu({ x: e.clientX, y: e.clientY });
+      }}>
+      {contextMenu && (
+        <ContextMenu x={contextMenu.x} y={contextMenu.y}
+          items={[
+            {
+              label: '粘贴',
+              action: async () => {
+                try {
+                  const text = await navigator.clipboard.readText();
+                  termRef.current?.paste(text);
+                } catch {}
+              },
+            },
+            {
+              label: '查找 (Ctrl+F)',
+              action: () => {
+                const input = document.getElementById('xterm-search-input') as HTMLInputElement;
+                if (input) {
+                  input.focus();
+                  input.select();
+                } else {
+                  termRef.current?.focus();
+                  const ctrlF = new KeyboardEvent('keydown', { ctrlKey: true, key: 'f', code: 'KeyF', bubbles: true });
+                  termRef.current?.element?.dispatchEvent(ctrlF);
+                }
+              },
+            },
+            {
+              label: '清屏',
+              action: () => {
+                termRef.current?.clear();
+              },
+            },
+          ]}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
+    </div>
+  );
 }
