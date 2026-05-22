@@ -26,13 +26,7 @@ export default function Workspace() {
         <MainArea />
       </div>
       {showSettings && (
-        <SettingsPanel
-          themeName="Dracula"
-          fontSize={13}
-          onThemeChange={(name) => { /* TODO: persist to localStorage */ }}
-          onFontSizeChange={(size) => { /* TODO: persist */ }}
-          onClose={() => setShowSettings(false)}
-        />
+        <SettingsPanel onClose={() => setShowSettings(false)} />
       )}
     </div>
   );

@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import Modal from '../common/Modal';
 import { presets } from '../../themes/presets';
+import { usePreferencesStore } from '../../store/preferences';
 
 interface Props {
-  themeName: string;
-  fontSize: number;
-  onThemeChange: (name: string) => void;
-  onFontSizeChange: (size: number) => void;
   onClose: () => void;
 }
 
-export default function SettingsPanel({ themeName, fontSize, onThemeChange, onFontSizeChange, onClose }: Props) {
+export default function SettingsPanel({ onClose }: Props) {
+  const themeName = usePreferencesStore((s) => s.themeName);
+  const fontSize = usePreferencesStore((s) => s.fontSize);
+  const setThemeName = usePreferencesStore((s) => s.setThemeName);
+  const setFontSize = usePreferencesStore((s) => s.setFontSize);
   const [activeSection, setActiveSection] = useState<'appearance' | 'highlights'>('appearance');
 
   return (
@@ -33,7 +34,7 @@ export default function SettingsPanel({ themeName, fontSize, onThemeChange, onFo
 
               <div style={{ marginBottom: 16 }}>
                 <label style={{ color: '#ccc', fontSize: 12, display: 'block', marginBottom: 6 }}>主题</label>
-                <select value={themeName} onChange={(e) => onThemeChange(e.target.value)}
+                <select value={themeName} onChange={(e) => setThemeName(e.target.value)}
                   style={{
                     width: '100%', padding: '6px 10px', background: '#3c3c3c', border: '1px solid #555',
                     borderRadius: 4, color: '#fff', fontSize: 12,
@@ -49,7 +50,7 @@ export default function SettingsPanel({ themeName, fontSize, onThemeChange, onFo
                   字体大小: {fontSize}px
                 </label>
                 <input type="range" min="10" max="24" value={fontSize}
-                  onChange={(e) => onFontSizeChange(Number(e.target.value))}
+                  onChange={(e) => setFontSize(Number(e.target.value))}
                   style={{ width: '100%' }} />
               </div>
             </div>

@@ -6,6 +6,7 @@ import { useHighlightRules } from '../../hooks/useTerminalTheme';
 import type { HighlightRule } from '../../hooks/useTerminalTheme';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { useLayoutStore } from '../../store/layout';
+import { usePreferencesStore } from '../../store/preferences';
 import '@xterm/xterm/css/xterm.css';
 import { getTheme } from '../../themes/presets';
 
@@ -34,15 +35,17 @@ function highlightText(text: string, rules: HighlightRule[]): string {
   return text;
 }
 
-export default function ThemedTerminal({ connId, themeName }: Props) {
+export default function ThemedTerminal({ connId, themeName: _themeName }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
   const rules = useHighlightRules();
+  const themeName = usePreferencesStore((s) => s.themeName);
+  const fontSize = usePreferencesStore((s) => s.fontSize);
 
   useEffect(() => {
     const themeConfig = getTheme(themeName || 'Dracula');
     const term = new Terminal({
-      cursorBlink: true, fontSize: 13, fontFamily: 'Menlo, Monaco, monospace',
+      cursorBlink: true, fontSize: fontSize, fontFamily: 'Menlo, Monaco, monospace',
       theme: {
         background: themeConfig.background,
         foreground: themeConfig.foreground,
@@ -126,7 +129,7 @@ export default function ThemedTerminal({ connId, themeName }: Props) {
       term.dispose();
       window.removeEventListener('resize', handleResize);
     };
-  }, [themeName]);
+  }, [themeName, fontSize]);
 
   const token = localStorage.getItem('token') || '';
   const wsUrl = `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws/ssh/${connId}?token=${token}`;
