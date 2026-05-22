@@ -5,6 +5,7 @@ import { SearchAddon } from '@xterm/addon-search';
 import { useHighlightRules } from '../../hooks/useTerminalTheme';
 import type { HighlightRule } from '../../hooks/useTerminalTheme';
 import { useWebSocket } from '../../hooks/useWebSocket';
+import { useLayoutStore } from '../../store/layout';
 import '@xterm/xterm/css/xterm.css';
 import { getTheme } from '../../themes/presets';
 
@@ -151,14 +152,48 @@ export default function ThemedTerminal({ connId, themeName }: Props) {
     },
   });
 
+  const broadcastMode = useLayoutStore((s) => s.broadcastMode);
+  const broadcastSourceId = useLayoutStore((s) => s.broadcastSourceId);
+  const setBroadcastSource = useLayoutStore((s) => s.setBroadcastSource);
+  const tabs = useLayoutStore((s) => s.tabs);
+  const activeTabId = useLayoutStore((s) => s.activeTabId);
+
+  // Register this terminal's send function globally for broadcast
+  useEffect(() => {
+    if (!activeTabId) return;
+    const key = `wshell-ws-${activeTabId}`;
+    (window as any)[key] = send;
+    return () => { delete (window as any)[key]; };
+  }, [activeTabId, send]);
+
+  // Auto-register as broadcast source if broadcast is on and no source set
+  useEffect(() => {
+    if (broadcastMode && !broadcastSourceId && activeTabId) {
+      setBroadcastSource(activeTabId);
+    }
+  }, [broadcastMode, broadcastSourceId, activeTabId, setBroadcastSource]);
+
   useEffect(() => {
     const term = termRef.current;
     if (!term) return;
     const disposable = term.onData((data) => {
+      if (broadcastMode && broadcastSourceId && activeTabId !== broadcastSourceId) {
+        // This is a target terminal - don't send keystrokes
+        return;
+      }
       send(JSON.stringify({ data }));
+      // If this is the source in broadcast mode, forward to all targets
+      if (broadcastMode && activeTabId === broadcastSourceId) {
+        tabs.forEach((tab) => {
+          if (tab.id !== activeTabId && tab.type === 'ssh') {
+            const targetSend = (window as any)[`wshell-ws-${tab.id}`];
+            if (targetSend) targetSend(JSON.stringify({ data }));
+          }
+        });
+      }
     });
     return () => disposable.dispose();
-  }, [send]);
+  }, [send, broadcastMode, broadcastSourceId, activeTabId, tabs]);
 
   return <div ref={ref} style={{ width: '100%', height: '100%' }} />;
 }

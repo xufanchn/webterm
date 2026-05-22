@@ -13,16 +13,27 @@ interface LayoutState {
   activeModule: ModuleType;
   tabs: Tab[];
   activeTabId: string | null;
+  broadcastMode: boolean;
+  broadcastSourceId: string | null;
+  broadcastTargetIds: string[];
   setActiveModule: (m: ModuleType) => void;
   openTab: (tab: Tab) => void;
   closeTab: (id: string) => void;
   setActiveTab: (id: string) => void;
+  setBroadcastMode: (on: boolean) => void;
+  setBroadcastSource: (id: string | null) => void;
+  addBroadcastTarget: (id: string) => void;
+  removeBroadcastTarget: (id: string) => void;
+  clearBroadcastTargets: () => void;
 }
 
 export const useLayoutStore = create<LayoutState>((set) => ({
   activeModule: 'ssh',
   tabs: [],
   activeTabId: null,
+  broadcastMode: false,
+  broadcastSourceId: null,
+  broadcastTargetIds: [],
   setActiveModule: (m) => set({ activeModule: m }),
   openTab: (tab) => set((s) => {
     const exists = s.tabs.find((t) => t.id === tab.id);
@@ -38,4 +49,9 @@ export const useLayoutStore = create<LayoutState>((set) => ({
     return { tabs, activeTabId };
   }),
   setActiveTab: (id) => set({ activeTabId: id }),
+  setBroadcastMode: (on) => set((s) => ({ broadcastMode: on, broadcastTargetIds: on ? s.broadcastTargetIds : [] })),
+  setBroadcastSource: (id) => set({ broadcastSourceId: id }),
+  addBroadcastTarget: (id) => set((s) => ({ broadcastTargetIds: [...s.broadcastTargetIds, id] })),
+  removeBroadcastTarget: (id) => set((s) => ({ broadcastTargetIds: s.broadcastTargetIds.filter(t => t !== id) })),
+  clearBroadcastTargets: () => set({ broadcastTargetIds: [] }),
 }));
