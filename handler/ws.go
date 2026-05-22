@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"io"
 	"strconv"
 	"time"
@@ -56,8 +57,18 @@ func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 			websocket.JSON.Send(conn, map[string]string{"error": "failed to create client: " + err.Error()})
 			return
 		}
-		if err := client.Connect(); err != nil {
-			websocket.JSON.Send(conn, map[string]string{"error": "connection failed: " + err.Error()})
+		var connectErr error
+		for attempt := 1; attempt <= 3; attempt++ {
+			connectErr = client.Connect()
+			if connectErr == nil {
+				break
+			}
+			if attempt < 3 {
+				time.Sleep(time.Duration(attempt) * time.Second)
+			}
+		}
+		if connectErr != nil {
+			websocket.JSON.Send(conn, map[string]string{"error": fmt.Sprintf("连接失败（已重试3次）: %s", connectErr.Error())})
 			return
 		}
 		h.Pool.Set(connID, client)
