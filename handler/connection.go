@@ -22,6 +22,9 @@ func (h *ConnectionHandler) List(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, `{"error":"internal error"}`, http.StatusInternalServerError)
 		return
 	}
+	if conns == nil {
+		conns = []store.Connection{}
+	}
 	json.NewEncoder(w).Encode(conns)
 }
 

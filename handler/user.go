@@ -21,6 +21,9 @@ func (h *UserHandler) List(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, `{"error":"internal error"}`, http.StatusInternalServerError)
 		return
 	}
+	if users == nil {
+		users = []store.User{}
+	}
 	json.NewEncoder(w).Encode(users)
 }
 

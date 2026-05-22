@@ -39,7 +39,7 @@ func (s *Store) ListConnections(groupID int64) ([]Connection, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var conns []Connection
+	conns := make([]Connection, 0)
 	for rows.Next() {
 		var c Connection
 		if err := rows.Scan(&c.ID, &c.GroupID, &c.Name, &c.Host, &c.Port, &c.Username, &c.AuthMethod, &c.PasswordEncrypted, &c.PrivateKeyEncrypted, &c.PrivateKeyPassphraseEncrypted, &c.CreatedBy, &c.Shared, &c.CreatedAt, &c.UpdatedAt); err != nil {

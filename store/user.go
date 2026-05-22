@@ -41,7 +41,7 @@ func (s *Store) ListUsers() ([]User, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var users []User
+	users := make([]User, 0)
 	for rows.Next() {
 		var u User
 		if err := rows.Scan(&u.ID, &u.Username, &u.PasswordHash, &u.Role, &u.Disabled, &u.CreatedAt, &u.UpdatedAt); err != nil {

@@ -26,7 +26,7 @@ func (s *Store) ListDbConnections() ([]DbConnection, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var conns []DbConnection
+	conns := make([]DbConnection, 0)
 	for rows.Next() {
 		var c DbConnection
 		if err := rows.Scan(&c.ID, &c.GroupID, &c.Name, &c.Host, &c.Port, &c.Username, &c.PasswordEncrypted, &c.DatabaseName, &c.Engine, &c.CreatedBy, &c.Shared, &c.CreatedAt, &c.UpdatedAt); err != nil {

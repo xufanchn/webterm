@@ -17,7 +17,7 @@ func (s *Store) ListBookmarks() ([]SftpBookmark, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var bm []SftpBookmark
+	bm := make([]SftpBookmark, 0)
 	for rows.Next() {
 		var b SftpBookmark
 		if err := rows.Scan(&b.ID, &b.GroupID, &b.ConnectionID, &b.Name, &b.RemotePath, &b.CreatedAt); err != nil {

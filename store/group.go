@@ -20,7 +20,7 @@ func (s *Store) ListGroups(groupType string) ([]Group, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var groups []Group
+	groups := make([]Group, 0)
 	for rows.Next() {
 		var g Group
 		if err := rows.Scan(&g.ID, &g.Name, &g.Type, &g.ParentID, &g.SortOrder, &g.CreatedAt); err != nil {
