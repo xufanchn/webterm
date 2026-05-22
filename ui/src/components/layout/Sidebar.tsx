@@ -1,17 +1,20 @@
 import { useEffect } from 'react';
 import { useLayoutStore } from '../../store/layout';
 import { useConnectionStore } from '../../store/connections';
-import type { Connection } from '../../store/connections';
+import type { Connection, DbConnection } from '../../store/connections';
 
 export default function Sidebar() {
   const activeModule = useLayoutStore((s) => s.activeModule);
-  const { connections, groups, fetchConnections, fetchGroups } = useConnectionStore();
+  const { connections, groups, dbConnections, fetchConnections, fetchDbConnections, fetchGroups } = useConnectionStore();
   const openTab = useLayoutStore((s) => s.openTab);
 
   useEffect(() => {
     if (activeModule === 'ssh') {
       fetchGroups('ssh');
       fetchConnections();
+    } else if (activeModule === 'database') {
+      fetchGroups('database');
+      fetchDbConnections();
     }
   }, [activeModule]);
 
@@ -53,6 +56,16 @@ export default function Sidebar() {
           <span>🟢</span> {c.name}
         </div>
       ))}
+      {activeModule === 'database' && dbConnections.length > 0 && (
+        <>
+          {dbConnections.map((c: DbConnection) => (
+            <div key={c.id} onDoubleClick={() => openTab({ id: `db-${c.id}`, type: 'database', title: c.name, connId: c.id })}
+              style={{ padding: '3px 10px 3px 28px', color: '#ccc', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span>🗄</span> {c.name}
+            </div>
+          ))}
+        </>
+      )}
     </div>
   );
 }

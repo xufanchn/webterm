@@ -3,6 +3,7 @@ import { useLayoutStore } from '../../store/layout';
 import ContextMenu from '../common/ContextMenu';
 import TabBar from './TabBar';
 import TerminalTab from '../terminal/TerminalTab';
+import QueryEditor from '../database/QueryEditor';
 
 type SplitDirection = 'horizontal' | 'vertical';
 
@@ -65,6 +66,9 @@ function PaneContent({ pane, rootPane, onUpdate }: {
       <div style={{ flex: 1, overflow: 'hidden' }}>
         {activeTab && activeTab.type === 'ssh' && activeTab.connId && (
           <TerminalTab connId={activeTab.connId} />
+        )}
+        {activeTab && activeTab.type === 'database' && activeTab.connId && (
+          <QueryEditor connId={activeTab.connId} />
         )}
         {!activeTab && (
           <div style={{
