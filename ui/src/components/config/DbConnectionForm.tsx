@@ -53,41 +53,41 @@ export default function DbConnectionForm({ connection, onClose, onSaved }: Props
 
   const update = (key: string, value: any) => setForm({ ...form, [key]: value });
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '6px 10px', background: '#3c3c3c', border: '1px solid #555',
-    borderRadius: 4, color: '#fff', fontSize: 12, boxSizing: 'border-box',
-  };
-  const labelStyle: React.CSSProperties = { color: '#ccc', fontSize: 12, display: 'block', marginBottom: 4 };
-
   return (
-    <Modal title={connection ? '编辑数据库连接' : '新建数据库连接'} onClose={onClose} width={600}>
-      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, flex: 1, overflow: 'auto', maxHeight: '65vh' }}>
-        {error && <div style={{ color: '#f44747', fontSize: 12, padding: '6px 10px', background: '#2d1b1b', borderRadius: 4 }}>{error}</div>}
+    <Modal title={connection ? '编辑数据库连接' : '新建数据库连接'} onClose={onClose} width={550} height={460}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        {error && <div style={{ color: '#f44747', fontSize: 12, padding: '6px 10px', background: '#2d1b1b', borderRadius: 4, margin: '8px 16px 0' }}>{error}</div>}
 
-        <div><label style={labelStyle}>名称</label><input value={form.name} onChange={(e) => update('name', e.target.value)} style={inputStyle} /></div>
-        <div><label style={labelStyle}>主机地址</label><input value={form.host} onChange={(e) => update('host', e.target.value)} placeholder="127.0.0.1" style={inputStyle} /></div>
-        <div><label style={labelStyle}>端口</label><input type="number" value={String(form.port)} onChange={(e) => update('port', Number(e.target.value) || 3306)} style={inputStyle} /></div>
-        <div><label style={labelStyle}>用户名</label><input value={form.username} onChange={(e) => update('username', e.target.value)} placeholder="root" style={inputStyle} /></div>
-        <div><label style={labelStyle}>密码</label><input type="password" value={form.password} onChange={(e) => update('password', e.target.value)} placeholder={connection ? '留空则不修改' : ''} style={inputStyle} /></div>
-        <div><label style={labelStyle}>数据库名</label><input value={form.database_name} onChange={(e) => update('database_name', e.target.value)} placeholder="可选，连接后可切换" style={inputStyle} /></div>
+        <div style={{ flex: 1, overflow: 'auto', padding: '8px 16px 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <FormField label="名称" value={form.name} onChange={(v) => update('name', v)} required />
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ flex: 2 }}><FormField label="主机地址" value={form.host} onChange={(v) => update('host', v)} placeholder="127.0.0.1" required /></div>
+            <div style={{ flex: 1 }}><FormField label="端口" value={String(form.port)} onChange={(v) => update('port', Number(v) || 3306)} type="number" /></div>
+          </div>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ flex: 1 }}><FormField label="用户名" value={form.username} onChange={(v) => update('username', v)} placeholder="root" /></div>
+            <div style={{ flex: 1 }}><FormField label="密码" value={form.password} onChange={(v) => update('password', v)} type="password" placeholder={connection ? '留空不修改' : ''} /></div>
+          </div>
+          <FormField label="数据库名" value={form.database_name} onChange={(v) => update('database_name', v)} placeholder="可选，连接后可切换" />
 
-        <div>
-          <label style={labelStyle}>分组</label>
-          <select value={form.group_id} onChange={(e) => update('group_id', Number(e.target.value))} style={inputStyle}>
-            <option value={0}>未分组</option>
-            {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
-          </select>
+          <div>
+            <label style={labelStyle}>分组</label>
+            <select value={form.group_id} onChange={(e) => update('group_id', Number(e.target.value))} style={inputStyle}>
+              <option value={0}>未分组</option>
+              {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+            </select>
+          </div>
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#ccc', fontSize: 12, paddingBottom: 8 }}>
+            <input type="checkbox" checked={form.shared} onChange={(e) => update('shared', e.target.checked)} />
+            共享连接
+          </label>
         </div>
 
-        <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#ccc', fontSize: 12 }}>
-          <input type="checkbox" checked={form.shared} onChange={(e) => update('shared', e.target.checked)} />
-          共享连接
-        </label>
-
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8, padding: '8px 16px', borderTop: '1px solid #383838', flexShrink: 0, background: '#1e1e1e' }}>
-          <button onClick={onClose} style={{ padding: '6px 16px', background: '#555', border: 'none', color: '#fff', borderRadius: 4, cursor: 'pointer', fontSize: 12 }}>取消</button>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, padding: '12px 16px', borderTop: '1px solid #383838', flexShrink: 0, background: '#252526' }}>
+          <button onClick={onClose} style={btnSecondary}>取消</button>
           <button onClick={handleSubmit} disabled={saving || !form.name || !form.host}
-            style={{ padding: '6px 16px', background: saving ? '#555' : '#007acc', border: 'none', color: '#fff', borderRadius: 4, cursor: saving ? 'default' : 'pointer', fontSize: 12 }}>
+            style={saving ? { ...btnPrimary, background: '#555', cursor: 'default' } : btnPrimary}>
             {saving ? '保存中...' : '保存'}
           </button>
         </div>
@@ -95,3 +95,23 @@ export default function DbConnectionForm({ connection, onClose, onSaved }: Props
     </Modal>
   );
 }
+
+function FormField({ label, value, onChange, type = 'text', placeholder, required }: {
+  label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string; required?: boolean;
+}) {
+  return (
+    <div>
+      <label style={labelStyle}>{label}{required ? ' *' : ''}</label>
+      <input type={type} value={value} onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder} style={inputStyle} />
+    </div>
+  );
+}
+
+const labelStyle: React.CSSProperties = { color: '#ccc', fontSize: 12, display: 'block', marginBottom: 4 };
+const inputStyle: React.CSSProperties = {
+  width: '100%', padding: '8px 10px', background: '#3c3c3c', border: '1px solid #555',
+  borderRadius: 4, color: '#fff', fontSize: 13, boxSizing: 'border-box',
+};
+const btnSecondary: React.CSSProperties = { padding: '8px 20px', background: '#555', border: 'none', color: '#fff', borderRadius: 4, cursor: 'pointer', fontSize: 13 };
+const btnPrimary: React.CSSProperties = { padding: '8px 20px', background: '#007acc', border: 'none', color: '#fff', borderRadius: 4, cursor: 'pointer', fontSize: 13 };

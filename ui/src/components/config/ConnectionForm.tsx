@@ -56,55 +56,59 @@ export default function ConnectionForm({ connection, onClose, onSaved }: Props) 
   const update = (key: string, value: any) => setForm({ ...form, [key]: value });
 
   return (
-    <Modal title={connection ? '编辑连接' : '新建 SSH 连接'} onClose={onClose} width={600}>
-      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, flex: 1, overflow: 'auto', maxHeight: '65vh' }}>
-        {error && <div style={{ color: '#f44747', fontSize: 12, padding: '6px 10px', background: '#2d1b1b', borderRadius: 4 }}>{error}</div>}
+    <Modal title={connection ? '编辑连接' : '新建 SSH 连接'} onClose={onClose} width={600} height={520}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        {error && <div style={{ color: '#f44747', fontSize: 12, padding: '6px 10px', background: '#2d1b1b', borderRadius: 4, margin: '8px 16px 0' }}>{error}</div>}
 
-        <FormField label="名称" value={form.name} onChange={(v) => update('name', v)} />
-        <FormField label="主机地址" value={form.host} onChange={(v) => update('host', v)} placeholder="192.168.1.1" />
-        <FormField label="端口" value={String(form.port)} onChange={(v) => update('port', Number(v) || 22)} type="number" />
-        <FormField label="用户名" value={form.username} onChange={(v) => update('username', v)} placeholder="root" />
+        <div style={{ flex: 1, overflow: 'auto', padding: '8px 16px 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <FormField label="名称" value={form.name} onChange={(v) => update('name', v)} required />
+          <FormField label="主机地址" value={form.host} onChange={(v) => update('host', v)} placeholder="192.168.1.1" required />
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ flex: 1 }}><FormField label="端口" value={String(form.port)} onChange={(v) => update('port', Number(v) || 22)} type="number" /></div>
+            <div style={{ flex: 2 }}><FormField label="用户名" value={form.username} onChange={(v) => update('username', v)} placeholder="root" /></div>
+          </div>
 
-        <div>
-          <label style={labelStyle}>认证方式</label>
-          <select value={form.auth_method} onChange={(e) => update('auth_method', e.target.value)}
-            style={inputStyle}>
-            <option value="password">密码</option>
-            <option value="private_key">私钥</option>
-          </select>
+          <div>
+            <label style={labelStyle}>认证方式</label>
+            <select value={form.auth_method} onChange={(e) => update('auth_method', e.target.value)} style={inputStyle}>
+              <option value="password">密码</option>
+              <option value="private_key">私钥</option>
+            </select>
+          </div>
+
+          {form.auth_method === 'password' && (
+            <FormField label="密码" value={form.password} onChange={(v) => update('password', v)} type="password" />
+          )}
+          {form.auth_method === 'private_key' && (
+            <>
+              <div>
+                <label style={labelStyle}>私钥（粘贴内容）</label>
+                <textarea value={form.private_key} onChange={(e) => update('private_key', e.target.value)}
+                  style={{ ...inputStyle, minHeight: 80, fontFamily: 'Consolas, monospace', fontSize: 11, resize: 'vertical' }}
+                  placeholder="-----BEGIN OPENSSH PRIVATE KEY-----" />
+              </div>
+              <FormField label="私钥口令" value={form.passphrase} onChange={(v) => update('passphrase', v)} type="password" />
+            </>
+          )}
+
+          <div>
+            <label style={labelStyle}>分组</label>
+            <select value={form.group_id} onChange={(e) => update('group_id', Number(e.target.value))} style={inputStyle}>
+              <option value={0}>未分组</option>
+              {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+            </select>
+          </div>
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#ccc', fontSize: 12, paddingBottom: 8 }}>
+            <input type="checkbox" checked={form.shared} onChange={(e) => update('shared', e.target.checked)} />
+            共享连接（所有用户可见）
+          </label>
         </div>
 
-        {form.auth_method === 'password' && (
-          <FormField label="密码" value={form.password} onChange={(v) => update('password', v)} type="password" />
-        )}
-        {form.auth_method === 'private_key' && (
-          <>
-            <div>
-              <label style={labelStyle}>私钥（粘贴内容）</label>
-              <textarea value={form.private_key} onChange={(e) => update('private_key', e.target.value)}
-                style={{ ...inputStyle, minHeight: 80, fontFamily: 'monospace', fontSize: 11 }}
-                placeholder="-----BEGIN OPENSSH PRIVATE KEY-----" />
-            </div>
-            <FormField label="私钥口令" value={form.passphrase} onChange={(v) => update('passphrase', v)} type="password" />
-          </>
-        )}
-
-        <div>
-          <label style={labelStyle}>分组</label>
-          <select value={form.group_id} onChange={(e) => update('group_id', Number(e.target.value))} style={inputStyle}>
-            <option value={0}>未分组</option>
-            {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
-          </select>
-        </div>
-
-        <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#ccc', fontSize: 12 }}>
-          <input type="checkbox" checked={form.shared} onChange={(e) => update('shared', e.target.checked)} />
-          共享连接（所有用户可见）
-        </label>
-
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8, padding: '8px 16px', borderTop: '1px solid #383838', flexShrink: 0, background: '#1e1e1e' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, padding: '12px 16px', borderTop: '1px solid #383838', flexShrink: 0, background: '#252526' }}>
           <button onClick={onClose} style={btnSecondary}>取消</button>
-          <button onClick={handleSubmit} disabled={saving || !form.name || !form.host} style={btnPrimary(saving)}>
+          <button onClick={handleSubmit} disabled={saving || !form.name || !form.host}
+            style={saving ? { ...btnPrimary, background: '#555', cursor: 'default' } : btnPrimary}>
             {saving ? '保存中...' : '保存'}
           </button>
         </div>
@@ -113,12 +117,12 @@ export default function ConnectionForm({ connection, onClose, onSaved }: Props) 
   );
 }
 
-function FormField({ label, value, onChange, type = 'text', placeholder }: {
-  label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string;
+function FormField({ label, value, onChange, type = 'text', placeholder, required }: {
+  label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string; required?: boolean;
 }) {
   return (
     <div>
-      <label style={labelStyle}>{label}</label>
+      <label style={labelStyle}>{label}{required ? ' *' : ''}</label>
       <input type={type} value={value} onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder} style={inputStyle} />
     </div>
@@ -127,11 +131,8 @@ function FormField({ label, value, onChange, type = 'text', placeholder }: {
 
 const labelStyle: React.CSSProperties = { color: '#ccc', fontSize: 12, display: 'block', marginBottom: 4 };
 const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '6px 10px', background: '#3c3c3c', border: '1px solid #555',
-  borderRadius: 4, color: '#fff', fontSize: 12, boxSizing: 'border-box',
+  width: '100%', padding: '8px 10px', background: '#3c3c3c', border: '1px solid #555',
+  borderRadius: 4, color: '#fff', fontSize: 13, boxSizing: 'border-box',
 };
-const btnSecondary: React.CSSProperties = { padding: '6px 16px', background: '#555', border: 'none', color: '#fff', borderRadius: 4, cursor: 'pointer', fontSize: 12 };
-const btnPrimary = (saving: boolean): React.CSSProperties => ({
-  padding: '6px 16px', background: saving ? '#555' : '#007acc', border: 'none', color: '#fff',
-  borderRadius: 4, cursor: saving ? 'default' : 'pointer', fontSize: 12,
-});
+const btnSecondary: React.CSSProperties = { padding: '8px 20px', background: '#555', border: 'none', color: '#fff', borderRadius: 4, cursor: 'pointer', fontSize: 13 };
+const btnPrimary: React.CSSProperties = { padding: '8px 20px', background: '#007acc', border: 'none', color: '#fff', borderRadius: 4, cursor: 'pointer', fontSize: 13 };

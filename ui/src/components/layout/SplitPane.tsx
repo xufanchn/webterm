@@ -154,20 +154,12 @@ function SplitContainer({ node }: { node: SplitNode }) {
   const [dragging, setDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  if (!node.children) {
-    return <LeafPane nodeId={node.id} />;
-  }
-
   const isHorizontal = node.direction === 'horizontal';
   const percent = node.splitPercent || 50;
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setDragging(true);
-  };
+  const hasChildren = node.children && node.children.length >= 2;
 
   useEffect(() => {
-    if (!dragging) return;
+    if (!dragging || !hasChildren) return;
     const handleMouseMove = (e: MouseEvent) => {
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
@@ -185,15 +177,23 @@ function SplitContainer({ node }: { node: SplitNode }) {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [dragging, isHorizontal, node]);
+  }, [dragging, isHorizontal, node, hasChildren]);
+
+  // Leaf pane - no children
+  if (!hasChildren) {
+    return <LeafPane nodeId={node.id} />;
+  }
+
+  const child0 = node.children![0];
+  const child1 = node.children![1];
 
   return (
     <div ref={containerRef} style={{ display: 'flex', flexDirection: isHorizontal ? 'row' : 'column', flex: 1, overflow: 'hidden', minWidth: 0, minHeight: 0 }}>
       <div style={{ flex: percent / 100, overflow: 'hidden', display: 'flex', minWidth: 0, minHeight: 0 }}>
-        <SplitContainer node={node.children[0]} />
+        <SplitContainer node={child0} />
       </div>
       <div
-        onMouseDown={handleMouseDown}
+        onMouseDown={(e) => { e.preventDefault(); setDragging(true); }}
         style={{
           flexShrink: 0,
           [isHorizontal ? 'width' : 'height']: '4px',
@@ -202,7 +202,7 @@ function SplitContainer({ node }: { node: SplitNode }) {
         }}
       />
       <div style={{ flex: 1 - percent / 100, overflow: 'hidden', display: 'flex', minWidth: 0, minHeight: 0 }}>
-        <SplitContainer node={node.children[1]} />
+        <SplitContainer node={child1} />
       </div>
     </div>
   );

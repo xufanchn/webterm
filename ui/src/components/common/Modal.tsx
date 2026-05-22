@@ -36,7 +36,7 @@ export default function Modal({ title, onClose, children, width = 600, height = 
           <span style={{ color: '#ccc' }}>{title}</span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: 16 }}>✕</button>
         </div>
-        <div style={{ flex: 1, overflow: 'hidden' }}>
+        <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
           {children}
         </div>
       </div>
