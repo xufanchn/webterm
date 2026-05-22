@@ -23,7 +23,7 @@ const modeStr = (mode: number): string => {
   return (mode & 0o40000 ? 'd' : mode & 0o120000 ? 'l' : '-') + r + w + x + r + w + x + r + w + x;
 };
 
-export default function FileList({ files, loading, onNavigate, onDelete, onRename, onMkdir }: Props) {
+export default function FileList({ files, loading, onNavigate, onDelete: _onDelete, onRename: _onRename, onMkdir }: Props) {
   const [showNewFolder, setShowNewFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
 

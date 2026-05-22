@@ -2,10 +2,11 @@ import { useEffect, useRef } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { SearchAddon } from '@xterm/addon-search';
-import { useHighlightRules, HighlightRule } from '../../hooks/useTerminalTheme';
+import { useHighlightRules } from '../../hooks/useTerminalTheme';
+import type { HighlightRule } from '../../hooks/useTerminalTheme';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import '@xterm/xterm/css/xterm.css';
-import { TerminalTheme, getTheme } from '../../themes/presets';
+import { getTheme } from '../../themes/presets';
 
 interface Props {
   connId: number;

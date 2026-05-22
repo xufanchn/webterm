@@ -1,4 +1,5 @@
-import { useLayoutStore, ModuleType } from '../../store/layout';
+import { useLayoutStore } from '../../store/layout';
+import type { ModuleType } from '../../store/layout';
 
 const icons: { type: ModuleType; label: string; icon: string }[] = [
   { type: 'ssh', label: 'SSH', icon: '▣' },

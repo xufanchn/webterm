@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useLayoutStore } from '../../store/layout';
-import { useConnectionStore, Connection } from '../../store/connections';
+import { useConnectionStore } from '../../store/connections';
+import type { Connection } from '../../store/connections';
 
 export default function Sidebar() {
   const activeModule = useLayoutStore((s) => s.activeModule);

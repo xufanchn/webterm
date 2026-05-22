@@ -21,7 +21,6 @@ function PaneContent({ pane, rootPane, onUpdate }: {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const tabs = useLayoutStore((s) => s.tabs);
   const activeTabId = useLayoutStore((s) => s.activeTabId);
-  const setActiveTab = useLayoutStore((s) => s.setActiveTab);
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();

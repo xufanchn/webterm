@@ -11,7 +11,7 @@ export function useWebSocket({ url, onMessage, onClose, onOpen }: UseWsOptions) 
   const wsRef = useRef<WebSocket | null>(null);
   const retryCountRef = useRef(0);
   const maxRetryDelay = 30000;
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const connect = useCallback(() => {
     const ws = new WebSocket(url);

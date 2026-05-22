@@ -1,9 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"crypto/rand"
+	"embed"
 	"flag"
 	"fmt"
+	"io"
+	"io/fs"
 	"log"
 	"net/http"
 
@@ -16,6 +20,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/net/websocket"
 )
+
+//go:embed frontend/dist
+var frontendDist embed.FS
 
 func main() {
 	configPath := flag.String("config", "config.yaml", "path to config file")
@@ -72,12 +79,57 @@ func main() {
 		w.Write([]byte(`{"status":"ok"}`))
 	})
 
+	mux.HandleFunc("/", spaHandler())
+
 	seedAdmin(st)
 
 	addr := fmt.Sprintf(":%d", cfg.Port)
 	log.Printf("wshell starting on %s", addr)
 	if err := http.ListenAndServe(addr, mux); err != nil {
 		log.Fatalf("server error: %v", err)
+	}
+}
+
+func spaHandler() http.HandlerFunc {
+	dist, err := fs.Sub(frontendDist, "frontend/dist")
+	if err != nil {
+		panic("frontend not built, run: cd ui && npm run build")
+	}
+	fileServer := http.FileServer(http.FS(dist))
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+
+		// Skip API and WebSocket paths — they are handled by more specific mux patterns
+		if len(path) >= 4 && path[:4] == "/api" {
+			return
+		}
+		if len(path) >= 3 && path[:3] == "/ws" {
+			return
+		}
+
+		// Try to serve the requested file
+		f, err := dist.Open(path[1:]) // strip leading "/"
+		if err == nil {
+			f.Close()
+			fileServer.ServeHTTP(w, r)
+			return
+		}
+
+		// SPA fallback: serve index.html
+		indexFile, err := dist.Open("index.html")
+		if err != nil {
+			http.Error(w, "index.html not found", http.StatusInternalServerError)
+			return
+		}
+		defer indexFile.Close()
+		stat, _ := indexFile.Stat()
+		data, err := io.ReadAll(indexFile)
+		if err != nil {
+			http.Error(w, "failed to read index.html", http.StatusInternalServerError)
+			return
+		}
+		http.ServeContent(w, r, "index.html", stat.ModTime(), bytes.NewReader(data))
 	}
 }
 
