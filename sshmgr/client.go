@@ -65,6 +65,10 @@ func (c *Client) IsAlive() bool {
 	return err == nil
 }
 
+func (c *Client) RawConn() *ssh.Client {
+	return c.conn
+}
+
 func (c *Client) Close() error {
 	if c.conn != nil {
 		return c.conn.Close()

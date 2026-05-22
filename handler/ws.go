@@ -7,6 +7,7 @@ import (
 
 	"github.com/xf/wshell/auth"
 	"github.com/xf/wshell/crypto"
+	"github.com/xf/wshell/sftpmgr"
 	"github.com/xf/wshell/sshmgr"
 	"github.com/xf/wshell/store"
 	"golang.org/x/crypto/ssh"
@@ -128,4 +129,121 @@ func (w *wsWriter) Write(p []byte) (int, error) {
 		return 0, err
 	}
 	return len(p), nil
+}
+
+func (h *WSHandler) HandleSFTP(conn *websocket.Conn) {
+	connID, _ := strconv.ParseInt(conn.Request().PathValue("conn_id"), 10, 64)
+	user := auth.GetUser(conn.Request())
+
+	connInfo, err := h.Store.GetConnection(connID)
+	if err != nil {
+		websocket.JSON.Send(conn, map[string]string{"error": "connection not found"})
+		return
+	}
+
+	// Get or create SSH client
+	sshClient, ok := h.Pool.Get(connID)
+	if !ok || !sshClient.IsAlive() {
+		if ok {
+			h.Pool.Remove(connID)
+		}
+
+		var password, privateKey, passphrase string
+		if connInfo.PasswordEncrypted != "" {
+			password, _ = h.AESCipher.Decrypt(connInfo.PasswordEncrypted)
+		}
+		if connInfo.PrivateKeyEncrypted != "" {
+			privateKey, _ = h.AESCipher.Decrypt(connInfo.PrivateKeyEncrypted)
+		}
+		if connInfo.PrivateKeyPassphraseEncrypted != "" {
+			passphrase, _ = h.AESCipher.Decrypt(connInfo.PrivateKeyPassphraseEncrypted)
+		}
+
+		sshClient, err = sshmgr.NewClient(connInfo.Host, connInfo.Port, connInfo.Username, password, privateKey, passphrase)
+		if err != nil {
+			websocket.JSON.Send(conn, map[string]string{"error": "ssh client failed: " + err.Error()})
+			return
+		}
+		if err := sshClient.Connect(); err != nil {
+			websocket.JSON.Send(conn, map[string]string{"error": "ssh connect failed: " + err.Error()})
+			return
+		}
+		h.Pool.Set(connID, sshClient)
+	}
+
+	sftpClient, err := sftpmgr.NewClient(sshClient.RawConn())
+	if err != nil {
+		websocket.JSON.Send(conn, map[string]string{"error": "sftp init failed: " + err.Error()})
+		return
+	}
+	defer sftpClient.Close()
+
+	h.Store.CreateSessionLog(&store.SessionLog{
+		UserID: user.UserID, ConnectionID: connID, Type: "sftp",
+	})
+
+	var msg struct {
+		Action  string `json:"action"`
+		Path    string `json:"path"`
+		NewPath string `json:"new_path"`
+		Content string `json:"content"`
+	}
+	for {
+		if err := websocket.JSON.Receive(conn, &msg); err != nil {
+			return
+		}
+		switch msg.Action {
+		case "list":
+			files, err := sftpClient.ListDir(msg.Path)
+			if err != nil {
+				websocket.JSON.Send(conn, map[string]interface{}{"type": "error", "error": err.Error()})
+			} else {
+				websocket.JSON.Send(conn, map[string]interface{}{"type": "file_list", "path": msg.Path, "files": files})
+			}
+		case "read":
+			data, err := sftpClient.ReadFile(msg.Path)
+			if err != nil {
+				websocket.JSON.Send(conn, map[string]interface{}{"type": "error", "error": err.Error()})
+			} else {
+				websocket.JSON.Send(conn, map[string]interface{}{"type": "file_content", "path": msg.Path, "content": string(data)})
+			}
+		case "write":
+			err := sftpClient.WriteFile(msg.Path, []byte(msg.Content))
+			if err != nil {
+				websocket.JSON.Send(conn, map[string]interface{}{"type": "error", "error": err.Error()})
+			} else {
+				websocket.JSON.Send(conn, map[string]interface{}{"type": "write_done", "path": msg.Path})
+			}
+		case "delete":
+			err := sftpClient.Delete(msg.Path)
+			if err != nil {
+				websocket.JSON.Send(conn, map[string]interface{}{"type": "error", "error": err.Error()})
+			} else {
+				websocket.JSON.Send(conn, map[string]interface{}{"type": "delete_done", "path": msg.Path})
+			}
+		case "rename":
+			err := sftpClient.Rename(msg.Path, msg.NewPath)
+			if err != nil {
+				websocket.JSON.Send(conn, map[string]interface{}{"type": "error", "error": err.Error()})
+			} else {
+				websocket.JSON.Send(conn, map[string]interface{}{"type": "rename_done", "path": msg.Path, "new_path": msg.NewPath})
+			}
+		case "mkdir":
+			err := sftpClient.Mkdir(msg.Path)
+			if err != nil {
+				websocket.JSON.Send(conn, map[string]interface{}{"type": "error", "error": err.Error()})
+			} else {
+				websocket.JSON.Send(conn, map[string]interface{}{"type": "mkdir_done", "path": msg.Path})
+			}
+		case "getwd":
+			wd, err := sftpClient.Getwd()
+			if err != nil {
+				websocket.JSON.Send(conn, map[string]interface{}{"type": "error", "error": err.Error()})
+			} else {
+				websocket.JSON.Send(conn, map[string]interface{}{"type": "pwd", "path": wd})
+			}
+		default:
+			websocket.JSON.Send(conn, map[string]interface{}{"type": "error", "error": "unknown action: " + msg.Action})
+		}
+	}
 }
