@@ -137,6 +137,7 @@ export default function ThemedTerminal({ connId, themeName: _themeName }: Props)
     if (ref.current) {
       term.open(ref.current);
       fitAddon.fit();
+      term.focus();
     }
 
     termRef.current = term;

@@ -74,6 +74,7 @@ func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 		h.Pool.Set(connID, client)
 	}
 
+	defer h.Pool.Remove(connID)
 	session, err := client.NewSession()
 	if err != nil {
 		websocket.JSON.Send(conn, map[string]string{"error": "session failed: " + err.Error()})
