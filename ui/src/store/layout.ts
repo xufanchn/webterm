@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 
 export type ModuleType = 'ssh' | 'sftp' | 'database' | 'config';
 
@@ -28,9 +27,7 @@ interface LayoutState {
   clearBroadcastTargets: () => void;
 }
 
-export const useLayoutStore = create<LayoutState>()(
-  persist(
-    (set) => ({
+export const useLayoutStore = create<LayoutState>((set) => ({
       activeModule: 'ssh',
       tabs: [],
       activeTabId: null,
@@ -57,14 +54,4 @@ export const useLayoutStore = create<LayoutState>()(
       addBroadcastTarget: (id) => set((s) => ({ broadcastTargetIds: [...s.broadcastTargetIds, id] })),
       removeBroadcastTarget: (id) => set((s) => ({ broadcastTargetIds: s.broadcastTargetIds.filter(t => t !== id) })),
       clearBroadcastTargets: () => set({ broadcastTargetIds: [] }),
-    }),
-    {
-      name: 'wshell-layout',
-      partialize: (state) => ({
-        activeModule: state.activeModule,
-        tabs: state.tabs,
-        activeTabId: state.activeTabId,
-      }),
-    }
-  )
-);
+}));

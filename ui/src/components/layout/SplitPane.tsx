@@ -21,19 +21,8 @@ function newNode(): SplitNode {
 }
 
 // Simple split state persisted at module level
-const STORAGE_KEY = 'wshell-split';
-let rootNode: SplitNode = (() => {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) return JSON.parse(saved);
-  } catch {}
-  return { id: 'root' };
-})();
+let rootNode: SplitNode = { id: 'root' };
 let listeners: Array<() => void> = [];
-
-function saveRoot(node: SplitNode) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(node)); } catch {}
-}
 
 function getRoot(): SplitNode { return rootNode; }
 function subscribe(fn: () => void) {
@@ -42,7 +31,6 @@ function subscribe(fn: () => void) {
 }
 function updateRoot(node: SplitNode) {
   rootNode = node;
-  saveRoot(node);
   listeners.forEach(fn => fn());
 }
 
