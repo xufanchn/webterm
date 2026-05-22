@@ -14,14 +14,15 @@ export interface SftpFile {
 }
 
 interface Props {
-  connId: number;
+  connId?: number;
+  localMode?: boolean;
   currentPath?: string;
   onPathChange?: (path: string) => void;
   style?: React.CSSProperties;
 }
 
-export default function SftpPanel({ connId, currentPath, onPathChange, style }: Props) {
-  const [path, setPath] = useState(currentPath || '/');
+export default function SftpPanel({ connId, localMode, currentPath, onPathChange, style }: Props) {
+  const [path, setPath] = useState(currentPath || (localMode ? '/home' : '/'));
   const [files, setFiles] = useState<SftpFile[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -31,6 +32,7 @@ export default function SftpPanel({ connId, currentPath, onPathChange, style }: 
   const [newFolderName, setNewFolderName] = useState('');
 
   const uploadFile = (file: File) => {
+    if (localMode) return;
     const token = localStorage.getItem('token') || '';
     const formData = new FormData();
     formData.append('file', file);
@@ -52,7 +54,9 @@ export default function SftpPanel({ connId, currentPath, onPathChange, style }: 
 
   useEffect(() => {
     const token = localStorage.getItem('token') || '';
-    const wsUrl = `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws/sftp/${connId}?token=${token}`;
+    const wsUrl = localMode
+      ? `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws/local-fs?token=${token}`
+      : `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws/sftp/${connId}?token=${token}`;
     const socket = new WebSocket(wsUrl);
     setWs(socket);
 

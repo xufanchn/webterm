@@ -57,17 +57,7 @@ export default function DualPaneSftp({ connections }: Props) {
           </select>
         </div>
         <div style={{ flex: 1, minHeight: 0 }}>
-          {rightConnId ? <SftpPanel connId={rightConnId} /> : (
-            <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%',
-              color: '#666', fontSize: 12, flexDirection: 'column',
-            }}>
-              <div>💻 浏览器所在主机</div>
-              <div style={{ fontSize: 10, marginTop: 4, color: '#888' }}>
-                可选择切换为远程连接
-              </div>
-            </div>
-          )}
+          {rightConnId ? <SftpPanel connId={rightConnId} /> : <SftpPanel localMode />}
         </div>
       </div>
     </div>

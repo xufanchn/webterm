@@ -4,7 +4,7 @@ import type { SftpFile } from './SftpPanel';
 interface Props {
   files: SftpFile[];
   loading: boolean;
-  connId: number;
+  connId?: number;
   currentPath: string;
   onNavigate: (path: string) => void;
   onDelete: (path: string) => void;

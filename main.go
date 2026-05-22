@@ -92,6 +92,7 @@ func main() {
 	mux.Handle("/ws/ssh/{conn_id}", websocket.Handler(wsH.HandleSSH))
 	mux.Handle("/ws/sftp/{conn_id}", websocket.Handler(wsH.HandleSFTP))
 	mux.Handle("/ws/db/{conn_id}", websocket.Handler(wsH.HandleDB))
+		mux.Handle("/ws/local-fs", websocket.Handler(handler.HandleLocalFS))
 
 	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`{"status":"ok"}`))
