@@ -80,6 +80,8 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
   const uploadTargetRef = useRef<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -112,10 +114,21 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
         if (xhr.status >= 200 && xhr.status < 300) {
           uploadNext(index + 1);
         } else {
+          let errMsg = `上传失败 (${xhr.status})`;
+          try {
+            const resp = JSON.parse(xhr.responseText);
+            if (resp.error) errMsg = resp.error;
+          } catch {}
           setUploading(false);
+          setUploadError(errMsg);
+          setTimeout(() => setUploadError(null), 5000);
         }
       };
-      xhr.onerror = () => setUploading(false);
+      xhr.onerror = () => {
+        setUploading(false);
+        setUploadError('网络错误，上传失败');
+        setTimeout(() => setUploadError(null), 5000);
+      };
       xhr.open('POST', '/api/sftp/upload');
       xhr.setRequestHeader('Authorization', 'Bearer ' + token);
       xhr.send(formData);
@@ -150,7 +163,10 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
       a.href = url; a.download = fileName;
       a.click();
       URL.revokeObjectURL(url);
-    } catch { /* ignore */ }
+    } catch {
+        setDownloadError(`下载失败: ${fileName}`);
+        setTimeout(() => setDownloadError(null), 5000);
+      }
   };
 
   return (
@@ -265,6 +281,17 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
             },
           ]}
         />
+      )}
+      {(uploadError || downloadError) && (
+        <div style={{
+          position: 'absolute', bottom: 8, left: 8, right: 8,
+          background: '#d32f2f', color: '#fff', padding: '6px 12px',
+          borderRadius: 4, fontSize: 11, zIndex: 10,
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        }}>
+          <span>{uploadError || downloadError}</span>
+          <span onClick={() => { setUploadError(null); setDownloadError(null); }} style={{ cursor: 'pointer', marginLeft: 8, opacity: 0.7 }}>✕</span>
+        </div>
       )}
     </div>
   );

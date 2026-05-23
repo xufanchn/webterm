@@ -84,6 +84,10 @@ func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 	}
 	defer session.Close()
 
+	// Configure shell to report PWD via OSC 7 for SFTP sync (Setenv = invisible)
+	osce7cmd := `printf "\033]7;file://$HOSTNAME$PWD\033\\"`
+	session.Setenv("PROMPT_COMMAND", osce7cmd)
+
 	modes := ssh.TerminalModes{
 		ssh.ECHO:          1,
 		ssh.TTY_OP_ISPEED: 14400,
@@ -103,9 +107,7 @@ func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 		return
 	}
 
-		// Configure shell to report PWD via OSC 7 for SFTP sync
-		stdinPipe.Write([]byte("stty -echo; PROMPT_COMMAND='printf \"\\033]7;file://%s%s\\033\\\\\" \"$HOSTNAME\" \"$PWD\"'; stty echo\n"))
-
+		
 		h.Store.CreateSessionLog(&store.SessionLog{
 		UserID: user.UserID, ConnectionID: connID, Type: "ssh",
 	})

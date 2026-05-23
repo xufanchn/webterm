@@ -20,9 +20,10 @@ interface Props {
   currentPath?: string;
   onPathChange?: (path: string) => void;
   style?: React.CSSProperties;
+  showFollowButton?: boolean;
 }
 
-export default function SftpPanel({ connId, localMode, currentPath, onPathChange, style }: Props) {
+export default function SftpPanel({ connId, localMode, currentPath, onPathChange, style, showFollowButton }: Props) {
   const defaultPath = currentPath || (localMode ? '/home' : '/');
   const [path, setPath] = useState(defaultPath);
   const [files, setFiles] = useState<SftpFile[]>([]);
@@ -31,6 +32,7 @@ export default function SftpPanel({ connId, localMode, currentPath, onPathChange
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [disconnected, setDisconnected] = useState(false);
   const [reconnectKey, setReconnectKey] = useState(0);
+  const [followCd, setFollowCd] = useState(true);
   const [editFile, setEditFile] = useState<{ path: string; name: string } | null>(null);
   const cacheRef = useRef<Map<number, { path: string; files: SftpFile[] }>>(new Map());
   const navRef = useRef({ history: [defaultPath], index: 0 });
@@ -142,11 +144,11 @@ export default function SftpPanel({ connId, localMode, currentPath, onPathChange
   // Follow SSH shell cd via OSC 7
   const sftpCdPath = useLayoutStore((s) => s.sftpCdPath);
   useEffect(() => {
-    if (!sftpCdPath || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+    if (!followCd || !sftpCdPath || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
     setPath(sftpCdPath);
     fetchDir(sftpCdPath);
     useLayoutStore.getState().setSftpCdPath(null);
-  }, [sftpCdPath]);
+  }, [followCd, sftpCdPath]);
 
   const navigateTo = useCallback((newPath: string, pushHistory = true) => {
     setPath(newPath);
@@ -223,6 +225,12 @@ export default function SftpPanel({ connId, localMode, currentPath, onPathChange
         <input value={path} onChange={(e) => setPath(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleNavigate(path); }}
           style={{ flex: 1, padding: '3px 8px', background: '#3c3c3c', border: '1px solid #555', borderRadius: 3, color: '#fff', fontSize: 11, fontFamily: 'Consolas, monospace' }} />
+        {showFollowButton && (
+          <button onClick={() => setFollowCd(!followCd)} title={followCd ? '已跟随终端目录' : '已固定当前目录'}
+            style={{ background: 'none', border: 'none', color: followCd ? '#4fc3f7' : '#888', cursor: 'pointer', fontSize: 11, whiteSpace: 'nowrap' }}>
+            {followCd ? '⊚ 跟随' : '◯ 固定'}
+          </button>
+        )}
         <button onClick={() => fetchDir(path)} title="刷新"
           style={{ background: 'none', border: 'none', color: '#4fc3f7', cursor: 'pointer', fontSize: 12 }}>⟳</button>
       </div>

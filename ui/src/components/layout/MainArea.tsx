@@ -58,7 +58,7 @@ export default function MainArea() {
         {sftpConnId ? (
           <>
             <div style={{ width: sftpCollapsed ? 0 : 260, flexShrink: 0, borderLeft: sftpCollapsed ? 'none' : '1px solid #383838', overflow: 'hidden', transition: 'width 0.15s' }}>
-              <SftpPanel connId={sftpConnId} />
+              <SftpPanel connId={sftpConnId} showFollowButton />
             </div>
             <button onClick={() => setSftpCollapsed(!sftpCollapsed)} title={sftpCollapsed ? '展开 SFTP' : '收起 SFTP'}
               style={{

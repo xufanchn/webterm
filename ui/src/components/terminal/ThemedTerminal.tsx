@@ -147,7 +147,10 @@ export default function ThemedTerminal({ connId, themeName: _themeName, onStatus
     term.parser.registerOscHandler(7, (data) => {
       // Format: file://hostname/path
       const match = /file:\/\/[^/]+(.+)/.exec(data);
-      if (match) setSftpCdPath(match[1]);
+      if (match) {
+        try { setSftpCdPath(decodeURIComponent(match[1])); }
+        catch { setSftpCdPath(match[1]); }
+      }
       return false; // don't display in terminal
     });
 
