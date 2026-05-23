@@ -13,7 +13,7 @@ export interface Tab {
 interface LayoutState {
   activeModule: ModuleType;
   newTabQueue: Tab[];
-  sftpCdPath: string | null;
+  sftpCdPaths: Record<string, string>;
   focusedPaneId: string | null;
   broadcastScope: BroadcastScope;
   broadcastSourceId: string | null;
@@ -25,7 +25,7 @@ interface LayoutState {
   drainTabQueue: () => Tab[];
   drainRemovedTabs: () => string[];
   notifyTabMoved: (tabId: string) => void;
-  setSftpCdPath: (path: string | null) => void;
+  setSftpCdPath: (tabId: string, path: string) => void;
   setFocusedPane: (paneId: string | null) => void;
   setBroadcastScope: (scope: BroadcastScope) => void;
   setBroadcastSource: (id: string | null) => void;
@@ -38,7 +38,7 @@ interface LayoutState {
 export const useLayoutStore = create<LayoutState>((set, get) => ({
       activeModule: 'ssh',
       newTabQueue: [],
-      sftpCdPath: null,
+      sftpCdPaths: {},
       focusedPaneId: 'root',
       broadcastScope: 'off',
       broadcastSourceId: null,
@@ -61,7 +61,7 @@ export const useLayoutStore = create<LayoutState>((set, get) => ({
       },
       notifyTabMoved: (tabId) => set((s) => ({ removedTabQueue: [...s.removedTabQueue, tabId] })),
       setFocusedPane: (paneId) => set({ focusedPaneId: paneId }),
-      setSftpCdPath: (path) => set({ sftpCdPath: path }),
+      setSftpCdPath: (tabId, path) => set((s) => ({ sftpCdPaths: { ...s.sftpCdPaths, [tabId]: path } })),
       setBroadcastScope: (scope) => set({ broadcastScope: scope, broadcastSourceId: scope !== 'off' ? get().broadcastSourceId : null }),
       setBroadcastSource: (id) => set({ broadcastSourceId: id }),
       registerTerminal: (tabId) => set((s) => {

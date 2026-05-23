@@ -147,9 +147,9 @@ export default function ThemedTerminal({ connId, themeName: _themeName, onStatus
     term.parser.registerOscHandler(7, (data) => {
       // Format: file://hostname/path
       const match = /file:\/\/[^/]+(.+)/.exec(data);
-      if (match) {
-        try { setSftpCdPath(decodeURIComponent(match[1])); }
-        catch { setSftpCdPath(match[1]); }
+      if (match && myTabId) {
+        const decoded = (() => { try { return decodeURIComponent(match[1]); } catch { return match[1]; } })();
+        setSftpCdPath(myTabId, decoded);
       }
       return false; // don't display in terminal
     });
@@ -282,6 +282,13 @@ export default function ThemedTerminal({ connId, themeName: _themeName, onStatus
       {contextMenu && (
         <ContextMenu x={contextMenu.x} y={contextMenu.y}
           items={[
+            {
+              label: '复制',
+              action: () => {
+                const sel = termRef.current?.getSelection();
+                if (sel) navigator.clipboard.writeText(sel).catch(() => {});
+              },
+            },
             {
               label: '粘贴',
               action: async () => {

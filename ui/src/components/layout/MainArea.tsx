@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useLayoutStore } from '../../store/layout';
 import type { Tab } from '../../store/layout';
 import { useConnectionStore } from '../../store/connections';
@@ -14,7 +14,13 @@ export default function MainArea() {
   const connections = useConnectionStore((s) => s.connections);
   const drainTabQueue = useLayoutStore((s) => s.drainTabQueue);
   const [sftpCollapsed, setSftpCollapsed] = useState(false);
-  const [sftpConnId, setSftpConnId] = useState<number | undefined>(undefined);
+  const [sftpCtx, setSftpCtx] = useState<{ connId: number; tabId: string } | null>(null);
+  const handleActiveSsh = useCallback((connId: number, tabId: string) => {
+    setSftpCtx((prev) => {
+      if (prev && prev.connId === connId && prev.tabId === tabId) return prev;
+      return { connId, tabId };
+    });
+  }, []);
   const [dbTabs, setDbTabs] = useState<Tab[]>([]);
   const [dbActiveTabId, setDbActiveTabId] = useState<string | null>(null);
 
@@ -53,12 +59,12 @@ export default function MainArea() {
       {/* SSH module */}
       <div style={{ flex: 1, display: show('ssh'), overflow: 'hidden' }}>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
-          <SplitPane onActiveSshChange={setSftpConnId} />
+          <SplitPane onActiveSshChange={handleActiveSsh} />
         </div>
-        {sftpConnId ? (
+        {sftpCtx ? (
           <>
             <div style={{ width: sftpCollapsed ? 0 : 260, flexShrink: 0, borderLeft: sftpCollapsed ? 'none' : '1px solid #383838', overflow: 'hidden', transition: 'width 0.15s' }}>
-              <SftpPanel connId={sftpConnId} showFollowButton />
+              <SftpPanel connId={sftpCtx.connId} tabId={sftpCtx.tabId} showFollowButton />
             </div>
             <button onClick={() => setSftpCollapsed(!sftpCollapsed)} title={sftpCollapsed ? '展开 SFTP' : '收起 SFTP'}
               style={{

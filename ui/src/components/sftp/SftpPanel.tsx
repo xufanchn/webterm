@@ -16,6 +16,7 @@ export interface SftpFile {
 
 interface Props {
   connId?: number;
+  tabId?: string;
   localMode?: boolean;
   currentPath?: string;
   onPathChange?: (path: string) => void;
@@ -23,7 +24,7 @@ interface Props {
   showFollowButton?: boolean;
 }
 
-export default function SftpPanel({ connId, localMode, currentPath, onPathChange, style, showFollowButton }: Props) {
+export default function SftpPanel({ connId, tabId, localMode, currentPath, onPathChange, style, showFollowButton }: Props) {
   const defaultPath = currentPath || (localMode ? '/home' : '/');
   const [path, setPath] = useState(defaultPath);
   const [files, setFiles] = useState<SftpFile[]>([]);
@@ -34,7 +35,8 @@ export default function SftpPanel({ connId, localMode, currentPath, onPathChange
   const [reconnectKey, setReconnectKey] = useState(0);
   const [followCd, setFollowCd] = useState(true);
   const [editFile, setEditFile] = useState<{ path: string; name: string } | null>(null);
-  const cacheRef = useRef<Map<number, { path: string; files: SftpFile[] }>>(new Map());
+  const sessionKey = tabId || String(connId);
+  const cacheRef = useRef<Map<string, { path: string; files: SftpFile[] }>>(new Map());
   const navRef = useRef({ history: [defaultPath], index: 0 });
   const [, setNavTick] = useState(0);
 
@@ -42,19 +44,20 @@ export default function SftpPanel({ connId, localMode, currentPath, onPathChange
   const wsRef = useRef<WebSocket | null>(null);
   const pathRef = useRef(path);
   pathRef.current = path;
-  const prevConnIdRef = useRef(connId);
+  const prevKeyRef = useRef(sessionKey);
 
-  // Save cache for old connId before switching to new one
-  if (prevConnIdRef.current !== connId) {
-    if (prevConnIdRef.current != null) {
-      cacheRef.current.set(prevConnIdRef.current, { path: pathRef.current, files });
+  // Save cache for old session before switching to new one
+  if (prevKeyRef.current !== sessionKey) {
+    if (prevKeyRef.current != null) {
+      cacheRef.current.set(prevKeyRef.current, { path: pathRef.current, files });
     }
-    prevConnIdRef.current = connId;
+    prevKeyRef.current = sessionKey;
   }
 
-  const fetchDir = useCallback((dirPath: string) => {
+  const fetchDir = useCallback((dirPath: string, force = false) => {
     const socket = wsRef.current;
     if (!socket || socket.readyState !== WebSocket.OPEN) return;
+    if (!force && dirPath === pathRef.current) return; // same dir, skip
     setLoading(true);
     setError('');
     socket.send(JSON.stringify({ action: 'list', path: dirPath }));
@@ -64,16 +67,18 @@ export default function SftpPanel({ connId, localMode, currentPath, onPathChange
     if (connId == null) return;
     setDisconnected(false);
 
-    // Restore cached state for this connection
-    const cached = cacheRef.current.get(connId);
+    // Restore cached state for this session; prefer OSC 7 tracked path
+    const cached = cacheRef.current.get(sessionKey);
+    const cdPaths = useLayoutStore.getState().sftpCdPaths;
+    const trackedPath = tabId ? cdPaths[tabId] : undefined;
+    const initPath = trackedPath || cached?.path || defaultPath;
     if (cached) {
-      setPath(cached.path);
       setFiles(cached.files);
-    } else {
-      setPath(defaultPath);
+    } else if (prevKeyRef.current == null) {
       setFiles([]);
     }
-    setLoading(true);
+    setPath(initPath);
+    setLoading(!cached);
     setError('');
 
     const token = localStorage.getItem('token') || '';
@@ -114,13 +119,27 @@ export default function SftpPanel({ connId, localMode, currentPath, onPathChange
           setPath(msg.path);
           fetchDir(msg.path);
         } else if (msg.type === 'delete_done' || msg.type === 'mkdir_done' || msg.type === 'rename_done') {
-          fetchDir(pathRef.current);
+          fetchDir(pathRef.current, true);
         }
       } catch {}
     };
 
     return () => { socket.close(); };
-  }, [connId, reconnectKey]);
+  }, [connId, reconnectKey]); // only reconnect on connId change, not tabId
+
+  // When tabId changes within same connId, refresh without reconnecting
+  const tabInitRef = useRef(false);
+  useEffect(() => {
+    if (!tabInitRef.current) { tabInitRef.current = true; return; }
+    const socket = wsRef.current;
+    if (!socket || socket.readyState !== WebSocket.OPEN) return;
+    const cached = cacheRef.current.get(sessionKey);
+    if (cached) {
+      fetchDir(cached.path);
+    } else {
+      socket.send(JSON.stringify({ action: 'getwd' }));
+    }
+  }, [tabId]);
 
   // Follow currentPath changes from parent (SSH terminal)
   useEffect(() => {
@@ -141,14 +160,15 @@ export default function SftpPanel({ connId, localMode, currentPath, onPathChange
     prevSignalRef.current = sftpDisconnectSignal;
   }, [sftpDisconnectSignal]);
 
-  // Follow SSH shell cd via OSC 7
-  const sftpCdPath = useLayoutStore((s) => s.sftpCdPath);
+  // Follow SSH shell cd via OSC 7 (per-tab paths)
+  const sftpCdPaths = useLayoutStore((s) => s.sftpCdPaths);
+  const cdPath = tabId ? sftpCdPaths[tabId] : undefined;
   useEffect(() => {
-    if (!followCd || !sftpCdPath || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
-    setPath(sftpCdPath);
-    fetchDir(sftpCdPath);
-    useLayoutStore.getState().setSftpCdPath(null);
-  }, [followCd, sftpCdPath]);
+    if (!followCd || !cdPath || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+    if (cdPath === path) return; // already there
+    setPath(cdPath);
+    fetchDir(cdPath);
+  }, [followCd, cdPath]);
 
   const navigateTo = useCallback((newPath: string, pushHistory = true) => {
     setPath(newPath);
@@ -213,26 +233,26 @@ export default function SftpPanel({ connId, localMode, currentPath, onPathChange
   return (
     <div style={{ background: '#252526', fontSize: 11, display: 'flex', flexDirection: 'column', height: '100%', ...style }}>
       {/* XFTP-style address bar */}
-      <div style={{ padding: '4px 6px', background: '#2d2d2d', display: 'flex', gap: 4, alignItems: 'center', borderBottom: '1px solid #383838', flexShrink: 0 }}>
+      <div style={{ padding: '2px 4px', background: '#2d2d2d', display: 'flex', gap: 2, alignItems: 'center', borderBottom: '1px solid #383838', flexShrink: 0 }}>
         <button onClick={handleBack} title="后退"
-          style={{ background: 'none', border: 'none', color: canGoBack ? '#ccc' : '#555', cursor: canGoBack ? 'pointer' : 'default', fontSize: 12, padding: '0 2px' }}>◀</button>
+          style={{ background: 'none', border: 'none', color: canGoBack ? '#ccc' : '#555', cursor: canGoBack ? 'pointer' : 'default', fontSize: 11, padding: '0 1px' }}>◀</button>
         <button onClick={handleForward} title="前进"
-          style={{ background: 'none', border: 'none', color: canGoForward ? '#ccc' : '#555', cursor: canGoForward ? 'pointer' : 'default', fontSize: 12, padding: '0 2px' }}>▶</button>
+          style={{ background: 'none', border: 'none', color: canGoForward ? '#ccc' : '#555', cursor: canGoForward ? 'pointer' : 'default', fontSize: 11, padding: '0 1px' }}>▶</button>
         <button onClick={handleGoParent} title="上级目录"
-          style={{ background: 'none', border: 'none', color: '#ccc', cursor: 'pointer', fontSize: 14, padding: '0 4px' }}>⟰</button>
+          style={{ background: 'none', border: 'none', color: '#ccc', cursor: 'pointer', fontSize: 12, padding: '0 2px' }}>⟰</button>
         <button onClick={handleHome} title="主目录"
-          style={{ background: 'none', border: 'none', color: '#ccc', cursor: 'pointer', fontSize: 12, padding: '0 4px' }}>⌂</button>
+          style={{ background: 'none', border: 'none', color: '#ccc', cursor: 'pointer', fontSize: 11, padding: '0 2px' }}>⌂</button>
         <input value={path} onChange={(e) => setPath(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleNavigate(path); }}
-          style={{ flex: 1, padding: '3px 8px', background: '#3c3c3c', border: '1px solid #555', borderRadius: 3, color: '#fff', fontSize: 11, fontFamily: 'Consolas, monospace' }} />
+          style={{ flex: 1, padding: '2px 6px', background: '#3c3c3c', border: '1px solid #555', borderRadius: 3, color: '#fff', fontSize: 11, fontFamily: 'Consolas, monospace', minWidth: 0 }} />
         {showFollowButton && (
-          <button onClick={() => setFollowCd(!followCd)} title={followCd ? '已跟随终端目录' : '已固定当前目录'}
-            style={{ background: 'none', border: 'none', color: followCd ? '#4fc3f7' : '#888', cursor: 'pointer', fontSize: 11, whiteSpace: 'nowrap' }}>
-            {followCd ? '⊚ 跟随' : '◯ 固定'}
+          <button onClick={() => setFollowCd(!followCd)} title={followCd ? '跟随终端目录' : '固定目录'}
+            style={{ background: 'none', border: 'none', color: followCd ? '#4fc3f7' : '#888', cursor: 'pointer', fontSize: 12, padding: '0 2px', flexShrink: 0 }}>
+            {followCd ? '⊚' : '◯'}
           </button>
         )}
-        <button onClick={() => fetchDir(path)} title="刷新"
-          style={{ background: 'none', border: 'none', color: '#4fc3f7', cursor: 'pointer', fontSize: 12 }}>⟳</button>
+        <button onClick={() => fetchDir(path, true)} title="刷新"
+          style={{ background: 'none', border: 'none', color: '#4fc3f7', cursor: 'pointer', fontSize: 12, padding: '0 2px', flexShrink: 0 }}>⟳</button>
       </div>
       {error && <div style={{ padding: '4px 8px', color: '#f44747', fontSize: 10 }}>{error}</div>}
       {disconnected ? (

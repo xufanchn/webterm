@@ -232,7 +232,7 @@ let pendingSplitTabs: { tabs: Tab[]; activeTabId: string | null } | null = null;
 
 // Leaf pane component — always mounted, just hidden when not in layout
 function LeafPane({ nodeId, onActiveSshChange, isInSplit }: {
-  nodeId: string; onActiveSshChange?: (connId: number) => void; isInSplit: boolean;
+  nodeId: string; onActiveSshChange?: (connId: number, tabId: string) => void; isInSplit: boolean;
 }) {
   const [tabs, setTabs] = useState<Tab[]>(() => {
     return paneTabsCache.get(nodeId) || [];
@@ -304,7 +304,11 @@ function LeafPane({ nodeId, onActiveSshChange, isInSplit }: {
   const handleClosePane = () => { if (isInSplit) doRemovePane(nodeId); };
 
   const activeTab = tabs.find((t) => t.id === activeTabId);
-  useEffect(() => { if (activeTab?.connId) onActiveSshChange?.(activeTab.connId); }, [activeTab?.connId, onActiveSshChange]);
+  useEffect(() => { if (activeTab?.connId) onActiveSshChange?.(activeTab.connId, activeTab.id); }, [activeTab?.connId, activeTab?.id, onActiveSshChange]);
+  // Also sync SFTP when this pane gains focus
+  useEffect(() => {
+    if (focusedPaneId === nodeId && activeTab?.connId) onActiveSshChange?.(activeTab.connId, activeTab.id);
+  }, [focusedPaneId, nodeId, activeTab?.connId, activeTab?.id, onActiveSshChange]);
 
   return (
     <div onClick={() => setFocusedPane(nodeId)} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0, minHeight: 0 }}>
@@ -330,7 +334,7 @@ function LeafPane({ nodeId, onActiveSshChange, isInSplit }: {
 }
 
 // Top-level grid container — ALL panes are direct children with stable keys
-function GridContainer({ onActiveSshChange }: { onActiveSshChange?: (connId: number) => void }) {
+function GridContainer({ onActiveSshChange }: { onActiveSshChange?: (connId: number, tabId: string) => void }) {
   const [tick, forceUpdate] = useState(0);
 
   useEffect(() => subscribe(() => forceUpdate((n) => n + 1)), []);
@@ -387,6 +391,6 @@ function SessionWelcome() {
 }
 
 
-export default function SplitPane({ onActiveSshChange }: { onActiveSshChange?: (connId: number) => void }) {
+export default function SplitPane({ onActiveSshChange }: { onActiveSshChange?: (connId: number, tabId: string) => void }) {
   return <GridContainer onActiveSshChange={onActiveSshChange} />;
 }

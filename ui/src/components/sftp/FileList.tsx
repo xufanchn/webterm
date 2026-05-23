@@ -22,12 +22,14 @@ const sizeFormat = (bytes: number): string => {
   return (bytes / 1048576).toFixed(1) + ' MB';
 };
 
-const modeStr = (mode: number): string => {
-  const r = (mode & 0o400) ? 'r' : '-';
-  const w = (mode & 0o200) ? 'w' : '-';
-  const x = (mode & 0o100) ? 'x' : '-';
-  return (mode & 0o40000 ? 'd' : mode & 0o120000 ? 'l' : '-') + r + w + x + r + w + x + r + w + x;
+const timeFormat = (ts: string): string => {
+  const d = new Date(ts);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
+
+type SortKey = 'name' | 'size' | 'time';
+type SortDir = 'asc' | 'desc';
 
 function NewFolderInput({ value, onChange, onConfirm, onCancel, confirmLabel = '创建' }: {
   value: string;
@@ -68,6 +70,8 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
   const [contextMenu, setContextMenu] = useState<{x: number; y: number; file: SftpFile} | null>(null);
   const [blankMenu, setBlankMenu] = useState<{x: number; y: number} | null>(null);
   const [renaming, setRenaming] = useState<{path: string; name: string} | null>(null);
+  const [sortKey, setSortKey] = useState<SortKey>('name');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
 
   const handleMkdir = () => {
     if (newFolderName.trim()) {
@@ -169,6 +173,23 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
       }
   };
 
+  // Sort: directories first, then by selected key
+  const sortedFiles = [...files].sort((a, b) => {
+    if (a.is_dir !== b.is_dir) return a.is_dir ? -1 : 1;
+    let cmp = 0;
+    if (sortKey === 'name') cmp = a.name.localeCompare(b.name);
+    else if (sortKey === 'size') cmp = a.size - b.size;
+    else if (sortKey === 'time') cmp = a.mod_time.localeCompare(b.mod_time);
+    return sortDir === 'asc' ? cmp : -cmp;
+  });
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortKey(key); setSortDir('asc'); }
+  };
+
+  const sortArrow = (key: SortKey) => sortKey === key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : '';
+
   return (
     <div style={{ flex: 1, overflow: 'auto', outline: dragOver ? '2px solid #4fc3f7' : 'none', outlineOffset: -2 }}
       onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -205,6 +226,13 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
           onCancel={() => { setShowNewFolder(false); setNewFolderName(''); }}
         />
       )}
+      {/* Column headers */}
+      <div style={{ padding: '2px 8px', borderBottom: '1px solid #383838', display: 'flex', alignItems: 'center', gap: 4, color: '#888', fontSize: 10, flexShrink: 0 }}>
+        <span style={{ width: 16, flexShrink: 0 }} />
+        <span onClick={() => toggleSort('name')} style={{ flex: 1, cursor: 'pointer', userSelect: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>名称{sortArrow('name')}</span>
+        <span onClick={() => toggleSort('size')} style={{ width: 55, cursor: 'pointer', userSelect: 'none', textAlign: 'right', flexShrink: 0 }}>大小{sortArrow('size')}</span>
+        <span onClick={() => toggleSort('time')} style={{ width: 105, cursor: 'pointer', userSelect: 'none', textAlign: 'right', flexShrink: 0 }}>修改时间{sortArrow('time')}</span>
+      </div>
       {loading && <div style={{ padding: 8, color: '#888' }}>加载中...</div>}
       {!loading && currentPath !== '/' && (
         <div data-file-row onDoubleClick={onGoParent}
@@ -213,9 +241,11 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
           onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
           <span style={{ width: 16, textAlign: 'center', flexShrink: 0 }}>📁</span>
           <span style={{ flex: 1 }}>..</span>
+          <span style={{ width: 55, flexShrink: 0 }} />
+          <span style={{ width: 105, flexShrink: 0 }} />
         </div>
       )}
-      {files.map((f) => (
+      {sortedFiles.map((f) => (
         <div key={f.path} data-file-row
           onDoubleClick={() => f.is_dir ? onNavigate(f.path) : onEdit(f.path, f.name)}
           onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, file: f }); }}
@@ -229,8 +259,8 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
             {f.is_dir ? '📁' : f.is_link ? '🔗' : '📄'}
           </span>
           <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
-          <span style={{ color: '#888', fontSize: 9, width: 60, textAlign: 'right', flexShrink: 0 }}>{!f.is_dir && sizeFormat(f.size)}</span>
-          <span style={{ color: '#666', fontSize: 9, width: 70, textAlign: 'right', flexShrink: 0 }}>{modeStr(f.mode)}</span>
+          <span style={{ color: '#888', fontSize: 10, width: 55, textAlign: 'right', flexShrink: 0 }}>{!f.is_dir ? sizeFormat(f.size) : ''}</span>
+          <span style={{ color: '#666', fontSize: 10, width: 105, textAlign: 'right', flexShrink: 0 }}>{timeFormat(f.mod_time)}</span>
         </div>
       ))}
       {renaming && (
