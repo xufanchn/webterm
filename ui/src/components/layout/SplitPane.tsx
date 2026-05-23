@@ -530,9 +530,16 @@ function SessionWelcome() {
         style={{ position: 'absolute', top: '60%', left: '50%', transform: 'translate(-50%, -50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, cursor: 'pointer', zIndex: 1, fontFamily: '"JetBrains Maple Mono", "JetBrains Mono", "Courier New", monospace' }}>
           <pre style={{
             margin: 0, fontSize: 17, lineHeight: 1.25, fontWeight: 700,
-            background: 'linear-gradient(180deg, #7aa2f7 0%, #bb9af7 40%, #7dcfff 100%)',
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-            filter: 'drop-shadow(0 0 10px #7aa2f755)',
+            color: '#7aa2f7',
+            textShadow: `
+              1px 1px 0 #bb9af7,
+              2px 2px 0 #7aa2f7,
+              3px 3px 0 #7aa2f7cc,
+              4px 4px 0 #7aa2f799,
+              5px 5px 0 #7aa2f766,
+              6px 6px 0 #7aa2f733,
+              0 0 20px #7aa2f766
+            `,
           }}>
             {banner.join('\n')}
           </pre>
