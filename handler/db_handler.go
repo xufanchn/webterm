@@ -16,7 +16,8 @@ type DbConnHandler struct {
 }
 
 func (h *DbConnHandler) List(w http.ResponseWriter, r *http.Request) {
-	conns, err := h.Store.ListDbConnections()
+	user := auth.GetUser(r)
+	conns, err := h.Store.ListDbConnections(user.UserID)
 	if err != nil {
 		http.Error(w, `{"error":"internal error"}`, http.StatusInternalServerError)
 		return

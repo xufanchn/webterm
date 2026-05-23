@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { EditorView, keymap } from '@codemirror/view';
+import { t } from '../../i18n';
 import { defaultKeymap } from '@codemirror/commands';
 import { basicSetup } from 'codemirror';
 import { sql } from '@codemirror/lang-sql';
@@ -131,9 +132,9 @@ export default function FileEditor({ filePath, fileName, ws, onClose, onSaved }:
   saveHandlerRef.current = handleSave;
 
   return (
-    <Modal title={`编辑: ${fileName}`} onClose={onClose} width={800} height={600}>
+    <Modal title={`${t('file_edit')}: ${fileName}`} onClose={onClose} width={800} height={600}>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        {loading && <div style={{ padding: 16, color: '#888' }}>加载中...</div>}
+        {loading && <div style={{ padding: 16, color: '#888' }}>{t("file_loading")}</div>}
         {error && (
           <div style={{ padding: '6px 12px', color: '#f44747', background: '#2d1b1b', fontSize: 12 }}>{error}</div>
         )}
@@ -143,13 +144,13 @@ export default function FileEditor({ filePath, fileName, ws, onClose, onSaved }:
           justifyContent: 'space-between', alignItems: 'center',
         }}>
           <span style={{ color: '#888', fontSize: 11 }}>
-            {filePath} — Ctrl+S 保存
+            {filePath} — Ctrl+S {t("conn_save")}
           </span>
           <button onClick={handleSave} disabled={saving} style={{
-            background: saving ? '#555' : '#007acc', border: 'none',
+            background: saving ? '#3b4261' : '#007acc', border: 'none',
             color: '#fff', padding: '6px 16px', borderRadius: 4, cursor: 'pointer', fontSize: 12,
           }}>
-            {saving ? '保存中...' : '保存'}
+            {saving ? t('conn_saving') : t('conn_save')}
           </button>
         </div>
       </div>

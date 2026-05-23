@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { EditorView, keymap } from '@codemirror/view';
+import { t } from '../../i18n';
 import { sql, MySQL } from '@codemirror/lang-sql';
 import { basicSetup } from 'codemirror';
 import { format } from 'sql-formatter';
@@ -60,7 +61,7 @@ export default function QueryEditor({ connId }: Props) {
     };
 
     const view = new EditorView({
-      doc: '-- Ctrl+Enter 执行 SQL\n-- Ctrl+Shift+F 格式化\n',
+      doc: t('db_hint'),
       extensions: [
         basicSetup,
         sql({ dialect: MySQL }),
@@ -102,7 +103,7 @@ export default function QueryEditor({ connId }: Props) {
 
   return (
     <div style={{ display: 'flex', height: '100%' }}>
-      <div style={{ width: 200, background: '#252526', borderRight: '1px solid #383838', flexShrink: 0 }}>
+      <div style={{ width: 200, background: '#252526', borderRight: '1px solid #3b4261', flexShrink: 0 }}>
         <DbTree ws={ws} onQuery={(sql) => {
           if (viewRef.current) {
             viewRef.current.dispatch({
@@ -115,7 +116,7 @@ export default function QueryEditor({ connId }: Props) {
         <div style={{ flex: 1, minHeight: 0 }} ref={editorRef} />
         {error && <div style={{ padding: '8px 12px', color: '#f44747', fontSize: 12, background: '#2d1b1b' }}>{error}</div>}
         {result && (
-          <div style={{ flex: 1, minHeight: 0, overflow: 'auto', borderTop: '1px solid #444' }}>
+          <div style={{ flex: 1, minHeight: 0, overflow: 'auto', borderTop: '1px solid #3b4261' }}>
             <ResultTable columns={result.columns} rows={result.rows} rowsAffected={result.rowsAffected} onExportCSV={exportCSV} />
           </div>
         )}

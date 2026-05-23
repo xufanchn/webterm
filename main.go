@@ -63,7 +63,7 @@ func main() {
 	mux.Handle("DELETE /api/users/{id}", auth.Middleware(auth.AdminOnly(http.HandlerFunc(userH.Delete))))
 
 	pool := sshmgr.NewPool()
-	connH := &handler.ConnectionHandler{Store: st, AESCipher: aesCipher}
+	connH := &handler.ConnectionHandler{Store: st, Pool: pool, AESCipher: aesCipher}
 	wsH := &handler.WSHandler{Store: st, Pool: pool, AESCipher: aesCipher}
 
 	mux.Handle("GET /api/connections", auth.Middleware(http.HandlerFunc(connH.List)))
@@ -103,7 +103,7 @@ func main() {
 	seedAdmin(st)
 
 	addr := fmt.Sprintf(":%d", cfg.Port)
-	log.Printf("wshell starting on %s", addr)
+	log.Printf("webterm starting on %s", addr)
 	if err := http.ListenAndServe(addr, mux); err != nil {
 		log.Fatalf("server error: %v", err)
 	}

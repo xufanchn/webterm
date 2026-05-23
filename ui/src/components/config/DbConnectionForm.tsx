@@ -1,5 +1,7 @@
+import { t } from '../../i18n';
 import { useState, useEffect } from 'react';
 import Modal from '../common/Modal';
+import CustomSelect from '../common/CustomSelect';
 import { apiPost, apiPut, apiGet } from '../../api/client';
 
 interface Group {
@@ -45,7 +47,7 @@ export default function DbConnectionForm({ connection, onClose, onSaved }: Props
       onSaved();
       onClose();
     } catch (e: any) {
-      setError(e.message || '保存失败');
+      setError(e.message || t('conn_save_failed'));
     } finally {
       setSaving(false);
     }
@@ -54,28 +56,28 @@ export default function DbConnectionForm({ connection, onClose, onSaved }: Props
   const update = (key: string, value: any) => setForm({ ...form, [key]: value });
 
   return (
-    <Modal title={connection ? '编辑数据库连接' : '新建数据库连接'} onClose={onClose} width={550} height={460}>
+    <Modal title={connection ? t('db_conn_edit') : t('db_conn_new')} onClose={onClose} width={550} height={420}>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
         {error && <div style={{ color: '#f44747', fontSize: 12, padding: '6px 10px', background: '#2d1b1b', borderRadius: 4, margin: '8px 16px 0' }}>{error}</div>}
 
-        <div style={{ flex: 1, overflow: 'auto', padding: '8px 16px 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <FormField label="名称" value={form.name} onChange={(v) => update('name', v)} required />
+        <div style={{ flex: 1, overflow: 'auto', padding: '12px 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <FormField label={t("conn_name")} value={form.name} onChange={(v) => update('name', v)} required />
           <div style={{ display: 'flex', gap: 12 }}>
-            <div style={{ flex: 2 }}><FormField label="主机地址" value={form.host} onChange={(v) => update('host', v)} placeholder="127.0.0.1" required /></div>
-            <div style={{ flex: 1 }}><FormField label="端口" value={String(form.port)} onChange={(v) => update('port', Number(v) || 3306)} type="number" /></div>
+            <div style={{ flex: 2 }}><FormField label={t("conn_host")} value={form.host} onChange={(v) => update('host', v)} placeholder="127.0.0.1" required /></div>
+            <div style={{ flex: 1 }}><FormField label={t("conn_port")} value={String(form.port)} onChange={(v) => update('port', Number(v) || 3306)} type="number" /></div>
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
-            <div style={{ flex: 1 }}><FormField label="用户名" value={form.username} onChange={(v) => update('username', v)} placeholder="root" /></div>
-            <div style={{ flex: 1 }}><FormField label="密码" value={form.password} onChange={(v) => update('password', v)} type="password" placeholder={connection ? '留空不修改' : ''} /></div>
+            <div style={{ flex: 1 }}><FormField label={t("conn_username")} value={form.username} onChange={(v) => update('username', v)} placeholder="root" /></div>
+            <div style={{ flex: 1 }}><FormField label={t("conn_password")} value={form.password} onChange={(v) => update('password', v)} type="password" placeholder={connection ? t('db_keep') : ''} /></div>
           </div>
-          <FormField label="数据库名" value={form.database_name} onChange={(v) => update('database_name', v)} placeholder="可选，连接后可切换" />
+          <FormField label={t("db_name")} value={form.database_name} onChange={(v) => update('database_name', v)} placeholder={t("db_optional")} />
 
           <div>
-            <label style={labelStyle}>分组</label>
-            <select value={form.group_id} onChange={(e) => update('group_id', Number(e.target.value))} style={inputStyle}>
-              <option value={0}>未分组</option>
+            <label style={labelStyle}>{t("conn_group")}</label>
+            <CustomSelect value={form.group_id} onChange={(v) => update('group_id', Number(v))} style={inputStyle}>
+              <option value={0}>{t("conn_ungrouped")}</option>
               {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
-            </select>
+            </CustomSelect>
           </div>
 
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#ccc', fontSize: 12, paddingBottom: 8 }}>
@@ -84,11 +86,11 @@ export default function DbConnectionForm({ connection, onClose, onSaved }: Props
           </label>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, padding: '12px 16px', borderTop: '1px solid #383838', flexShrink: 0, background: '#252526' }}>
-          <button onClick={onClose} style={btnSecondary}>取消</button>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, padding: '12px 24px', flexShrink: 0 }}>
+          <button onClick={onClose} style={btnSecondary}>{t("conn_cancel")}</button>
           <button onClick={handleSubmit} disabled={saving || !form.name || !form.host}
-            style={saving ? { ...btnPrimary, background: '#555', cursor: 'default' } : btnPrimary}>
-            {saving ? '保存中...' : '保存'}
+            style={saving ? { ...btnPrimary, background: '#3b4261', cursor: 'default' } : btnPrimary}>
+            {saving ? t('conn_saving') : t('conn_save')}
           </button>
         </div>
       </div>
@@ -108,10 +110,10 @@ function FormField({ label, value, onChange, type = 'text', placeholder, require
   );
 }
 
-const labelStyle: React.CSSProperties = { color: '#ccc', fontSize: 12, display: 'block', marginBottom: 4 };
+const labelStyle: React.CSSProperties = { color: '#565f89', fontSize: 12, display: 'block', marginBottom: 4 };
 const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '8px 10px', background: '#3c3c3c', border: '1px solid #555',
-  borderRadius: 4, color: '#fff', fontSize: 13, boxSizing: 'border-box',
+  width: '100%', padding: '10px 12px', background: 'rgba(31,35,53,0.5)', border: '1px solid #3b4261',
+  borderRadius: 4, color: '#c0caf5', fontSize: 14, boxSizing: 'border-box',
 };
-const btnSecondary: React.CSSProperties = { padding: '8px 20px', background: '#555', border: 'none', color: '#fff', borderRadius: 4, cursor: 'pointer', fontSize: 13 };
-const btnPrimary: React.CSSProperties = { padding: '8px 20px', background: '#007acc', border: 'none', color: '#fff', borderRadius: 4, cursor: 'pointer', fontSize: 13 };
+const btnSecondary: React.CSSProperties = { padding: '8px 20px', background: 'transparent', border: '1px solid #3b4261', color: '#c0caf5', borderRadius: 4, cursor: 'pointer', fontSize: 14 };
+const btnPrimary: React.CSSProperties = { padding: '8px 20px', background: '#7aa2f7', border: 'none', color: '#1a1b26', borderRadius: 4, cursor: 'pointer', fontSize: 14, fontWeight: 600 };

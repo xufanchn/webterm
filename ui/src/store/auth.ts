@@ -15,7 +15,7 @@ interface AuthState {
 
 function loadUser(): User | null {
   try {
-    const saved = localStorage.getItem('wshell-user');
+    const saved = localStorage.getItem('webterm-user');
     return saved ? JSON.parse(saved) : null;
   } catch { return null; }
 }
@@ -25,12 +25,13 @@ export const useAuthStore = create<AuthState>((set) => ({
   token: localStorage.getItem('token'),
   setAuth: (user, token) => {
     localStorage.setItem('token', token);
-    localStorage.setItem('wshell-user', JSON.stringify(user));
+    localStorage.setItem('webterm-user', JSON.stringify(user));
     set({ user, token });
   },
   logout: () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('wshell-user');
+    ['token', 'webterm-user', 'webterm-rm-user', 'webterm-rm-pwd'].forEach(k => localStorage.removeItem(k));
+    sessionStorage.clear();
     set({ user: null, token: null });
+    window.location.replace('/');
   },
 }));

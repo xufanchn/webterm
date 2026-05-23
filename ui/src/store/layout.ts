@@ -33,6 +33,10 @@ interface LayoutState {
   unregisterTerminal: (tabId: string) => void;
   sftpDisconnectSignal: number;
   signalSftpDisconnect: () => void;
+  sftpPruneConn: number | null;
+  pruneSftpConn: (connId: number) => void;
+  statusConn: { name: string; host: string; connected: boolean } | null;
+  setStatusConn: (info: { name: string; host: string; connected: boolean } | null) => void;
 }
 
 export const useLayoutStore = create<LayoutState>((set, get) => ({
@@ -46,6 +50,10 @@ export const useLayoutStore = create<LayoutState>((set, get) => ({
       registeredTabs: [],
       removedTabQueue: [],
       sftpDisconnectSignal: 0,
+      sftpPruneConn: null,
+      pruneSftpConn: (connId) => set({ sftpPruneConn: connId }),
+      statusConn: null,
+      setStatusConn: (info) => set({ statusConn: info }),
       signalSftpDisconnect: () => set((s) => ({ sftpDisconnectSignal: s.sftpDisconnectSignal + 1 })),
       setActiveModule: (m) => set({ activeModule: m }),
       requestTab: (tab) => set((s) => ({ newTabQueue: [...s.newTabQueue, tab] })),

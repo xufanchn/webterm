@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { useEffect, useRef, useState } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
@@ -6,6 +7,7 @@ import { useHighlightRules } from '../../hooks/useTerminalTheme';
 import type { HighlightRule } from '../../hooks/useTerminalTheme';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { useLayoutStore } from '../../store/layout';
+import { useConnectionStore } from '../../store/connections';
 import { usePreferencesStore } from '../../store/preferences';
 import '@xterm/xterm/css/xterm.css';
 import { getTheme } from '../../themes/presets';
@@ -44,6 +46,7 @@ function highlightText(text: string, rules: HighlightRule[]): string {
 export default function ThemedTerminal({ connId, themeName: _themeName, onStatus, onResizeDim, extraMenuItems, tabs,  myTabId }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
+  const [termKey, setTermKey] = useState(0);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const rules = useHighlightRules();
   const sendRef = useRef<(data: string) => void>(() => {});
@@ -57,10 +60,13 @@ export default function ThemedTerminal({ connId, themeName: _themeName, onStatus
   useEffect(() => {
     const themeConfig = getTheme(themeName || 'Dracula');
     const term = new Terminal({
-      cursorBlink: true, fontSize: fontSize, fontFamily: 'Consolas, "Cascadia Code", "Courier New", monospace',
+      cursorBlink: true, fontSize: fontSize, fontFamily: '"JetBrains Mono", "JetBrains Maple Mono", Consolas, monospace',
       theme: {
         background: themeConfig.background,
         foreground: themeConfig.foreground,
+        scrollbarSliderBackground: '#3b4261',
+        scrollbarSliderHoverBackground: '#565f89',
+        scrollbarSliderActiveBackground: '#7aa2f7',
         cursor: themeConfig.cursor,
         cursorAccent: themeConfig.cursorAccent,
         selectionBackground: themeConfig.selectionBackground,
@@ -119,8 +125,8 @@ export default function ThemedTerminal({ connId, themeName: _themeName, onStatus
           bar.style.cssText = 'position:absolute;top:0;right:0;z-index:10;display:flex;gap:4px;padding:4px 8px;background:#333;border-radius:0 0 0 6px;';
           const input = document.createElement('input');
           input.id = 'xterm-search-input';
-          input.style.cssText = 'width:160px;padding:2px 6px;border:1px solid #555;border-radius:3px;background:#1e1e1e;color:#fff;font-size:12px;outline:none;';
-          input.placeholder = '查找...';
+          input.style.cssText = 'width:160px;padding:2px 6px;border:1px solid #3b4261;border-radius:3px;background:#1e1e1e;color:#fff;font-size:12px;outline:none;';
+          input.placeholder = t('term_find_placeholder');
 
           input.onkeydown = (ke) => {
             if (ke.key === 'Escape') { bar.remove(); term.focus(); }
@@ -155,6 +161,7 @@ export default function ThemedTerminal({ connId, themeName: _themeName, onStatus
     });
 
     term.onResize(({ cols, rows }) => {
+      if (cols < 2 || rows < 1) return; // ignore zero-size (hidden terminal)
       sendRef.current(JSON.stringify({ cols, rows }));
       onResizeDimRef.current?.(cols, rows);
     });
@@ -163,6 +170,7 @@ export default function ThemedTerminal({ connId, themeName: _themeName, onStatus
       ref.current.style.backgroundColor = themeConfig.background;
       term.open(ref.current);
       termRef.current = term;
+      setTermKey((k) => k + 1);
 
       requestAnimationFrame(() => {
         fitAddon.fit();
@@ -173,7 +181,9 @@ export default function ThemedTerminal({ connId, themeName: _themeName, onStatus
     }
 
     const resizeObserver = new ResizeObserver(() => {
-      fitAddon.fit();
+      if (ref.current && (ref.current.offsetWidth > 0 || ref.current.offsetHeight > 0)) {
+        fitAddon.fit();
+      }
     });
     if (ref.current) resizeObserver.observe(ref.current);
 
@@ -206,15 +216,19 @@ export default function ThemedTerminal({ connId, themeName: _themeName, onStatus
     onClose: (final) => {
       if (final) {
         onStatusRef.current?.(false);
-        signalSftpDisconnect();
-        termRef.current?.write('\r\n\x1b[33m[连接已断开]\x1b[0m\r\n');
+        setStatusConn(null);
+        termRef.current?.write('\r\n\x1b[33m[' + t('term_disconnected') + ']\x1b[0m\r\n');
       } else {
-        termRef.current?.write('\r\n\x1b[33m[连接已断开，正在重连...]\x1b[0m\r\n');
+        termRef.current?.write('\r\n\x1b[33m[' + t('term_reconnecting') + ']\x1b[0m\r\n');
       }
     },
     onOpen: () => {
       onStatusRef.current?.(true);
-      termRef.current?.write('\r\n\x1b[32m[已连接]\x1b[0m\r\n');
+      const conns = useConnectionStore.getState().connections;
+      const conn = conns.find((c: any) => c.id === connId);
+      if (conn && focusedPaneId) {
+        setStatusConn({ name: conn.name, host: conn.host, connected: true });
+      }
     },
   });
 
@@ -227,12 +241,13 @@ export default function ThemedTerminal({ connId, themeName: _themeName, onStatus
   const registerTerminal = useLayoutStore((s) => s.registerTerminal);
   const unregisterTerminal = useLayoutStore((s) => s.unregisterTerminal);
   const setSftpCdPath = useLayoutStore((s) => s.setSftpCdPath);
-  const signalSftpDisconnect = useLayoutStore((s) => s.signalSftpDisconnect);
+  const setStatusConn = useLayoutStore((s) => s.setStatusConn);
+  const focusedPaneId = useLayoutStore((s) => s.focusedPaneId);
 
   // Register this terminal's send function globally for broadcast
   useEffect(() => {
     if (!myTabId) return;
-    const key = `wshell-ws-${myTabId}`;
+    const key = `webterm-ws-${myTabId}`;
     (window as any)[key] = send;
     registerTerminal(myTabId);
     return () => {
@@ -264,17 +279,17 @@ export default function ThemedTerminal({ connId, themeName: _themeName, onStatus
         const targets = broadcastScope === 'all' ? terminalRegistry : tabs?.map((t) => t.id) || [];
         targets.forEach((tid) => {
           if (tid !== myTabId) {
-            const targetSend = (window as any)[`wshell-ws-${tid}`];
+            const targetSend = (window as any)[`webterm-ws-${tid}`];
             if (targetSend) targetSend(JSON.stringify({ data }));
           }
         });
       }
     });
     return () => disposable.dispose();
-  }, [send, broadcastScope, broadcastSourceId, myTabId, tabs, terminalRegistry]);
+  }, [send, broadcastScope, broadcastSourceId, myTabId, tabs, terminalRegistry, termKey]);
 
   return (
-    <div ref={ref} style={{ flex: 1, overflow: 'hidden' }}
+    <div ref={ref} style={{ flex: 1, overflow: 'hidden', padding: '0 6px' }}
       onContextMenu={(e) => {
         e.preventDefault();
         setContextMenu({ x: e.clientX, y: e.clientY });
@@ -283,14 +298,14 @@ export default function ThemedTerminal({ connId, themeName: _themeName, onStatus
         <ContextMenu x={contextMenu.x} y={contextMenu.y}
           items={[
             {
-              label: '复制',
+              label: t('term_copy'),
               action: () => {
                 const sel = termRef.current?.getSelection();
                 if (sel) navigator.clipboard.writeText(sel).catch(() => {});
               },
             },
             {
-              label: '粘贴',
+              label: t('term_paste'),
               action: async () => {
                 try {
                   const text = await navigator.clipboard.readText();
@@ -299,7 +314,7 @@ export default function ThemedTerminal({ connId, themeName: _themeName, onStatus
               },
             },
             {
-              label: '查找 (Ctrl+F)',
+              label: t('term_find'),
               action: () => {
                 const input = document.getElementById('xterm-search-input') as HTMLInputElement;
                 if (input) {
@@ -313,7 +328,7 @@ export default function ThemedTerminal({ connId, themeName: _themeName, onStatus
               },
             },
             {
-              label: '清屏',
+              label: t('term_clear'),
               action: () => {
                 termRef.current?.clear();
               },

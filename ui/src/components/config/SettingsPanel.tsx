@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { t } from '../../i18n';
+import React, { useState } from 'react';
 import Modal from '../common/Modal';
+import CustomSelect from '../common/CustomSelect';
 import { presets } from '../../themes/presets';
-import { usePreferencesStore } from '../../store/preferences';
+import { usePreferencesStore, parseOnekey, formatOnekey } from '../../store/preferences';
+import Icon from '../common/Icon';
 
 interface Props {
   onClose: () => void;
@@ -12,79 +15,126 @@ export default function SettingsPanel({ onClose }: Props) {
   const fontSize = usePreferencesStore((s) => s.fontSize);
   const setThemeName = usePreferencesStore((s) => s.setThemeName);
   const setFontSize = usePreferencesStore((s) => s.setFontSize);
-  const [activeSection, setActiveSection] = useState<'appearance' | 'highlights'>('appearance');
+  const onekeyPwd = usePreferencesStore((s) => s.onekeyPwd);
+  const setOnekeyPwd = usePreferencesStore((s) => s.setOnekeyPwd);
+  const [activeSection, setActiveSection] = useState<'appearance' | 'highlights' | 'connection'>('appearance');
+  const [showIdx, setShowIdx] = useState(-1);
+
+  const onekeyList = parseOnekey(onekeyPwd);
+  const updateOnekeyItem = (i: number, k: string, u: string, p: string) => {
+    const list = parseOnekey(onekeyPwd);
+    if (i < list.length) list[i] = { k, u, v: p };
+    else list.push({ k, u, v: p });
+    setOnekeyPwd(formatOnekey(list));
+  };
+  const addOnekeyItem = () => {
+    const list = parseOnekey(onekeyPwd);
+    list.push({ k: '', u: '', v: '' });
+    setOnekeyPwd(formatOnekey(list));
+  };
+  const removeOnekeyItem = (i: number) => {
+    const list = parseOnekey(onekeyPwd);
+    list.splice(i, 1);
+    setOnekeyPwd(formatOnekey(list));
+  };
+
+  const cellStyle: React.CSSProperties = {
+    flex: 2, padding: '5px 4px', background: 'transparent', border: 'none',
+    color: '#ccc', fontSize: 12, width: '100%', boxSizing: 'border-box', outline: 'none',
+  };
+
+  const sections = [
+    { key: 'appearance' as const, label: t('settings_appearance') },
+    { key: 'highlights' as const, label: t('settings_highlights') },
+    { key: 'connection' as const, label: t('settings_connection') },
+  ];
 
   return (
-    <Modal title="个人设置" onClose={onClose} width={500} height={400}>
-      <div style={{ display: 'flex', height: '100%' }}>
-        <div style={{ width: 120, background: '#252526', borderRight: '1px solid #383838', flexShrink: 0 }}>
-          <div onClick={() => setActiveSection('appearance')} style={{
-            padding: '8px 12px', cursor: 'pointer', color: activeSection === 'appearance' ? '#fff' : '#888',
-            background: activeSection === 'appearance' ? '#37373d' : 'transparent', fontSize: 12,
-          }}>外观</div>
-          <div onClick={() => setActiveSection('highlights')} style={{
-            padding: '8px 12px', cursor: 'pointer', color: activeSection === 'highlights' ? '#fff' : '#888',
-            background: activeSection === 'highlights' ? '#37373d' : 'transparent', fontSize: 12,
-          }}>关键字高亮</div>
-        </div>
-        <div style={{ flex: 1, padding: 16, overflow: 'auto' }}>
-          {activeSection === 'appearance' && (
-            <div>
-              <h4 style={{ color: '#fff', fontSize: 14, marginBottom: 16 }}>终端外观</h4>
-
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ color: '#ccc', fontSize: 12, display: 'block', marginBottom: 6 }}>主题</label>
-                <select value={themeName} onChange={(e) => setThemeName(e.target.value)}
-                  style={{
-                    width: '100%', padding: '6px 10px', background: '#3c3c3c', border: '1px solid #555',
-                    borderRadius: 4, color: '#fff', fontSize: 12,
-                  }}>
-                  {presets.map((t) => (
-                    <option key={t.name} value={t.name}>{t.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ color: '#ccc', fontSize: 12, display: 'block', marginBottom: 6 }}>
-                  字体大小: {fontSize}px
-                </label>
-                <input type="range" min="10" max="24" value={fontSize}
-                  onChange={(e) => setFontSize(Number(e.target.value))}
-                  style={{ width: '100%' }} />
-              </div>
+    <Modal title={t("settings_title")} onClose={onClose} width={500} height={420}>
+      <div style={{ padding: '0 24px', display: 'flex', borderBottom: '1px solid #3b4261', height: 36, alignItems: 'center' }}>
+        {sections.map((s, idx) => (
+          <React.Fragment key={s.key}>
+            {idx > 0 && (
+              <span style={{
+                width: 1, height: 16, flexShrink: 0, alignSelf: 'center',
+                background: (activeSection !== s.key && activeSection !== sections[idx-1].key) ? '#3b4261' : 'transparent',
+              }} />
+            )}
+            <div onClick={() => setActiveSection(s.key)} style={{
+              padding: '4px 14px', cursor: 'pointer', fontSize: 12, borderRadius: 5,
+              color: activeSection === s.key ? '#1a1b26' : '#787e99',
+              background: activeSection === s.key ? '#7aa2f7' : 'transparent',
+              height: 28, display: 'flex', alignItems: 'center',
+            }}>{s.label}</div>
+          </React.Fragment>
+        ))}
+      </div>
+      <div style={{ flex: 1, padding: '20px 24px', overflow: 'auto' }}>
+        {activeSection === 'appearance' && (
+          <div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ color: '#565f89', fontSize: 12, display: 'block', marginBottom: 6 }}>{t("settings_theme")}</label>
+              <CustomSelect value={themeName} onChange={(v) => setThemeName(v)}
+                style={{
+                  width: '100%', padding: '8px 10px', background: 'rgba(31,35,53,0.5)', border: '1px solid #3b4261',
+                  borderRadius: 4, color: '#c0caf5', fontSize: 14,
+                }}>
+                {presets.map((t) => (
+                  <option key={t.name} value={t.name}>{t.name}</option>
+                ))}
+              </CustomSelect>
             </div>
-          )}
-
-          {activeSection === 'highlights' && (
-            <div>
-              <h4 style={{ color: '#fff', fontSize: 14, marginBottom: 16 }}>关键字高亮规则</h4>
-              <div style={{ color: '#888', fontSize: 12 }}>
-                <div style={{ marginBottom: 8 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0' }}>
-                    <span style={{ color: '#f44747', fontWeight: 'bold', width: 60 }}>ERROR</span>
-                    <span style={{ color: '#888' }}>红色 · 预设</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0' }}>
-                    <span style={{ color: '#cca700', fontWeight: 'bold', width: 60 }}>WARN</span>
-                    <span style={{ color: '#888' }}>黄色 · 预设</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0' }}>
-                    <span style={{ color: '#6a9955', fontWeight: 'bold', width: 60 }}>INFO</span>
-                    <span style={{ color: '#888' }}>绿色 · 预设</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0' }}>
-                    <span style={{ color: '#808080', fontWeight: 'bold', width: 60 }}>DEBUG</span>
-                    <span style={{ color: '#888' }}>灰色 · 预设</span>
-                  </div>
-                </div>
-                <div style={{ marginTop: 12, padding: '8px 12px', background: '#2d2d2d', borderRadius: 4, fontSize: 11 }}>
-                  自定义关键字规则（后续版本支持）
-                </div>
-              </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ color: '#565f89', fontSize: 12, display: 'block', marginBottom: 6 }}>
+                {t("settings_font")}: {fontSize}px
+              </label>
+              <input type="range" min="10" max="24" value={fontSize}
+                onChange={(e) => setFontSize(Number(e.target.value))}
+                style={{ width: '100%', accentColor: '#7aa2f7' }} />
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {activeSection === 'highlights' && (
+          <div>
+            {[{k:'ERROR',c:'#f44747'},{k:'WARN',c:'#cca700'},{k:'INFO',c:'#6a9955'},{k:'DEBUG',c:'#808080'}].map(r => (
+              <div key={r.k} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: '1px solid #3b4261' }}>
+                <span style={{ color: r.c, fontWeight: 'bold', width: 60, fontSize: 13 }}>{r.k}</span>
+                <span style={{ color: '#565f89', fontSize: 12 }}>{t("settings_preset")}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeSection === 'connection' && (
+          <div>
+            <div style={{ display: 'flex', color: '#565f89', fontSize: 10, padding: '4px 0', borderBottom: '1px solid #3b4261', marginBottom: 2 }}>
+              <span style={{ flex: 2 }}>{t("settings_onekey_key")}</span><span style={{ flex: 2 }}>{t("settings_onekey_user")}</span><span style={{ flex: 2 }}>{t("settings_onekey_pwd")}</span><span style={{ width: 20 }} />
+            </div>
+            {onekeyList.map((kv, i) => (
+              <div key={i} style={{ display: 'flex', gap: 4, alignItems: 'center', borderBottom: '1px solid #3b4261', padding: '3px 0' }}>
+                <input value={kv.k} onChange={(e) => updateOnekeyItem(i, e.target.value, kv.u, kv.v)}
+                  placeholder="key" style={cellStyle} />
+                <input value={kv.u} onChange={(e) => updateOnekeyItem(i, kv.k, e.target.value, kv.v)}
+                  placeholder="user" style={cellStyle} />
+                <div style={{ flex: 2, position: 'relative' }}>
+                  <input type={showIdx === i ? 'text' : 'password'} value={kv.v} onChange={(e) => updateOnekeyItem(i, kv.k, kv.u, e.target.value)}
+                    style={{ ...cellStyle, paddingRight: 24 }} />
+                  <span onClick={() => setShowIdx(showIdx === i ? -1 : i)}
+                    style={{ position: 'absolute', right: 4, top: 5, cursor: 'pointer', color: '#565f89', userSelect: 'none', display: 'flex', alignItems: 'center' }}>
+                    {showIdx === i ? <Icon name="eye-off" size={12} /> : <Icon name="eye" size={12} />}
+                  </span>
+                </div>
+                <span onClick={() => removeOnekeyItem(i)}
+                  style={{ cursor: 'pointer', color: '#f44747', width: 20, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="x" size={14} /></span>
+              </div>
+            ))}
+            <button onClick={addOnekeyItem}
+              style={{ marginTop: 8, padding: '6px 16px', background: '#7aa2f7', border: 'none', borderRadius: 4, color: '#1a1b26', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+              {t("settings_add")}
+            </button>
+          </div>
+        )}
       </div>
     </Modal>
   );

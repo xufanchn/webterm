@@ -26,15 +26,15 @@ export default function ContextMenu({ x, y, items, onClose }: Props) {
   return (
     <div ref={ref} style={{
       position: 'fixed', left: x, top: y, zIndex: 1000,
-      background: '#2d2d2d', border: '1px solid #555', borderRadius: 4,
-      minWidth: 140, padding: '4px 0', boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+      background: '#1f2335', border: '1px solid #3b4261', borderRadius: 4, overflow: 'hidden',
+      minWidth: 140, boxShadow: '0 0 16px rgba(0,0,0,0.6), 0 0 4px rgba(0,255,255,0.1)',
     }}>
       {items.map((item, i) => (
         <div key={i} onClick={() => { item.action(); onClose(); }}
           style={{
-            padding: '6px 16px', fontSize: 12, color: '#ccc', cursor: 'pointer',
+            padding: '8px 16px', fontSize: 12, color: '#c0caf5', cursor: 'pointer',
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = '#094771')}
+          onMouseEnter={(e) => (e.currentTarget.style.background = '#3b4261')}
           onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
           {item.label}
         </div>

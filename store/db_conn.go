@@ -18,9 +18,10 @@ type DbConnection struct {
 	UpdatedAt         time.Time `json:"updated_at"`
 }
 
-func (s *Store) ListDbConnections() ([]DbConnection, error) {
+func (s *Store) ListDbConnections(userID int64) ([]DbConnection, error) {
 	rows, err := s.DB.Query(
-		"SELECT id, group_id, name, host, port, username, password_encrypted, database_name, engine, created_by, shared, created_at, updated_at FROM db_connections ORDER BY name",
+		"SELECT id, group_id, name, host, port, username, password_encrypted, database_name, engine, created_by, shared, created_at, updated_at FROM db_connections WHERE (created_by=? OR shared=1) ORDER BY name",
+		userID,
 	)
 	if err != nil {
 		return nil, err

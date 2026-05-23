@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useLayoutStore } from '../../store/layout';
 import { useConnectionStore } from '../../store/connections';
+import { useAuthStore } from '../../store/auth';
 import type { Connection, DbConnection, Group } from '../../store/connections';
 import ConnectionForm from '../config/ConnectionForm';
 import DbConnectionForm from '../config/DbConnectionForm';
 import ContextMenu from '../common/ContextMenu';
+import CustomSelect from '../common/CustomSelect';
 import { apiPost, apiPut, apiDelete } from '../../api/client';
+import { t } from '../../i18n';
+import Icon from '../common/Icon';
 
-export default function Sidebar({ collapsed }: { collapsed: boolean }) {
+export default function Sidebar({ collapsed, width }: { collapsed: boolean; width: number }) {
   const activeModule = useLayoutStore((s) => s.activeModule);
   const { connections, groups, dbConnections, fetchConnections, fetchDbConnections, fetchGroups } = useConnectionStore();
   const requestTab = useLayoutStore((s) => s.requestTab);
@@ -21,6 +25,9 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
   const [blankMenu, setBlankMenu] = useState<{x: number; y: number} | null>(null);
   const [groupMenu, setGroupMenu] = useState<{x: number; y: number; group: Group} | null>(null);
   const [connMenu, setConnMenu] = useState<{x: number; y: number; conn: any} | null>(null);
+  const [tagFilter, setTagFilter] = useState('');
+  const [multiMode, setMultiMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [dragConn, setDragConn] = useState<number | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<number>>(new Set());
 
@@ -36,7 +43,9 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
   const isDb = activeModule === 'database';
   const typeStr = isSsh ? 'ssh' : 'database';
 
+  const token = useAuthStore((s) => s.token);
   useEffect(() => {
+    if (!token) return;
     if (activeModule === 'ssh' || activeModule === 'sftp') {
       fetchGroups('ssh');
       fetchConnections();
@@ -44,7 +53,7 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
       fetchGroups('database');
       fetchDbConnections();
     }
-  }, [activeModule]);
+  }, [activeModule, token]);
 
   const handleDblClick = (conn: Connection) => {
     requestTab({ id: `ssh-${conn.id}-${Date.now()}`, type: 'ssh', title: conn.name, connId: conn.id });
@@ -86,20 +95,47 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
     setConnMenu(null);
   };
 
+  const handleBatchDelete = async () => {
+    for (const id of selectedIds) {
+      await apiDelete(`/api/connections/${id}`).catch(() => {});
+    }
+    setSelectedIds(new Set());
+    fetchConnections();
+  };
   const handleMoveConn = async (connId: number, groupId: number) => {
     await apiPut(`/api/connections/${connId}`, { group_id: groupId });
     fetchConnections();
     setConnMenu(null);
   };
+  const handleBatchMove = async (groupId: number) => {
+    for (const id of selectedIds) {
+      await apiPut(`/api/connections/${id}`, { group_id: groupId }).catch(() => {});
+    }
+    setSelectedIds(new Set());
+    fetchConnections();
+  };
+
+  const filtered = connections.filter((c) => {
+    if (tagFilter && (c as any).tag !== tagFilter) return false;
+    return true;
+  });
 
   const groupMap: Record<number, Connection[]> = {};
-  connections.forEach((c) => {
+  filtered.forEach((c) => {
     const gid = c.group_id || 0;
     if (!groupMap[gid]) groupMap[gid] = [];
     groupMap[gid].push(c);
   });
 
-  const renderConnItem = (c: any, isDbConn: boolean) => (
+  const toggleSelect = (id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const renderConnItem = (c: any, isDbConn: boolean, indent = false) => (
     <div key={c.id} data-sidebar-item
       draggable
       onDragStart={() => setDragConn(c.id)}
@@ -109,13 +145,32 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
         : handleDblClick(c)}
       onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setConnMenu({ x: e.clientX, y: e.clientY, conn: c }); }}
       style={{
-        padding: '3px 10px 3px 28px', color: '#ccc', cursor: 'pointer',
+        padding: indent ? '3px 8px 3px 22px' : '3px 8px 3px 10px', color: '#ccc', cursor: 'pointer',
         display: 'flex', alignItems: 'center', gap: 4,
         opacity: dragConn === c.id ? 0.3 : 1,
       }}
-      onMouseEnter={(e) => e.currentTarget.style.background = '#2a2d2e'}
+      onMouseEnter={(e) => e.currentTarget.style.background = '#3b4261'}
       onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-      <span>{isDbConn ? '🗄' : '🟢'}</span> {c.name}
+      {multiMode && (
+        <span onClick={(e) => { e.stopPropagation(); toggleSelect(c.id); }}
+          style={{ flexShrink: 0, display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+          <span style={{
+            width: 13, height: 13, borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            border: '1px solid #3b4261', background: selectedIds.has(c.id) ? '#7aa2f7' : 'rgba(31,35,53,0.5)',
+          }}>
+            {selectedIds.has(c.id) && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#1a1b26" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+          </span>
+        </span>
+      )}
+      <span style={{ color: (c as any).color || '#ccc', fontSize: 12, lineHeight: 1 }}>●</span>
+      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
+      {(c as any).tag && (
+        <span onClick={(e) => { e.stopPropagation(); setTagFilter(tagFilter === (c as any).tag ? '' : (c as any).tag); }}
+          style={{
+            padding: '1px 4px', borderRadius: 4, fontSize: 9, background: tagFilter === (c as any).tag ? '#7aa2f740' : '#333',
+            color: tagFilter === (c as any).tag ? '#7aa2f7' : '#888', whiteSpace: 'nowrap', flexShrink: 0,
+          }}>{(c as any).tag}</span>
+      )}
     </div>
   );
 
@@ -134,34 +189,68 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
                 if (e.key === 'Enter') handleRenameGroup(g.id, e.currentTarget.value);
                 if (e.key === 'Escape') setEditingGroupId(null);
               }}
-              onBlur={() => setEditingGroupId(null)}
+              onBlur={(e) => { handleRenameGroup(g.id, e.currentTarget.value); }}
               autoFocus
-              style={{ flex: 1, padding: '2px 6px', background: '#3c3c3c', border: '1px solid #555', borderRadius: 3, color: '#fff', fontSize: 11 }} />
+              style={{ flex: 1, padding: '2px 6px', background: '#1f2335', border: '1px solid #3b4261', borderRadius: 4, color: '#fff', fontSize: 11 }} />
           </div>
         ) : (
           <div data-sidebar-item
             onClick={() => toggleGroup(g.id)}
             onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setGroupMenu({ x: e.clientX, y: e.clientY, group: g }); }}
-            style={{ padding: '4px 10px', color: '#4fc3f7', cursor: 'pointer' }}>
-            {collapsedGroups.has(g.id) ? '▶' : '▼'} 📁 {g.name}
+            style={{ padding: '4px 10px', color: '#ccc', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+            {collapsedGroups.has(g.id) ? <Icon name="chevron-right" size={12} /> : <Icon name="chevron-down" size={12} />}
+            <Icon name="folder" size={12} /> {g.name}
           </div>
         )}
-        {!collapsedGroups.has(g.id) && childConns.map((c) => renderConnItem(c, false))}
+        {!collapsedGroups.has(g.id) && childConns.map((c) => renderConnItem(c, false, true))}
       </div>
     );
   };
 
   return (
-    <div style={{ width: collapsed ? 0 : 210, flexShrink: 0, fontSize: 12, display: 'flex', flexDirection: 'column', background: '#252526', overflow: 'hidden', transition: 'width 0.15s' }}
+    <div style={{ width: collapsed ? 0 : width, flexShrink: 0, fontSize: 12, display: 'flex', flexDirection: 'column', background: '#1a1b26', borderRight: '1px solid #3b4261', overflow: 'hidden' }}
       onContextMenu={(e) => {
         if ((e.target as HTMLElement).closest('[data-sidebar-item]')) return;
         e.preventDefault();
         setBlankMenu({ x: e.clientX, y: e.clientY });
       }}>
-      <div style={{ padding: '8px 10px', color: '#fff', fontWeight: 600, borderBottom: '1px solid #383838', flexShrink: 0, whiteSpace: 'nowrap' }}>
-        {activeModule === 'ssh' ? '▣ SSH 主机' : activeModule === 'sftp' ? '◧ SFTP 文件' : activeModule === 'database' ? '🗄 数据库' : '⚙ 配置'}
+      <div style={{ height: 36, padding: '0 10px', color: '#c0caf5', fontWeight: 600, borderBottom: '1px solid #3b4261', flexShrink: 0, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6, boxSizing: 'border-box' }}>
+        {activeModule === 'ssh' ? <Icon name="terminal" size={14} /> : activeModule === 'sftp' ? <Icon name="folder-open" size={14} /> : activeModule === 'database' ? <Icon name="database" size={14} /> : <Icon name="settings" size={14} />}
+        <span style={{ flex: 1 }}>{activeModule === 'ssh' ? t('sidebar_ssh') : activeModule === 'sftp' ? t('sidebar_sftp') : activeModule === 'database' ? t('sidebar_database') : t('activity_config')}</span>
+        {!collapsed && (
+          <span title={t("multi_mode")} onClick={() => { setMultiMode(!multiMode); setSelectedIds(new Set()); }}
+            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+            <span style={{
+              width: 13, height: 13, borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              border: '1px solid #3b4261', background: multiMode ? '#7aa2f7' : 'rgba(31,35,53,0.5)', flexShrink: 0,
+            }}>
+              {multiMode && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#1a1b26" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+            </span>
+          </span>
+        )}
       </div>
       {!collapsed && (<>
+        {tagFilter && (
+          <div style={{ padding: '0 8px 4px', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ fontSize: 10, color: '#7aa2f7', background: '#7aa2f720', padding: '1px 6px', borderRadius: 4 }}>
+              {t("batch_label")} {tagFilter}
+              <span onClick={() => setTagFilter('')} style={{ cursor: 'pointer', marginLeft: 4, color: '#888', display: 'flex', alignItems: 'center' }}><Icon name="x" size={10} /></span>
+            </span>
+          </div>
+        )}
+        {selectedIds.size > 0 && (
+          <div style={{ padding: '4px 8px', background: '#7aa2f720', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+            <span style={{ color: '#7aa2f7', fontSize: 11 }}>{t("multi_selected")} {selectedIds.size} {t("multi_items")}</span>
+            <CustomSelect value="-1" onChange={(v) => { const n = Number(v); if (n >= 0) handleBatchMove(n); }}
+              style={{ background: '#1f2335', border: '1px solid #3b4261', color: '#ccc', borderRadius: 4, padding: '2px 4px', fontSize: 10 }}>
+              <option value={-1}>{t("multi_move")}</option>
+              <option value={0}>{t("conn_ungrouped")}</option>
+              {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+            </CustomSelect>
+            <button onClick={handleBatchDelete} style={{ background: '#d32f2f', border: 'none', color: '#fff', borderRadius: 4, padding: '2px 8px', cursor: 'pointer', fontSize: 10 }}>{t("multi_delete")}</button>
+            <button onClick={() => setSelectedIds(new Set())} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: 10, marginLeft: 'auto' }}>{t("multi_cancel")}</button>
+          </div>
+        )}
         <div style={{ overflow: 'auto', flex: 1 }}>
           {(isSsh || activeModule === 'sftp') && (
             <>
@@ -172,9 +261,9 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
           {isDb && dbConnections.map((c: DbConnection) => renderConnItem(c, true))}
         </div>
         {(isSsh || isDb) && (
-          <div style={{ borderTop: '1px solid #383838', padding: '4px 8px', marginTop: 'auto' }}>
+          <div style={{ borderTop: '1px solid #3b4261', padding: '4px 8px', marginTop: 'auto' }}>
             <div onClick={() => { if (isSsh) { setEditingConn(null); setShowConnForm(true); } else { setEditingDbConn(null); setShowDbForm(true); } }}
-            style={{ padding: '4px 8px', color: '#4fc3f7', cursor: 'pointer', fontSize: 11 }}>+ 新建连接</div>
+            style={{ padding: '4px 8px', color: '#ccc', cursor: 'pointer', fontSize: 11 }}>{t("sidebar_new_conn")}</div>
           {showGroupInput ? (
             <div style={{ display: 'flex', gap: 4, padding: '4px 0' }}>
               <input value={newGroupName} onChange={(e) => setNewGroupName(e.target.value)}
@@ -183,16 +272,16 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
                   if (e.key === 'Escape') { setShowGroupInput(false); setNewGroupName(''); }
                 }}
                 onBlur={() => { setShowGroupInput(false); setNewGroupName(''); }}
-                placeholder="分组名称" autoFocus
-                style={{ flex: 1, padding: '2px 6px', background: '#3c3c3c', border: '1px solid #555', borderRadius: 3, color: '#fff', fontSize: 10 }} />
+                placeholder={t("sidebar_group_name")} autoFocus
+                style={{ flex: 1, padding: '2px 6px', background: '#1f2335', border: '1px solid #3b4261', borderRadius: 4, color: '#fff', fontSize: 10 }} />
               <button onClick={() => handleCreateGroup(newGroupName)}
-                style={{ background: '#007acc', border: 'none', color: '#fff', borderRadius: 3, padding: '2px 6px', cursor: 'pointer', fontSize: 10 }}>创建</button>
+                style={{ background: '#7aa2f7', border: 'none', color: '#1a1b26', fontWeight: 600, borderRadius: 4, padding: '2px 6px', cursor: 'pointer', fontSize: 10 }}>{t("config_create")}</button>
               <button onClick={() => { setShowGroupInput(false); setNewGroupName(''); }}
-                style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: 10, padding: '2px 4px' }}>✕</button>
+                style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', padding: '2px 4px', display: 'flex', alignItems: 'center' }}><Icon name="x" size={10} /></button>
             </div>
           ) : (
             <div onClick={() => setShowGroupInput(true)}
-              style={{ padding: '4px 8px', color: '#888', cursor: 'pointer', fontSize: 11 }}>+ 新建分组</div>
+              style={{ padding: '4px 8px', color: '#888', cursor: 'pointer', fontSize: 11 }}>{t("sidebar_new_group")}</div>
           )}
         </div>
       )}
@@ -201,12 +290,12 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
       {blankMenu && (
         <ContextMenu x={blankMenu.x} y={blankMenu.y} onClose={() => setBlankMenu(null)}
           items={[
-            { label: '新建连接', action: () => {
+            { label: t('sidebar_new_conn'), action: () => {
               if (isDb) { setEditingDbConn(null); setShowDbForm(true); }
               else { setEditingConn(null); setShowConnForm(true); }
               setBlankMenu(null);
             }},
-            { label: '新建分组', action: () => { setShowGroupInput(true); setBlankMenu(null); } },
+            { label: t('sidebar_new_group'), action: () => { setShowGroupInput(true); setBlankMenu(null); } },
           ]} />
       )}
 
@@ -214,13 +303,13 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
       {groupMenu && (
         <ContextMenu x={groupMenu.x} y={groupMenu.y} onClose={() => setGroupMenu(null)}
           items={[
-            { label: '在此分组新建连接', action: () => {
+            { label: t('sidebar_new_conn_in_group'), action: () => {
               if (isDb) { setEditingDbConn({ group_id: groupMenu.group.id }); setShowDbForm(true); }
               else { setEditingConn({ group_id: groupMenu.group.id }); setShowConnForm(true); }
               setGroupMenu(null);
             }},
-            { label: '重命名分组', action: () => { setEditingGroupId(groupMenu.group.id); setGroupMenu(null); } },
-            { label: '删除分组', action: () => handleDeleteGroup(groupMenu.group.id) },
+            { label: t('menu_rename_group'), action: () => { setEditingGroupId(groupMenu.group.id); setGroupMenu(null); } },
+            { label: t('menu_delete_group'), action: () => handleDeleteGroup(groupMenu.group.id) },
           ]} />
       )}
 
@@ -228,21 +317,27 @@ export default function Sidebar({ collapsed }: { collapsed: boolean }) {
       {connMenu && (() => {
         const isDbConn = 'database_name' in connMenu.conn;
         const moveItems = groups.map((g) => ({
-          label: `→ ${g.name}`,
+          label: `  ${g.name}`,
           action: () => handleMoveConn(connMenu.conn.id, g.id),
         }));
         return (
           <ContextMenu x={connMenu.x} y={connMenu.y} onClose={() => setConnMenu(null)}
             items={[
-              { label: '编辑', action: () => {
+              { label: t('menu_edit'), action: () => {
                 if (isDbConn) { setEditingDbConn(connMenu.conn); setShowDbForm(true); }
                 else { setEditingConn(connMenu.conn); setShowConnForm(true); }
                 setConnMenu(null);
               }},
+              ...(!isDbConn ? [{ label: t('menu_copy'), action: () => {
+                const c = connMenu.conn;
+                setEditingConn({ ...c, id: 0, name: c.name + ' (1)' });
+                setShowConnForm(true);
+                setConnMenu(null);
+              }}] : []),
               ...(isDbConn ? [] : [
-                ...(groups.length > 0 ? [{ label: '移动到分组', action: () => {} }, ...moveItems] : []),
+                ...(groups.length > 0 ? [{ label: t('menu_move_to'), action: () => {} }, ...moveItems] : []),
               ]),
-              { label: '删除', action: () => {
+              { label: t('multi_delete'), action: () => {
                 if (isDbConn) handleDeleteDbConn(connMenu.conn.id);
                 else handleDeleteConn(connMenu.conn.id);
               }},

@@ -13,6 +13,16 @@ import (
 	"github.com/xf/wshell/store"
 )
 
+func friendlyErr(err error) string {
+	msg := err.Error()
+	if strings.Contains(msg, "unable to authenticate") { return "认证失败，请检查用户名和密码" }
+	if strings.Contains(msg, "connection refused") { return "连接被拒绝，请检查主机地址和端口" }
+	if strings.Contains(msg, "no route to host") { return "无法访问主机，请检查网络" }
+	if strings.Contains(msg, "timeout") { return "连接超时，请检查主机可达性" }
+	if strings.Contains(msg, "handshake failed") { return "SSH 握手失败，请检查主机配置" }
+	return msg
+}
+
 type SftpHandler struct {
 	Store     *store.Store
 	Pool      *sshmgr.Pool
@@ -66,7 +76,7 @@ func (h *SftpHandler) Upload(w http.ResponseWriter, r *http.Request) {
 
 	sshClient, err := h.Pool.AcquireOrCreate(connID, h.makeSSHFactory(connInfo))
 	if err != nil {
-		http.Error(w, fmt.Sprintf(`{"error":"ssh: %s"}`, err.Error()), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, friendlyErr(err)), http.StatusInternalServerError)
 		return
 	}
 	defer h.Pool.Release(connID)
@@ -102,7 +112,7 @@ func (h *SftpHandler) Download(w http.ResponseWriter, r *http.Request) {
 
 	sshClient, err := h.Pool.AcquireOrCreate(connID, h.makeSSHFactory(connInfo))
 	if err != nil {
-		http.Error(w, fmt.Sprintf(`{"error":"ssh: %s"}`, err.Error()), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, friendlyErr(err)), http.StatusInternalServerError)
 		return
 	}
 	defer h.Pool.Release(connID)

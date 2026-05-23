@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import Icon from './Icon';
 
 interface Props {
   title: string;
@@ -21,20 +22,20 @@ export default function Modal({ title, onClose, children, width = 600, height = 
   return createPortal(
     <div style={{
       position: 'fixed', inset: 0, zIndex: 10000,
-      background: 'rgba(0,0,0,0.6)', display: 'flex',
-      alignItems: 'center', justifyContent: 'center',
+      background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
     }} onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div style={{
-        background: '#1e1e1e', borderRadius: 8, width, height,
+        background: 'rgba(26,27,38,0.88)', borderRadius: 12, width, height,
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px #3b4261',
       }} onClick={(e) => e.stopPropagation()}>
         <div style={{
-          padding: '8px 16px', background: '#333', display: 'flex',
-          justifyContent: 'space-between', alignItems: 'center', fontSize: 13,
+          padding: '16px 24px 8px', display: 'flex',
+          justifyContent: 'space-between', alignItems: 'center', fontSize: 16,
         }}>
-          <span style={{ color: '#ccc' }}>{title}</span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: 16 }}>✕</button>
+          <span style={{ color: '#7aa2f7', fontWeight: 600 }}>{title}</span>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#565f89', cursor: 'pointer', display: 'flex', alignItems: 'center' }}><Icon name="x" size={18} /></button>
         </div>
         <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
           {children}

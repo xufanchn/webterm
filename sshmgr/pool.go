@@ -16,18 +16,15 @@ func NewPool() *Pool {
 	return &Pool{entries: make(map[int64]*poolEntry)}
 }
 
-// Acquire returns an existing alive client and increments its ref count.
+// Acquire returns an existing client and increments its ref count.
+// Does NOT probe liveness (keepalive) to avoid false-positive disconnects.
 func (p *Pool) Acquire(connID int64) (*Client, bool) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	e, ok := p.entries[connID]
-	if ok && e.client.IsAlive() {
+	if ok && e.client.RawConn() != nil {
 		e.refCount++
 		return e.client, true
-	}
-	if ok {
-		e.client.Close()
-		delete(p.entries, connID)
 	}
 	return nil, false
 }
@@ -44,13 +41,12 @@ func (p *Pool) Add(connID int64, c *Client) {
 func (p *Pool) AcquireOrCreate(connID int64, factory func() (*Client, error)) (*Client, error) {
 	p.mu.Lock()
 	e, ok := p.entries[connID]
-	if ok && e.client.IsAlive() {
+	if ok && e.client.RawConn() != nil {
 		e.refCount++
 		p.mu.Unlock()
 		return e.client, nil
 	}
 	if ok {
-		e.client.Close()
 		delete(p.entries, connID)
 	}
 	p.mu.Unlock()
@@ -63,7 +59,7 @@ func (p *Pool) AcquireOrCreate(connID int64, factory func() (*Client, error)) (*
 	p.mu.Lock()
 	// Double-check: another goroutine might have created one while we were connecting
 	e, ok = p.entries[connID]
-	if ok && e.client.IsAlive() {
+	if ok && e.client.RawConn() != nil {
 		client.Close()
 		e.refCount++
 		p.mu.Unlock()
@@ -73,6 +69,25 @@ func (p *Pool) AcquireOrCreate(connID int64, factory func() (*Client, error)) (*
 	p.mu.Unlock()
 	return client, nil
 }
+// SessionCount returns the current number of active sessions (ref count) for a connId.
+func (p *Pool) SessionCount(connID int64) int {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	e, ok := p.entries[connID]
+	if !ok {
+		return 0
+	}
+	return e.refCount
+}
+
+// Remove deletes the pool entry without closing the client (used on credential update).
+// Active sessions keep using the old connection; new sessions will re-authenticate.
+func (p *Pool) Remove(connID int64) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	delete(p.entries, connID)
+}
+
 func (p *Pool) Release(connID int64) {
 	p.mu.Lock()
 	defer p.mu.Unlock()

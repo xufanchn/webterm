@@ -1,11 +1,14 @@
-import { useState, useEffect, useLayoutEffect, useMemo } from 'react';
+import { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useLayoutStore } from '../../store/layout';
 import type { Tab } from '../../store/layout';
 import { useConnectionStore } from '../../store/connections';
 import TabBar from './TabBar';
 import TerminalTab from '../terminal/TerminalTab';
 import QueryEditor from '../database/QueryEditor';
-
+import { t } from '../../i18n';
+import MatrixRain from '../common/MatrixRain';
+import { useAuthStore } from '../../store/auth';
+import { apiPost } from '../../api/client';
 type Direction = 'horizontal' | 'vertical';
 
 // Tree node for layout computation only (NOT used for rendering)
@@ -104,7 +107,8 @@ function doSplit(targetId: string, direction: Direction, newId?: string) {
 
 // Remove a pane from the layout
 function doRemovePane(paneId: string) {
-  if (paneId === 'root') return;
+  // Only refuse to remove root when it's the sole pane
+  if (paneId === 'root' && layoutRoot.type === 'leaf') return;
 
   function removeFrom(node: LayoutNode): LayoutNode | null {
     if (node.type === 'leaf') return node.id === paneId ? null : node;
@@ -232,7 +236,7 @@ let pendingSplitTabs: { tabs: Tab[]; activeTabId: string | null } | null = null;
 
 // Leaf pane component — always mounted, just hidden when not in layout
 function LeafPane({ nodeId, onActiveSshChange, isInSplit }: {
-  nodeId: string; onActiveSshChange?: (connId: number, tabId: string) => void; isInSplit: boolean;
+  nodeId: string; onActiveSshChange?: (connId: number | null, tabId: string | null) => void; isInSplit: boolean;
 }) {
   const [tabs, setTabs] = useState<Tab[]>(() => {
     return paneTabsCache.get(nodeId) || [];
@@ -252,6 +256,7 @@ function LeafPane({ nodeId, onActiveSshChange, isInSplit }: {
   const drainTabQueue = useLayoutStore((s) => s.drainTabQueue);
   const focusedPaneId = useLayoutStore((s) => s.focusedPaneId);
   const setFocusedPane = useLayoutStore((s) => s.setFocusedPane);
+  const setStatusConn = useLayoutStore((s) => s.setStatusConn);
   const drainRemovedTabs = useLayoutStore((s) => s.drainRemovedTabs);
   const notifyTabMoved = useLayoutStore((s) => s.notifyTabMoved);
   const connections = useConnectionStore((s) => s.connections);
@@ -282,7 +287,13 @@ function LeafPane({ nodeId, onActiveSshChange, isInSplit }: {
   const closeTab = (id: string) => {
     setTabs((prev) => {
       const next = prev.filter((t) => t.id !== id);
-      if (next.length === 0 && isInSplit) { setTimeout(() => doRemovePane(nodeId), 0); return next; }
+      if (next.length === 0 && isInSplit) {
+          setTimeout(() => {
+            doRemovePane(nodeId);
+            setFocusedPane(layoutRoot.type === 'leaf' ? layoutRoot.id : 'root');
+          }, 0);
+          return next;
+        }
       if (activeTabId === id) setActiveTabId(next.length > 0 ? next[next.length - 1].id : null);
       return next;
     });
@@ -302,26 +313,80 @@ function LeafPane({ nodeId, onActiveSshChange, isInSplit }: {
     if (resultId) setTimeout(() => setFocusedPane(resultId), 100);
   };
   const handleClosePane = () => { if (isInSplit) doRemovePane(nodeId); };
+  const handleQuadSplit = () => {
+    const activeTab = tabs.find((t) => t.id === activeTabId);
+    if (!activeTab?.connId) return;
+    const ts = Date.now();
+    const vId1 = `pane-${ts}-1`;
+    const vId2 = `pane-${ts}-2`;
+    const tab1: Tab = { ...activeTab, id: `${activeTab.type}-${activeTab.connId}-${ts}-1` };
+    const tab2: Tab = { ...activeTab, id: `${activeTab.type}-${activeTab.connId}-${ts}-2` };
+    paneTabsCache.set(vId1, [tab1]);
+    paneTabsCache.set(vId2, [tab2]);
+    paneActiveCache.set(vId1, tab1.id);
+    paneActiveCache.set(vId2, tab2.id);
+    const horizId = doSplit(nodeId, 'horizontal');
+    if (!horizId) return;
+    pendingSplitTabs = { tabs: [tab1], activeTabId: tab1.id };
+    setTimeout(() => {
+      doSplit(nodeId, 'vertical', vId1);
+      pendingSplitTabs = { tabs: [tab2], activeTabId: tab2.id };
+      doSplit(horizId, 'vertical', vId2);
+    }, 0);
+  };
 
   const activeTab = tabs.find((t) => t.id === activeTabId);
-  useEffect(() => { if (activeTab?.connId) onActiveSshChange?.(activeTab.connId, activeTab.id); }, [activeTab?.connId, activeTab?.id, onActiveSshChange]);
+  // Helper: check if a connId still has any active tab across all panes
+  const connHasTabs = (cId: number) => {
+    for (const t of paneTabsCache.values()) {
+      if (t.some((tab) => tab.connId === cId)) return true;
+    }
+    return false;
+  };
+
+  const prevConnRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (activeTab?.connId) {
+      onActiveSshChange?.(activeTab.connId, activeTab.id);
+      const conn = connections.find((c) => c.id === activeTab.connId);
+      if (conn) setStatusConn({ name: conn.name, host: conn.host, connected: true });
+      prevConnRef.current = activeTab.connId;
+    } else if (tabs.length === 0 && !isInSplit) {
+      // Root pane empty — check if any pane still has tabs
+      for (const t of paneTabsCache.values()) { if (t.length > 0) return; }
+      onActiveSshChange?.(null, null);
+      prevConnRef.current = null;
+    } else if (prevConnRef.current != null && !connHasTabs(prevConnRef.current)) {
+      // Last tab for this connId was closed — notify SFTP to release this connId
+      useLayoutStore.getState().pruneSftpConn(prevConnRef.current);
+      onActiveSshChange?.(-prevConnRef.current, null);
+      prevConnRef.current = null;
+    }
+  }, [activeTab?.connId, activeTab?.id, tabs.length, isInSplit, onActiveSshChange]);
   // Also sync SFTP when this pane gains focus
   useEffect(() => {
-    if (focusedPaneId === nodeId && activeTab?.connId) onActiveSshChange?.(activeTab.connId, activeTab.id);
-  }, [focusedPaneId, nodeId, activeTab?.connId, activeTab?.id, onActiveSshChange]);
+    if (focusedPaneId === nodeId && activeTab?.connId) {
+      onActiveSshChange?.(activeTab.connId, activeTab.id);
+      const conn = connections.find((c) => c.id === activeTab.connId);
+      if (conn) setStatusConn({ name: conn.name, host: conn.host, connected: true });
+    }
+  }, [focusedPaneId, nodeId, activeTab?.connId, activeTab?.id, onActiveSshChange, connections, setStatusConn]);
 
   return (
     <div onClick={() => setFocusedPane(nodeId)} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0, minHeight: 0 }}>
-      <TabBar tabs={tabs} activeTabId={activeTabId} onSelectTab={setActiveTabId} onCloseTab={closeTab} filterType="ssh"
-        connections={connections} onAddTab={handleAddTab} onReceiveTab={handleReceiveTab} />
+      {tabs.length > 0 && (
+        <TabBar tabs={tabs} activeTabId={activeTabId} onSelectTab={setActiveTabId} onCloseTab={closeTab} filterType="ssh"
+          connections={connections} onAddTab={handleAddTab} onReceiveTab={handleReceiveTab} />
+      )}
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         {tabs.map((tab) => (
           <div key={tab.id} style={{ flex: 1, display: tab.id === activeTabId ? 'flex' : 'none', overflow: 'hidden' }}>
             {tab.type === 'ssh' && tab.connId && (
               <TerminalTab connId={tab.connId} myTabId={tab.id} paneTabs={tabs} extraMenuItems={[
-                { label: '横向分屏', action: () => handleSplit('horizontal') },
-                { label: '纵向分屏', action: () => handleSplit('vertical') },
-                ...(isInSplit ? [{ label: '关闭分屏', action: handleClosePane }] : []),
+                { label: t('term_split_h'), action: () => handleSplit('horizontal') },
+                { label: t('term_split_v'), action: () => handleSplit('vertical') },
+                { label: t('term_split_quad'), action: handleQuadSplit },
+                ...(isInSplit ? [{ label: t('term_close_pane'), action: handleClosePane }] : []),
               ]} />
             )}
             {tab.type === 'database' && tab.connId && <QueryEditor connId={tab.connId} />}
@@ -334,7 +399,7 @@ function LeafPane({ nodeId, onActiveSshChange, isInSplit }: {
 }
 
 // Top-level grid container — ALL panes are direct children with stable keys
-function GridContainer({ onActiveSshChange }: { onActiveSshChange?: (connId: number, tabId: string) => void }) {
+function GridContainer({ onActiveSshChange }: { onActiveSshChange?: (connId: number | null, tabId: string | null) => void }) {
   const [tick, forceUpdate] = useState(0);
 
   useEffect(() => subscribe(() => forceUpdate((n) => n + 1)), []);
@@ -362,7 +427,7 @@ function GridContainer({ onActiveSshChange }: { onActiveSshChange?: (connId: num
       gridTemplateRows: `repeat(${rows}, 1fr)`,
       gridTemplateAreas,
       flex: 1, overflow: 'hidden', minWidth: 0, minHeight: 0,
-      gap: 1, background: '#555',
+      gap: 1, background: '#3b4261',
     }}>
       {paneIds.map((id) => {
         const cell = cellMap.get(id);
@@ -380,17 +445,155 @@ function GridContainer({ onActiveSshChange }: { onActiveSshChange?: (connId: num
   );
 }
 
+const banner = [
+  ' _    _  _____  _____  _____  _____  _____  __  __ ',
+  '| |  | ||  ___||  __ \\|_   _||  ___||  __ \\|  \\/  |',
+  '| |  | || |__  | |__) | | |  | |__  | |__) | \\  / |',
+  '| |/\\| ||  __| |  _  /  | |  |  __| |  _  /| |\\/| |',
+  '\\  /\\  /| |___ | | \\ \\  | |  | |___ | | \\ \\| |  | |',
+  ' \\/  \\/ |_____||_|  \\_\\ \\_/  |_____||_|  \\_\\|_|  |_|',
+];
+
 function SessionWelcome() {
+  const [tick, setTick] = useState(0);
+  const token = useAuthStore((s) => s.token);
+  const setAuth = useAuthStore((s) => s.setAuth);
+  const [step, setStep] = useState<'user' | 'pass' | 'done'>('user');
+  const [username, setUsername] = useState(localStorage.getItem('webterm-rm-user') || '');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [lines, setLines] = useState<string[]>([]);
+  const [remember, setRemember] = useState(!!localStorage.getItem('webterm-rm-user'));
+  const inputRef = useRef<HTMLInputElement>(null);
+  const savedPwd = localStorage.getItem('webterm-rm-pwd') || '';
+
+  const append = (text: string) => setLines((l) => [...l, text]);
+
+  const handleLogin = async (user: string, pass: string) => {
+    setError('');
+    try {
+      const data = await apiPost('/api/auth/login', { username: user, password: pass });
+      if (remember) {
+        localStorage.setItem('webterm-rm-user', user);
+        localStorage.setItem('webterm-rm-pwd', pass);
+      } else {
+        localStorage.removeItem('webterm-rm-user');
+        localStorage.removeItem('webterm-rm-pwd');
+      }
+      setStep('done');
+      setLines([
+        `<span style="color:#7aa2f7">login:</span> ${user}`,
+        `<span style="color:#7aa2f7">password:</span>`,
+        `<span style="color:#9ece6a">Welcome, ${data.user.username}!</span>`,
+      ]);
+      setTimeout(() => {
+        // Clear all connection state before setting new auth
+        useConnectionStore.getState().connections.length > 0 &&
+          useConnectionStore.setState({ connections: [], groups: [], dbConnections: [] });
+        setAuth(data.user, data.token);
+      }, 1000);
+    } catch {
+      setStep('done');
+      setLines([
+        `<span style="color:#7aa2f7">login:</span> ${user}`,
+        `<span style="color:#7aa2f7">password:</span>`,
+        `<span style="color:#f7768e">${t('login_error')}</span>`,
+      ]);
+      setTimeout(() => { setLines([]); setStep('user'); setUsername(''); setPassword(''); }, 1000);
+    }
+  };
+
+  const onKey = (e: React.KeyboardEvent) => {
+    if (e.key !== 'Enter' && e.key !== 'Tab') return;
+    e.preventDefault();
+    if (step === 'user') {
+      const u = username.trim();
+      if (!u) return;
+      append(`<span style="color:#7aa2f7">login:</span> ${u}`);
+      if (remember && savedPwd && u === localStorage.getItem('webterm-rm-user')) {
+        handleLogin(u, savedPwd);
+        return;
+      }
+      setStep('pass');
+    } else {
+      handleLogin(username.trim(), password);
+    }
+  };
+
+  // Focus input when step changes
+  useEffect(() => { inputRef.current?.focus(); }, [step]);
+
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', flexDirection: 'column', gap: 8 }}>
-      <div style={{ fontSize: 48, opacity: 0.15 }}>▣</div>
-      <div style={{ color: '#888', fontSize: 14 }}>没有打开的会话</div>
-      <div style={{ color: '#666', fontSize: 11 }}>双击左侧面板中的连接开始，或右键此处分屏</div>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', flexDirection: 'column', background: '#1a1b26', position: 'relative', overflow: 'hidden' }}>
+      <MatrixRain key={tick} fontSize={22} columns={24} opacity={0.5} />
+      <div onClick={() => setTick((n) => n + 1)}
+        style={{ position: 'absolute', top: '60%', left: '50%', transform: 'translate(-50%, -50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, cursor: 'pointer', zIndex: 1, fontFamily: '"JetBrains Maple Mono", "JetBrains Mono", "Courier New", monospace' }}>
+          <pre style={{
+            margin: 0, fontSize: 17, lineHeight: 1.25, fontWeight: 700,
+            background: 'linear-gradient(180deg, #7aa2f7 0%, #bb9af7 40%, #7dcfff 100%)',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+            filter: 'drop-shadow(0 0 10px #7aa2f755)',
+          }}>
+            {banner.join('\n')}
+          </pre>
+          <div style={{ color: '#565f89', fontSize: 14, letterSpacing: 1 }}>{t('app_slogan')}</div>
+        </div>
+
+        {!token && (
+          <div onClick={() => inputRef.current?.focus()}
+            style={{
+              position: 'absolute', top: '70%', left: '50%', transform: 'translateX(-50%)',
+              fontFamily: '"JetBrains Maple Mono", "JetBrains Mono", "Courier New", monospace',
+              fontSize: 14, color: '#c0caf5', width: 320, zIndex: 1,
+              padding: '16px 20px', cursor: 'text',
+            }}>
+            {lines.map((l, i) => (
+              <div key={i} style={{ lineHeight: 1.8 }} dangerouslySetInnerHTML={{ __html: l }} />
+            ))}
+            {error && <div style={{ color: '#f7768e', lineHeight: 1.8 }}>{error}</div>}
+            {step !== 'done' && (
+            <div style={{ display: 'flex', alignItems: 'center', lineHeight: 1.8 }}>
+              <span style={{ color: '#7aa2f7', marginRight: 8 }}>
+                {step === 'user' ? 'login:' : 'password:'}
+              </span>
+              <input ref={inputRef}
+                className="login-input"
+                type={step === 'user' ? 'text' : 'password'}
+                value={step === 'user' ? username : password}
+                onChange={(e) => step === 'user' ? setUsername(e.target.value) : setPassword(e.target.value)}
+                onKeyDown={onKey}
+                autoFocus
+                style={{
+                  flex: 1, background: 'none', border: 'none', color: '#c0caf5',
+                  fontSize: 14, outline: 'none', fontFamily: 'inherit',
+                  caretColor: '#7aa2f7', caretShape: 'block',
+                }} />
+            </div>
+            )}
+            {step !== 'done' && (
+            <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
+              onClick={() => setRemember(!remember)}>
+              <span style={{
+                width: 13, height: 13, borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                border: '1px solid #3b4261', background: remember ? '#7aa2f7' : 'rgba(31,35,53,0.5)', flexShrink: 0,
+              }}>
+                {remember && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#1a1b26" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+              </span>
+              <span style={{ color: '#565f89', fontSize: 12, userSelect: 'none' }}>
+                remember
+              </span>
+            </div>
+            )}
+          </div>
+        )}
     </div>
   );
 }
 
 
-export default function SplitPane({ onActiveSshChange }: { onActiveSshChange?: (connId: number, tabId: string) => void }) {
+// Expose for SFTP panel to check active connIds
+(window as any).__paneTabsCache = paneTabsCache;
+
+export default function SplitPane({ onActiveSshChange }: { onActiveSshChange?: (connId: number | null, tabId: string | null) => void }) {
   return <GridContainer onActiveSshChange={onActiveSshChange} />;
 }

@@ -7,23 +7,32 @@ import (
 
 	"github.com/xf/wshell/auth"
 	"github.com/xf/wshell/crypto"
+	"github.com/xf/wshell/sshmgr"
 	"github.com/xf/wshell/store"
 )
 
 type ConnectionHandler struct {
 	Store     *store.Store
+	Pool      *sshmgr.Pool
 	AESCipher *crypto.AESCipher
 }
 
 func (h *ConnectionHandler) List(w http.ResponseWriter, r *http.Request) {
 	groupID, _ := strconv.ParseInt(r.URL.Query().Get("group_id"), 10, 64)
-	conns, err := h.Store.ListConnections(groupID)
+	user := auth.GetUser(r)
+	conns, err := h.Store.ListConnections(groupID, user.UserID)
 	if err != nil {
 		http.Error(w, `{"error":"internal error"}`, http.StatusInternalServerError)
 		return
 	}
 	if conns == nil {
 		conns = []store.Connection{}
+	}
+	for i := range conns {
+		if conns[i].PasswordEncrypted != "" {
+			pwd, err := h.AESCipher.Decrypt(conns[i].PasswordEncrypted)
+			if err == nil { conns[i].Password = pwd }
+		}
 	}
 	json.NewEncoder(w).Encode(conns)
 }
@@ -170,6 +179,8 @@ func (h *ConnectionHandler) Update(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, `{"error":"update failed"}`, http.StatusInternalServerError)
 		return
 	}
+	// Invalidate cached SSH client so next connection uses updated credentials
+	if h.Pool != nil { h.Pool.Remove(id) }
 	w.Write([]byte(`{"status":"ok"}`))
 }
 

@@ -1,7 +1,13 @@
+import { useAuthStore } from '../store/auth';
+
 const BASE = '';
 
 function getToken(): string | null {
   return localStorage.getItem('token');
+}
+
+function clearAuth() {
+  useAuthStore.getState().logout();
 }
 
 export async function apiFetch(path: string, options: RequestInit = {}): Promise<Response> {
@@ -14,9 +20,8 @@ export async function apiFetch(path: string, options: RequestInit = {}): Promise
     headers['Authorization'] = `Bearer ${token}`;
   }
   const resp = await fetch(`${BASE}${path}`, { ...options, headers });
-  if (resp.status === 401) {
-    localStorage.removeItem('token');
-    window.location.href = '/login';
+  if (resp.status === 401 && token) {
+    clearAuth();
   }
   return resp;
 }

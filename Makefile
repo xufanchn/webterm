@@ -2,7 +2,7 @@
 
 build:
 	cd ui && npm run build
-	go build -o wshell .
+	go build -o webterm .
 
 dev:
 	go run . -config config.yaml

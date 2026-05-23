@@ -1,6 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { t } from '../../i18n';
+import React, { useState, useRef, useEffect } from 'react';
 import { useLayoutStore } from '../../store/layout';
 import type { Tab, BroadcastScope } from '../../store/layout';
+import Icon from '../common/Icon';
 
 interface Props {
   tabs: Tab[];
@@ -14,9 +16,9 @@ interface Props {
 }
 
 const scopeLabels: Record<BroadcastScope, string> = {
-  off: '⚟ 广播',
-  pane: '⚟ 当前分屏',
-  all: '⚟ 所有标签',
+  off: t('broadcast_off'),
+  pane: t('broadcast_pane'),
+  all: t('broadcast_all'),
 };
 
 export default function TabBar({ tabs, activeTabId, onSelectTab, onCloseTab, onAddTab, onReceiveTab, filterType, connections }: Props) {
@@ -43,37 +45,48 @@ export default function TabBar({ tabs, activeTabId, onSelectTab, onCloseTab, onA
   };
 
   return (
-    <div style={{ display: 'flex', background: '#2d2d2d', height: 30, alignItems: 'center', padding: '0 4px', gap: 2, flexShrink: 0, overflow: 'visible' }}>
-      {filtered.map((tab) => (
-        <div key={tab.id}
-          draggable
-          onDragStart={(e) => {
-            e.dataTransfer.setData('text/plain', JSON.stringify({ id: tab.id, title: tab.title, type: tab.type, connId: tab.connId }));
-            e.dataTransfer.effectAllowed = 'move';
-          }}
-          onClick={() => onSelectTab(tab.id)}
-          style={{
-            padding: '2px 12px', fontSize: 11, borderRadius: '2px 2px 0 0', cursor: 'pointer',
-            background: activeTabId === tab.id ? '#1e1e1e' : 'transparent',
-            color: activeTabId === tab.id ? '#4fc3f7' : '#999',
-            borderBottom: activeTabId === tab.id ? '2px solid #4fc3f7' : 'none',
-            display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap',
-          }}>
-          {tab.title}
-          <span onClick={(e) => { e.stopPropagation(); onCloseTab(tab.id); }}
-            style={{ fontSize: 10, color: '#888', cursor: 'pointer' }}>✕</span>
-        </div>
+    <div style={{ display: 'flex', background: '#1a1b26', height: 36, alignItems: 'center', padding: '0 6px', gap: 2, flexShrink: 0, overflow: 'visible', borderBottom: '1px solid #3b4261' }}>
+      {filtered.map((tab, idx) => (
+        <React.Fragment key={tab.id}>
+          {idx > 0 && (
+            <span style={{
+              width: 1, height: 16, flexShrink: 0, alignSelf: 'center',
+              background: (activeTabId !== tab.id && activeTabId !== filtered[idx-1]?.id) ? '#3b4261' : 'transparent',
+            }} />
+          )}
+          <div
+            draggable
+            onDragStart={(e) => {
+              e.dataTransfer.setData('text/plain', JSON.stringify({ id: tab.id, title: tab.title, type: tab.type, connId: tab.connId }));
+              e.dataTransfer.effectAllowed = 'move';
+            }}
+            onClick={() => onSelectTab(tab.id)}
+            style={{
+              padding: '4px 14px', fontSize: 12, borderRadius: 5, cursor: 'pointer',
+              background: activeTabId === tab.id ? '#7aa2f7' : 'transparent',
+              color: activeTabId === tab.id ? '#1a1b26' : '#787e99',
+              display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap',
+              height: 28, marginBottom: 0,
+              transition: 'background 0.1s',
+            }}>
+            {tab.title}
+            <span onClick={(e) => { e.stopPropagation(); onCloseTab(tab.id); }}
+              style={{ color: '#565f89', cursor: 'pointer', borderRadius: '50%', width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#3b4261'; e.currentTarget.style.color = '#1a1b26'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#565f89'; }}><Icon name="x" size={11} /></span>
+          </div>
+        </React.Fragment>
       ))}
       {/* Add tab button with connection picker */}
       <div style={{ position: 'relative', flexShrink: 0 }}>
-        <span onClick={() => setShowPicker(!showPicker)} title="新建标签"
-          style={{ padding: '2px 6px', cursor: 'pointer', color: showPicker ? '#4fc3f7' : '#888', fontSize: 14, borderRadius: 3 }}>
-          +
+        <span onClick={() => setShowPicker(!showPicker)} title={t("tab_new")}
+          style={{ padding: '2px 6px', cursor: 'pointer', color: showPicker ? '#7aa2f7' : '#565f89', borderRadius: 4, marginBottom: 2, display: 'flex', alignItems: 'center' }}>
+          <Icon name="plus" size={14} />
         </span>
         {showPicker && connections && connections.length > 0 && (
           <div ref={pickerRef} style={{
             position: 'absolute', top: '100%', left: 0, zIndex: 1000,
-            background: '#2d2d2d', border: '1px solid #555', borderRadius: 4,
+            background: '#1f2335', border: '1px solid #3b4261', borderRadius: 4,
             minWidth: 160, maxHeight: 200, overflow: 'auto', padding: '4px 0',
             boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
           }}>
@@ -82,9 +95,9 @@ export default function TabBar({ tabs, activeTabId, onSelectTab, onCloseTab, onA
                 style={{
                   padding: '6px 12px', cursor: 'pointer', color: '#ccc', fontSize: 11,
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.background = '#094771'}
+                onMouseEnter={(e) => e.currentTarget.style.background = '#7aa2f740'}
                 onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                🟢 {c.name}
+                <Icon name="circle" size={8} fill="#4caf50" color="#4caf50" style={{ marginRight: 4 }} /> {c.name}
               </div>
             ))}
           </div>
@@ -104,14 +117,14 @@ export default function TabBar({ tabs, activeTabId, onSelectTab, onCloseTab, onA
         }}
         style={{ flex: 1, alignSelf: 'stretch', minWidth: 4, background: dragOverAdd ? 'rgba(0,122,204,0.3)' : 'transparent' }}
       />
-      <span onClick={cycleScope} title="点击切换广播范围"
+      <span onClick={cycleScope} title={t("broadcast_toggle")}
         style={{
-          padding: '2px 8px', cursor: 'pointer',
+          padding: '4px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
           background: broadcastScope !== 'off' ? '#d32f2f' : 'transparent',
           color: broadcastScope !== 'off' ? '#fff' : '#888',
-          borderRadius: 3, fontSize: 11, flexShrink: 0,
+          borderRadius: 4, fontSize: 12, flexShrink: 0, alignSelf: 'center',
         }}>
-        {scopeLabels[broadcastScope]}
+        <Icon name="radio" size={12} /> {scopeLabels[broadcastScope]}
       </span>
     </div>
   );

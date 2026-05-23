@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import SftpPanel from './SftpPanel';
+import CustomSelect from '../common/CustomSelect';
+import Icon from '../common/Icon';
+import { t } from '../../i18n';
 
 interface Props {
   connections: Array<{ id: number; name: string }>;
@@ -16,13 +19,13 @@ export default function DualPaneSftp({ connections }: Props) {
         <div style={{
           padding: 4, background: '#1a3a1a', display: 'flex', gap: 4, alignItems: 'center', fontSize: 11, flexShrink: 0,
         }}>
-          <span style={{ color: '#ccc' }}>🖥 远程</span>
-          <select value={leftConnId || ''} onChange={(e) => setLeftConnId(Number(e.target.value) || null)}
-            style={{ background: '#2d2d2d', color: '#ccc', border: '1px solid #555', borderRadius: 3, fontSize: 11, padding: '2px 4px' }}>
+          <span style={{ color: '#ccc', display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="monitor" size={12} /> {t('sftp_remote')}</span>
+          <CustomSelect value={String(leftConnId || '')} onChange={(v) => setLeftConnId(Number(v) || null)}
+            style={{ background: '#2d2d2d', color: '#ccc', border: '1px solid #3b4261', borderRadius: 3, fontSize: 11, padding: '2px 4px' }}>
             {connections.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
-          </select>
+          </CustomSelect>
         </div>
         <div style={{ flex: 1, minHeight: 0 }}>
           {leftConnId ? <SftpPanel connId={leftConnId} /> : (
@@ -34,7 +37,7 @@ export default function DualPaneSftp({ connections }: Props) {
       </div>
 
       {/* Divider */}
-      <div style={{ width: 3, background: '#555', flexShrink: 0 }} />
+      <div style={{ width: 1, background: '#3b4261', flexShrink: 0 }} />
 
       {/* Right pane: Local (default) or another remote */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
@@ -42,19 +45,16 @@ export default function DualPaneSftp({ connections }: Props) {
           padding: 4, background: '#1a1a3a', display: 'flex', gap: 4, alignItems: 'center', fontSize: 11, flexShrink: 0,
         }}>
           <span style={{ color: '#ccc' }}>
-            {rightConnId === null ? '💻 本机' : '🖥 远程'}
+            {rightConnId === null ? <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="laptop" size={12} /> {t('sftp_local')}</span> : <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="monitor" size={12} /> {t('sftp_remote')}</span>}
           </span>
-          <select value={rightConnId === null ? 'local' : String(rightConnId)}
-            onChange={(e) => {
-              const val = e.target.value;
-              setRightConnId(val === 'local' ? null : Number(val));
-            }}
-            style={{ background: '#2d2d2d', color: '#ccc', border: '1px solid #555', borderRadius: 3, fontSize: 11, padding: '2px 4px' }}>
+          <CustomSelect value={rightConnId === null ? 'local' : String(rightConnId)}
+            onChange={(v) => setRightConnId(v === 'local' ? null : Number(v))}
+            style={{ background: '#2d2d2d', color: '#ccc', border: '1px solid #3b4261', borderRadius: 3, fontSize: 11, padding: '2px 4px' }}>
             <option value="local">本机</option>
             {connections.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
-          </select>
+          </CustomSelect>
         </div>
         <div style={{ flex: 1, minHeight: 0 }}>
           {rightConnId ? <SftpPanel connId={rightConnId} /> : <SftpPanel localMode />}

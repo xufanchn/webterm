@@ -55,6 +55,7 @@ func (s *Store) migrate() error {
 		private_key_passphrase_encrypted TEXT DEFAULT '',
 		created_by INTEGER DEFAULT 0,
 		shared INTEGER DEFAULT 0,
+		max_sessions INTEGER DEFAULT 10,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 	);
@@ -94,7 +95,14 @@ func (s *Store) migrate() error {
 	);
 	`
 	_, err := s.DB.Exec(schema)
-	return err
+	if err != nil {
+		return err
+	}
+	// Migrations: add columns (ignore errors if already exist)
+	s.DB.Exec("ALTER TABLE connections ADD COLUMN max_sessions INTEGER DEFAULT 10")
+	s.DB.Exec("ALTER TABLE connections ADD COLUMN tag TEXT DEFAULT ''")
+	s.DB.Exec("ALTER TABLE connections ADD COLUMN color TEXT DEFAULT '#4fc3f7'")
+	return nil
 }
 
 func (s *Store) Close() error {

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SftpFile } from './SftpPanel';
+import { t } from '../../i18n';
 import ContextMenu from '../common/ContextMenu';
-
+import Icon from '../common/Icon';
 interface Props {
   files: SftpFile[];
   loading: boolean;
@@ -14,6 +15,8 @@ interface Props {
   onUpload: () => void;
   onEdit: (path: string, name: string) => void;
   onGoParent?: () => void;
+  onToggleFollow?: () => void;
+  followCd?: boolean;
 }
 
 const sizeFormat = (bytes: number): string => {
@@ -31,7 +34,7 @@ const timeFormat = (ts: string): string => {
 type SortKey = 'name' | 'size' | 'time';
 type SortDir = 'asc' | 'desc';
 
-function NewFolderInput({ value, onChange, onConfirm, onCancel, confirmLabel = '创建' }: {
+function NewFolderInput({ value, onChange, onConfirm, onCancel, confirmLabel = t('config_create') }: {
   value: string;
   onChange: (v: string) => void;
   onConfirm: () => void;
@@ -54,17 +57,17 @@ function NewFolderInput({ value, onChange, onConfirm, onCancel, confirmLabel = '
           if (e.key === 'Enter') onConfirm();
           if (e.key === 'Escape') onCancel();
         }}
-        autoFocus placeholder="文件夹名"
-        style={{ flex: 1, padding: '2px 6px', background: '#3c3c3c', border: '1px solid #555', borderRadius: 3, color: '#fff', fontSize: 10 }} />
+        autoFocus placeholder={t("file_folder_name")}
+        style={{ flex: 1, padding: '2px 6px', background: '#1f2335', border: '1px solid #3b4261', borderRadius: 4, color: '#fff', fontSize: 10 }} />
       <button onClick={onConfirm}
-        style={{ background: '#007acc', border: 'none', color: '#fff', borderRadius: 3, padding: '2px 8px', cursor: 'pointer', fontSize: 10 }}>{confirmLabel}</button>
+        style={{ background: '#7aa2f7', border: 'none', color: '#1a1b26', fontWeight: 600, borderRadius: 4, padding: '2px 8px', cursor: 'pointer', fontSize: 10 }}>{confirmLabel}</button>
       <button onClick={onCancel}
-        style={{ background: '#555', border: 'none', color: '#ccc', borderRadius: 3, padding: '2px 8px', cursor: 'pointer', fontSize: 10 }}>取消</button>
+        style={{ background: '#3b4261', border: 'none', color: '#ccc', borderRadius: 4, padding: '2px 8px', cursor: 'pointer', fontSize: 10 }}>{t("conn_cancel")}</button>
     </div>
   );
 }
 
-export default function FileList({ files, loading, connId, currentPath, onNavigate, onDelete, onRename, onMkdir, onUpload, onEdit, onGoParent }: Props) {
+export default function FileList({ files, loading, connId, currentPath, onNavigate, onDelete, onRename, onMkdir, onUpload, onEdit, onGoParent, onToggleFollow, followCd }: Props) {
   const [showNewFolder, setShowNewFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [contextMenu, setContextMenu] = useState<{x: number; y: number; file: SftpFile} | null>(null);
@@ -118,7 +121,7 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
         if (xhr.status >= 200 && xhr.status < 300) {
           uploadNext(index + 1);
         } else {
-          let errMsg = `上传失败 (${xhr.status})`;
+          let errMsg = `${t("file_upload_failed")} (${xhr.status})`;
           try {
             const resp = JSON.parse(xhr.responseText);
             if (resp.error) errMsg = resp.error;
@@ -130,7 +133,7 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
       };
       xhr.onerror = () => {
         setUploading(false);
-        setUploadError('网络错误，上传失败');
+        setUploadError(t('file_upload_error'));
         setTimeout(() => setUploadError(null), 5000);
       };
       xhr.open('POST', '/api/sftp/upload');
@@ -168,7 +171,7 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-        setDownloadError(`下载失败: ${fileName}`);
+        setDownloadError(`${t('file_download_failed')}: ${fileName}`);
         setTimeout(() => setDownloadError(null), 5000);
       }
   };
@@ -188,10 +191,10 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
     else { setSortKey(key); setSortDir('asc'); }
   };
 
-  const sortArrow = (key: SortKey) => sortKey === key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : '';
+  const sortArrow = (key: SortKey) => sortKey === key ? (sortDir === 'asc' ? <Icon name="arrow-up" size={10} style={{ verticalAlign: 'middle' }} /> : <Icon name="arrow-down" size={10} style={{ verticalAlign: 'middle' }} />) : '';
 
   return (
-    <div style={{ flex: 1, overflow: 'auto', outline: dragOver ? '2px solid #4fc3f7' : 'none', outlineOffset: -2 }}
+    <div style={{ flex: 1, overflow: 'auto', outline: dragOver ? '2px solid #7aa2f7' : 'none', outlineOffset: -2 }}
       onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
       onDragLeave={() => setDragOver(false)}
       onDrop={(e) => { setDragOver(false); handleDrop(e); }}
@@ -204,42 +207,26 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
         e.preventDefault();
         setBlankMenu({ x: e.clientX, y: e.clientY });
       }}>
-      <div style={{ padding: '2px 8px', borderBottom: '1px solid #383838', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#888', fontSize: 10 }}>
-        <div style={{ display: 'flex', gap: 6 }}>
-          <button onClick={() => setShowNewFolder(!showNewFolder)}
-            style={{ background: 'none', border: 'none', color: '#4fc3f7', cursor: 'pointer', fontSize: 10 }}>+ 新文件夹</button>
-          <button onClick={() => fileInputRef.current?.click()}
-            style={{ background: 'none', border: 'none', color: '#4fc3f7', cursor: 'pointer', fontSize: 10 }}>⬆ 上传</button>
-          <input ref={fileInputRef} type="file" multiple style={{ display: 'none' }}
-            onChange={(e) => {
-              if (e.target.files && e.target.files.length > 0) doUpload(e.target.files);
-              e.target.value = '';
-            }} />
-        </div>
-        {uploading && <span style={{ color: '#4fc3f7' }}>上传中... {uploadProgress}%</span>}
-      </div>
-      {showNewFolder && (
-        <NewFolderInput
-          value={newFolderName}
-          onChange={setNewFolderName}
-          onConfirm={handleMkdir}
-          onCancel={() => { setShowNewFolder(false); setNewFolderName(''); }}
-        />
-      )}
+      <input ref={fileInputRef} type="file" multiple style={{ display: 'none' }}
+        onChange={(e) => {
+          if (e.target.files && e.target.files.length > 0) doUpload(e.target.files);
+          e.target.value = '';
+        }} />
+      {uploading && <div style={{ padding: '2px 8px', color: '#7aa2f7', fontSize: 10 }}>{t("sftp_uploading")} {uploadProgress}%</div>}
       {/* Column headers */}
-      <div style={{ padding: '2px 8px', borderBottom: '1px solid #383838', display: 'flex', alignItems: 'center', gap: 4, color: '#888', fontSize: 10, flexShrink: 0 }}>
+      <div style={{ padding: '2px 8px', borderBottom: '1px solid #3b4261', display: 'flex', alignItems: 'center', gap: 4, color: '#888', fontSize: 10, flexShrink: 0 }}>
         <span style={{ width: 16, flexShrink: 0 }} />
-        <span onClick={() => toggleSort('name')} style={{ flex: 1, cursor: 'pointer', userSelect: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>名称{sortArrow('name')}</span>
-        <span onClick={() => toggleSort('size')} style={{ width: 55, cursor: 'pointer', userSelect: 'none', textAlign: 'right', flexShrink: 0 }}>大小{sortArrow('size')}</span>
-        <span onClick={() => toggleSort('time')} style={{ width: 105, cursor: 'pointer', userSelect: 'none', textAlign: 'right', flexShrink: 0 }}>修改时间{sortArrow('time')}</span>
+        <span onClick={() => toggleSort('name')} style={{ flex: 1, cursor: 'pointer', userSelect: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t('file_name')}{sortArrow('name')}</span>
+        <span onClick={() => toggleSort('size')} style={{ width: 55, cursor: 'pointer', userSelect: 'none', textAlign: 'right', flexShrink: 0 }}>{t('file_size')}{sortArrow('size')}</span>
+        <span onClick={() => toggleSort('time')} style={{ width: 105, cursor: 'pointer', userSelect: 'none', textAlign: 'right', flexShrink: 0 }}>{t('file_time')}{sortArrow('time')}</span>
       </div>
-      {loading && <div style={{ padding: 8, color: '#888' }}>加载中...</div>}
+      {loading && <div style={{ padding: 8, color: '#888' }}>{t("file_loading")}</div>}
       {!loading && currentPath !== '/' && (
         <div data-file-row onDoubleClick={onGoParent}
-          style={{ padding: '2px 8px', color: '#4fc3f7', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
-          onMouseEnter={(e) => e.currentTarget.style.background = '#2a2d2e'}
+          style={{ padding: '2px 8px', color: '#7aa2f7', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+          onMouseEnter={(e) => e.currentTarget.style.background = '#3b4261'}
           onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-          <span style={{ width: 16, textAlign: 'center', flexShrink: 0 }}>📁</span>
+          <span style={{ width: 16, textAlign: 'center', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="folder-open" size={14} color="#7aa2f7" /></span>
           <span style={{ flex: 1 }}>..</span>
           <span style={{ width: 55, flexShrink: 0 }} />
           <span style={{ width: 105, flexShrink: 0 }} />
@@ -253,48 +240,56 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
             padding: '2px 8px', color: '#ccc', cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: 4,
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = '#2a2d2e')}
+          onMouseEnter={(e) => (e.currentTarget.style.background = '#3b4261')}
           onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
-          <span style={{ width: 16, textAlign: 'center', flexShrink: 0 }}>
-            {f.is_dir ? '📁' : f.is_link ? '🔗' : '📄'}
+          <span style={{ width: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {f.is_dir ? <Icon name="folder" size={14} color="#7aa2f7" /> : f.is_link ? <Icon name="link" size={14} color="#e0af68" /> : <Icon name="file" size={14} color="#888" />}
           </span>
           <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
           <span style={{ color: '#888', fontSize: 10, width: 55, textAlign: 'right', flexShrink: 0 }}>{!f.is_dir ? sizeFormat(f.size) : ''}</span>
           <span style={{ color: '#666', fontSize: 10, width: 105, textAlign: 'right', flexShrink: 0 }}>{timeFormat(f.mod_time)}</span>
         </div>
       ))}
+      {showNewFolder && (
+        <NewFolderInput
+          value={newFolderName}
+          onChange={setNewFolderName}
+          onConfirm={handleMkdir}
+          onCancel={() => { setShowNewFolder(false); setNewFolderName(''); }}
+        />
+      )}
       {renaming && (
         <NewFolderInput
           value={renaming.name}
           onChange={(v) => setRenaming({ ...renaming, name: v })}
           onConfirm={() => { onRename(renaming.path, renaming.name); setRenaming(null); }}
           onCancel={() => setRenaming(null)}
-          confirmLabel="确定"
+          confirmLabel={t("config_confirm")}
         />
       )}
       {contextMenu && (
         <ContextMenu x={contextMenu.x} y={contextMenu.y} onClose={() => setContextMenu(null)}
           items={[
             ...(contextMenu.file.is_dir ? [{
-              label: '上传到此处',
+              label: t('file_upload_to'),
               action: () => { uploadTargetRef.current = contextMenu.file.path; fileInputRef.current?.click(); setContextMenu(null); },
             }] : [{
-              label: '下载',
+              label: t('file_download'),
               action: () => { handleDownload(contextMenu.file.path, contextMenu.file.name); setContextMenu(null); },
             }, {
-              label: '编辑',
+              label: t('file_edit'),
               action: () => { onEdit(contextMenu.file.path, contextMenu.file.name); setContextMenu(null); },
             }]),
-            { label: '重命名',
+            { label: t('file_rename'),
               action: () => {
                 setRenaming({ path: contextMenu.file.path, name: contextMenu.file.name });
                 setContextMenu(null);
               },
             },
-            { label: '删除',
+            { label: t('menu_delete'),
               action: () => { onDelete(contextMenu.file.path); setContextMenu(null); },
             },
-            { label: '刷新',
+            { label: t('sftp_refresh'),
               action: () => { onNavigate(currentPath); setContextMenu(null); },
             },
           ]}
@@ -303,10 +298,16 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
       {blankMenu && (
         <ContextMenu x={blankMenu.x} y={blankMenu.y} onClose={() => setBlankMenu(null)}
           items={[
-            { label: '上传',
+            { label: t('sftp_new_folder'),
+              action: () => { setShowNewFolder(true); setBlankMenu(null); },
+            },
+            { label: t('sftp_upload'),
               action: () => { fileInputRef.current?.click(); setBlankMenu(null); },
             },
-            { label: '刷新',
+            { label: followCd ? t('sftp_fixed') : t('sftp_follow'),
+              action: () => { onToggleFollow?.(); setBlankMenu(null); },
+            },
+            { label: t('sftp_refresh'),
               action: () => { onNavigate(currentPath); setBlankMenu(null); },
             },
           ]}
@@ -320,7 +321,7 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         }}>
           <span>{uploadError || downloadError}</span>
-          <span onClick={() => { setUploadError(null); setDownloadError(null); }} style={{ cursor: 'pointer', marginLeft: 8, opacity: 0.7 }}>✕</span>
+          <span onClick={() => { setUploadError(null); setDownloadError(null); }} style={{ cursor: 'pointer', marginLeft: 8, display: 'flex', alignItems: 'center' }}><Icon name="x" size={12} /></span>
         </div>
       )}
     </div>

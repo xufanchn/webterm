@@ -22,6 +22,9 @@ export interface Connection {
   username: string;
   auth_method: string;
   shared: boolean;
+  max_sessions: number;
+  tag?: string;
+  color?: string;
 }
 
 export interface Group {

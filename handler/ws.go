@@ -56,7 +56,7 @@ func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 
 		client, err = sshmgr.NewClient(connInfo.Host, connInfo.Port, connInfo.Username, password, privateKey, passphrase)
 		if err != nil {
-			sendErr(conn, "failed to create client: " + err.Error())
+			sendErr(conn, "创建连接失败: "+friendlyErr(err))
 			return
 		}
 		var connectErr error
@@ -70,16 +70,26 @@ func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 			}
 		}
 		if connectErr != nil {
-			sendErr(conn, fmt.Sprintf("连接失败（已重试3次）: %s", connectErr.Error()))
+			sendErr(conn, "连接失败: "+friendlyErr(connectErr))
 			return
 		}
 		h.Pool.Add(connID, client)
 	}
 
 	defer h.Pool.Release(connID)
+
+	// Check session limit (default 10, matching OpenSSH MaxSessions)
+	if connInfo.MaxSessions > 0 {
+		count := h.Pool.SessionCount(connID)
+		if count > connInfo.MaxSessions {
+			sendErr(conn, fmt.Sprintf("会话数已达上限(%d)，请关闭一些标签页后重试", connInfo.MaxSessions))
+			return
+		}
+	}
+
 	session, err := client.NewSession()
 	if err != nil {
-		sendErr(conn, "session failed: " + err.Error())
+		sendErr(conn, "创建会话失败: "+friendlyErr(err))
 		return
 	}
 	defer session.Close()
@@ -249,8 +259,20 @@ func (h *WSHandler) HandleSFTP(conn *websocket.Conn) {
 		return
 	}
 
-	// Get or create SSH client
+	// Get or create SSH client (with retry if existing client is stale)
+	var sshClient *sshmgr.Client
+	var sftpClient *sftpmgr.Client
+	var acquireErr error
 	sshClient, ok := h.Pool.Acquire(connID)
+	if ok {
+		sftpClient, acquireErr = sftpmgr.NewClient(sshClient.RawConn())
+		if acquireErr != nil {
+			// Existing client is stale — close it, release ref, force new connection
+			sshClient.Close()
+			h.Pool.Release(connID)
+			ok = false
+		}
+	}
 	if !ok {
 		var password, privateKey, passphrase string
 		if connInfo.PasswordEncrypted != "" {
@@ -265,24 +287,24 @@ func (h *WSHandler) HandleSFTP(conn *websocket.Conn) {
 
 		sshClient, err = sshmgr.NewClient(connInfo.Host, connInfo.Port, connInfo.Username, password, privateKey, passphrase)
 		if err != nil {
-			sendErr(conn, "ssh client failed: " + err.Error())
+			sendErr(conn, "SSH 连接失败: "+friendlyErr(err))
 			return
 		}
 		if err := sshClient.Connect(); err != nil {
-			sendErr(conn, "ssh connect failed: " + err.Error())
+			sendErr(conn, "SSH 连接失败: "+friendlyErr(err))
 			return
 		}
 		h.Pool.Add(connID, sshClient)
+
+		sftpClient, err = sftpmgr.NewClient(sshClient.RawConn())
+		if err != nil {
+			sendErr(conn, "SFTP 初始化失败: "+friendlyErr(err))
+			return
+		}
 	}
 
-	defer h.Pool.Release(connID)
-
-	sftpClient, err := sftpmgr.NewClient(sshClient.RawConn())
-	if err != nil {
-		sendErr(conn, "sftp init failed: " + err.Error())
-		return
-	}
 	defer sftpClient.Close()
+	defer h.Pool.Release(connID)
 
 	h.Store.CreateSessionLog(&store.SessionLog{
 		UserID: user.UserID, ConnectionID: connID, Type: "sftp",
