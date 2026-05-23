@@ -1,4 +1,4 @@
-# WShell
+# WebTerm
 
 > [中文文档](README_zh.md)
 
@@ -18,7 +18,7 @@ Web-based SSH/SFTP/Database terminal manager. Single binary, Go backend + React 
 
 ```bash
 make build          # build frontend + Go binary
-./wshell            # runs on :8443 by default (see config.yaml)
+./webterm            # runs on :8443 by default (see config.yaml)
 ```
 
 Default admin: `admin` / `admin`

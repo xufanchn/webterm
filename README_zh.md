@@ -1,4 +1,4 @@
-# WShell
+# WebTerm
 
 > [English Docs](README.md)
 
@@ -18,7 +18,7 @@
 
 ```bash
 make build          # 构建前端 + Go 二进制
-./wshell            # 默认监听 :8443（参见 config.yaml）
+./webterm            # 默认监听 :8443（参见 config.yaml）
 ```
 
 默认管理员：`admin` / `admin`
