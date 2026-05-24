@@ -1,4 +1,4 @@
-module github.com/xf/wshell
+module github.com/xf/webterm
 
 go 1.26.3
 

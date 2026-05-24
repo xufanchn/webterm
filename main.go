@@ -11,12 +11,12 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/xf/wshell/auth"
-	"github.com/xf/wshell/config"
-	"github.com/xf/wshell/crypto"
-	"github.com/xf/wshell/handler"
-	"github.com/xf/wshell/sshmgr"
-	"github.com/xf/wshell/store"
+	"github.com/xf/webterm/auth"
+	"github.com/xf/webterm/config"
+	"github.com/xf/webterm/crypto"
+	"github.com/xf/webterm/handler"
+	"github.com/xf/webterm/sshmgr"
+	"github.com/xf/webterm/store"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/net/websocket"
 )
@@ -33,7 +33,7 @@ func main() {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
-	st, err := store.New("wshell.db")
+	st, err := store.New("webterm.db")
 	if err != nil {
 		log.Fatalf("failed to open database: %v", err)
 	}

@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/xf/wshell/auth"
-	"github.com/xf/wshell/crypto"
-	"github.com/xf/wshell/sshmgr"
-	"github.com/xf/wshell/store"
+	"github.com/xf/webterm/auth"
+	"github.com/xf/webterm/crypto"
+	"github.com/xf/webterm/sshmgr"
+	"github.com/xf/webterm/store"
 )
 
 type ConnectionHandler struct {
