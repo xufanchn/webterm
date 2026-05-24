@@ -11,5 +11,5 @@ dev-ui:
 	cd ui && npm run dev
 
 clean:
-	rm -f wshell wshell.db
+	rm -f webterm webterm.db
 	rm -rf frontend/dist

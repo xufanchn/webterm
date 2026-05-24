@@ -1,5 +1,5 @@
 .superpowers/
 /frontend/dist/*
 !/frontend/dist/.gitkeep
-/wshell
-/wshell.db*
+/webterm
+/webterm.db*

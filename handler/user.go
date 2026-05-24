@@ -8,7 +8,7 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/xf/wshell/store"
+	"github.com/xf/webterm/store"
 )
 
 type UserHandler struct {

@@ -1,8 +1,8 @@
-# WShell 设计文档
+# WebTerm 设计文档
 
 ## 概述
 
-WShell 是一个基于 Web 的运维开发工具，部署在 Linux 服务器上，通过浏览器访问。提供 SSH 终端、SFTP 文件管理、MySQL 数据库管理及配置管理，内置登录系统。
+WebTerm 是一个基于 Web 的运维开发工具，部署在 Linux 服务器上，通过浏览器访问。提供 SSH 终端、SFTP 文件管理、MySQL 数据库管理及配置管理，内置登录系统。
 
 ## 技术栈
 
@@ -25,7 +25,7 @@ Go 后端（单二进制文件）
   └── 认证 + 配置服务 (SQLite)
 ```
 
-- 单文件部署：`./wshell -config config.yaml`
+- 单文件部署：`./webterm -config config.yaml`
 - 配置文件 `config.yaml` 放在二进制同目录下，包含 `port`、`encryption_key`（AES-256 用 32 字节 hex）、`log_level`
 - 前端静态文件通过 `embed.FS` 编译进二进制
 - WebSocket 维持 SSH 终端和 SFTP 面板的实时连接

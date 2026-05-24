@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/xf/wshell/store"
+	"github.com/xf/webterm/store"
 )
 
 type GroupHandler struct {

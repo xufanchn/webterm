@@ -1,4 +1,4 @@
-# WShell 实现计划
+# WebTerm 实现计划
 
 > **对于自动化执行者：** 推荐使用 superpowers:subagent-driven-development 或 superpowers:executing-plans 逐任务实现此计划。步骤使用 `- [ ]` 勾选语法跟踪进度。
 
@@ -13,7 +13,7 @@
 ### 文件结构总览
 
 ```
-wshell/
+webterm/
 ├── main.go                          # 入口，启动服务器
 ├── go.mod, go.sum
 ├── config.yaml                      # 配置文件模板
@@ -111,7 +111,7 @@ wshell/
 - [ ] **Step 1: 初始化 Go 模块**
 
 ```bash
-cd /home/xf/code/github/wshell && go mod init github.com/xf/wshell
+cd /home/xf/code/github/webterm && go mod init github.com/xf/webterm
 ```
 
 - [ ] **Step 2: 创建配置文件结构体**
@@ -147,7 +147,7 @@ func Load(path string) (*Config, error) {
 - [ ] **Step 3: 安装 yaml 依赖**
 
 ```bash
-cd /home/xf/code/github/wshell && go get gopkg.in/yaml.v3
+cd /home/xf/code/github/webterm && go get gopkg.in/yaml.v3
 ```
 
 - [ ] **Step 4: 创建入口文件**
@@ -161,7 +161,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"github.com/xf/wshell/config"
+	"github.com/xf/webterm/config"
 )
 
 func main() {
@@ -179,7 +179,7 @@ func main() {
 	})
 
 	addr := fmt.Sprintf(":%d", cfg.Port)
-	log.Printf("wshell starting on %s", addr)
+	log.Printf("webterm starting on %s", addr)
 	if err := http.ListenAndServe(addr, mux); err != nil {
 		log.Fatalf("server error: %v", err)
 	}
@@ -198,7 +198,7 @@ log_level: "info"
 - [ ] **Step 6: 验证服务启动**
 
 ```bash
-cd /home/xf/code/github/wshell && go run . -config config.yaml &
+cd /home/xf/code/github/webterm && go run . -config config.yaml &
 sleep 1 && curl http://localhost:8443/api/health && kill %1
 ```
 预期：`{"status":"ok"}`
@@ -220,7 +220,7 @@ git commit -m "feat: 初始化 Go 项目骨架，配置加载和健康检查接�
 - [ ] **Step 1: 安装 SQLite 依赖**
 
 ```bash
-cd /home/xf/code/github/wshell && go get github.com/mattn/go-sqlite3
+cd /home/xf/code/github/webterm && go get github.com/mattn/go-sqlite3
 ```
 
 - [ ] **Step 2: 创建数据库初始化和迁移**
@@ -721,7 +721,7 @@ func (s *Store) EndSessionLog(id int64) error {
 - [ ] **Step 8: 编译验证**
 
 ```bash
-cd /home/xf/code/github/wshell && go build ./...
+cd /home/xf/code/github/webterm && go build ./...
 ```
 预期：编译成功
 
@@ -815,7 +815,7 @@ func (c *AESCipher) Decrypt(encryptedHex string) (string, error) {
 - [ ] **Step 2: 安装 JWT 依赖**
 
 ```bash
-cd /home/xf/code/github/wshell && go get github.com/golang-jwt/jwt/v5 && go get golang.org/x/crypto/bcrypt
+cd /home/xf/code/github/webterm && go get github.com/golang-jwt/jwt/v5 && go get golang.org/x/crypto/bcrypt
 ```
 
 - [ ] **Step 3: JWT 生成和验证**
@@ -925,7 +925,7 @@ func GetUser(r *http.Request) *Claims {
 - [ ] **Step 5: 编译验证**
 
 ```bash
-cd /home/xf/code/github/wshell && go build ./...
+cd /home/xf/code/github/webterm && go build ./...
 ```
 预期：编译成功
 
@@ -946,19 +946,19 @@ git commit -m "feat: 添加 AES-256-GCM 加解密和 JWT 认证中间件"
 - [ ] **Step 1: 使用 Vite 创建 React + TypeScript 项目**
 
 ```bash
-cd /home/xf/code/github/wshell && npm create vite@latest ui -- --template react-ts
+cd /home/xf/code/github/webterm && npm create vite@latest ui -- --template react-ts
 ```
 
 - [ ] **Step 2: 安装核心依赖**
 
 ```bash
-cd /home/xf/code/github/wshell/ui && npm install && npm install zustand react-router-dom @xterm/xterm @xterm/addon-fit @xterm/addon-search @xterm/addon-web-links codemirror @codemirror/lang-sql @codemirror/lang-yaml @codemirror/lang-json @codemirror/lang-javascript @codemirror/lang-python sql-formatter
+cd /home/xf/code/github/webterm/ui && npm install && npm install zustand react-router-dom @xterm/xterm @xterm/addon-fit @xterm/addon-search @xterm/addon-web-links codemirror @codemirror/lang-sql @codemirror/lang-yaml @codemirror/lang-json @codemirror/lang-javascript @codemirror/lang-python sql-formatter
 ```
 
 - [ ] **Step 3: 安装开发依赖**
 
 ```bash
-cd /home/xf/code/github/wshell/ui && npm install -D @types/react @types/react-dom
+cd /home/xf/code/github/webterm/ui && npm install -D @types/react @types/react-dom
 ```
 
 - [ ] **Step 4: 配置 Vite 代理**
@@ -1125,7 +1125,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 - [ ] **Step 9: 验证前端能启动**
 
 ```bash
-cd /home/xf/code/github/wshell/ui && npm run dev &
+cd /home/xf/code/github/webterm/ui && npm run dev &
 sleep 3 && curl -s http://localhost:5173 | head -5 && kill %1
 ```
 预期：返回 HTML 页面
@@ -1158,8 +1158,8 @@ import (
 	"log"
 	"net/http"
 	"golang.org/x/crypto/bcrypt"
-	"github.com/xf/wshell/auth"
-	"github.com/xf/wshell/store"
+	"github.com/xf/webterm/auth"
+	"github.com/xf/webterm/store"
 )
 
 type AuthHandler struct {
@@ -1216,8 +1216,8 @@ import (
 	"strconv"
 	"strings"
 	"golang.org/x/crypto/bcrypt"
-	"github.com/xf/wshell/auth"
-	"github.com/xf/wshell/store"
+	"github.com/xf/webterm/auth"
+	"github.com/xf/webterm/store"
 )
 
 type UserHandler struct {
@@ -1309,11 +1309,11 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/xf/wshell/auth"
-	"github.com/xf/wshell/config"
-	"github.com/xf/wshell/crypto"
-	"github.com/xf/wshell/handler"
-	"github.com/xf/wshell/store"
+	"github.com/xf/webterm/auth"
+	"github.com/xf/webterm/config"
+	"github.com/xf/webterm/crypto"
+	"github.com/xf/webterm/handler"
+	"github.com/xf/webterm/store"
 )
 
 func main() {
@@ -1325,7 +1325,7 @@ func main() {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
-	st, err := store.New("wshell.db")
+	st, err := store.New("webterm.db")
 	if err != nil {
 		log.Fatalf("failed to open database: %v", err)
 	}
@@ -1364,7 +1364,7 @@ func main() {
 	seedAdmin(st)
 
 	addr := fmt.Sprintf(":%d", cfg.Port)
-	log.Printf("wshell starting on %s", addr)
+	log.Printf("webterm starting on %s", addr)
 	if err := http.ListenAndServe(addr, mux); err != nil {
 		log.Fatalf("server error: %v", err)
 	}
@@ -1412,7 +1412,7 @@ func seedAdmin(st *store.Store) {
 - [ ] **Step 5: 运行测试**
 
 ```bash
-cd /home/xf/code/github/wshell && go build ./... && (rm -f wshell.db && timeout 3 go run . -config config.yaml 2>&1 || true)
+cd /home/xf/code/github/webterm && go build ./... && (rm -f webterm.db && timeout 3 go run . -config config.yaml 2>&1 || true)
 ```
 预期：看到 "seeded default admin user" 日志
 
@@ -1467,7 +1467,7 @@ export default function LoginPage() {
         background: '#2d2d2d', padding: 40, borderRadius: 8,
         width: 360, display: 'flex', flexDirection: 'column', gap: 16,
       }}>
-        <h1 style={{ textAlign: 'center', color: '#fff', marginBottom: 8 }}>WShell</h1>
+        <h1 style={{ textAlign: 'center', color: '#fff', marginBottom: 8 }}>WebTerm</h1>
         {error && <div style={{ color: '#f44336', textAlign: 'center', fontSize: 14 }}>{error}</div>}
         <input
           style={{ padding: 10, borderRadius: 4, border: '1px solid #555', background: '#3c3c3c', color: '#fff' }}
@@ -1508,7 +1508,7 @@ export default function Workspace() {
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <div style={{ padding: '8px 16px', background: '#333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ color: '#fff' }}>WShell</span>
+        <span style={{ color: '#fff' }}>WebTerm</span>
         <span>
           <span style={{ marginRight: 16, color: '#ccc' }}>{user?.username} ({user?.role})</span>
           <button onClick={logout} style={{ background: '#555', color: '#fff', border: 'none', padding: '4px 12px', borderRadius: 4, cursor: 'pointer' }}>退出</button>
@@ -1525,7 +1525,7 @@ export default function Workspace() {
 - [ ] **Step 3: 验证前端编译**
 
 ```bash
-cd /home/xf/code/github/wshell/ui && npx tsc --noEmit
+cd /home/xf/code/github/webterm/ui && npx tsc --noEmit
 ```
 预期：无类型错误
 
@@ -1670,7 +1670,7 @@ func (p *Pool) Remove(connID int64) {
 - [ ] **Step 3: 安装 SSH 依赖**
 
 ```bash
-cd /home/xf/code/github/wshell && go get golang.org/x/crypto/ssh
+cd /home/xf/code/github/webterm && go get golang.org/x/crypto/ssh
 ```
 
 - [ ] **Step 4: SSH 连接管理 API Handler**
@@ -1684,9 +1684,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/xf/wshell/auth"
-	"github.com/xf/wshell/crypto"
-	"github.com/xf/wshell/store"
+	"github.com/xf/webterm/auth"
+	"github.com/xf/webterm/crypto"
+	"github.com/xf/webterm/store"
 )
 
 type ConnectionHandler struct {
@@ -1796,10 +1796,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/xf/wshell/auth"
-	"github.com/xf/wshell/crypto"
-	"github.com/xf/wshell/sshmgr"
-	"github.com/xf/wshell/store"
+	"github.com/xf/webterm/auth"
+	"github.com/xf/webterm/crypto"
+	"github.com/xf/webterm/sshmgr"
+	"github.com/xf/webterm/store"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/net/websocket"
 )
@@ -1906,7 +1906,7 @@ func (w *wsWriter) Write(p []byte) (int, error) {
 `handler/ws.go` 应使用 `golang.org/x/net/websocket`。
 
 ```bash
-cd /home/xf/code/github/wshell && go get golang.org/x/net/websocket
+cd /home/xf/code/github/webterm && go get golang.org/x/net/websocket
 ```
 
 - [ ] **Step 7: 更新 main.go 注册路由**
@@ -1930,7 +1930,7 @@ mux.Handle("/ws/ssh/{conn_id}", websocket.Handler(wsH.HandleSSH))
 - [ ] **Step 8: 编译验证**
 
 ```bash
-cd /home/xf/code/github/wshell && go build ./...
+cd /home/xf/code/github/webterm && go build ./...
 ```
 编译通过。
 
@@ -1953,7 +1953,7 @@ git commit -m "feat: 添加 SSH 客户端封装、会话池和 WebSocket 代理"
 - [ ] **Step 1: 安装 xterm 类型定义**
 
 ```bash
-cd /home/xf/code/github/wshell/ui && npx tsc --noEmit 2>/dev/null || true
+cd /home/xf/code/github/webterm/ui && npx tsc --noEmit 2>/dev/null || true
 ```
 
 - [ ] **Step 2: 布局状态管理**
@@ -2330,7 +2330,7 @@ export default function Workspace() {
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <div style={{ padding: '6px 16px', background: '#007acc', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-        <span style={{ color: '#fff', fontWeight: 600 }}>WShell</span>
+        <span style={{ color: '#fff', fontWeight: 600 }}>WebTerm</span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ color: '#ddd', fontSize: 13 }}>{user?.username}</span>
           <button onClick={logout} style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none', padding: '2px 10px', borderRadius: 3, cursor: 'pointer', fontSize: 12 }}>退出</button>
@@ -2349,7 +2349,7 @@ export default function Workspace() {
 - [ ] **Step 10: 验证前端编译**
 
 ```bash
-cd /home/xf/code/github/wshell/ui && npx tsc --noEmit
+cd /home/xf/code/github/webterm/ui && npx tsc --noEmit
 ```
 预期：无类型错误
 
