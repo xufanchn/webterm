@@ -27,6 +27,8 @@ archives:
         dst: run.sh
       - src: scripts/webterm.bat
         dst: webterm.bat
+      - src: scripts/webterm.service
+        dst: webterm.service
     format_overrides:
       - goos: windows
         formats: [zip]
