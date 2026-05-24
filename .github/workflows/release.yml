@@ -42,7 +42,7 @@ jobs:
         with:
           distribution: goreleaser
           version: "~> v2"
-          args: release --clean --skip=before,docker,docker-manifest,publish
+          args: release --clean --skip=before,docker,publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -60,6 +60,6 @@ jobs:
         with:
           distribution: goreleaser
           version: "~> v2"
-          args: release --clean --skip=before,build,archive,docker,docker-manifest
+          args: release --clean --skip=before,build,archive,docker
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
