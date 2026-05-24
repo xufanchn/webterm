@@ -1,8 +1,10 @@
 .PHONY: build dev clean
 
+VERSION ?= dev
+
 build:
 	cd ui && npm run build
-	go build -o webterm .
+	go build -ldflags "-X main.version=$(VERSION)" -o webterm .
 
 dev:
 	go run . -config config.yaml

@@ -21,12 +21,20 @@ import (
 	"golang.org/x/net/websocket"
 )
 
+var version = "dev"
+
 //go:embed frontend/dist
 var frontendDist embed.FS
 
 func main() {
 	configPath := flag.String("config", "config.yaml", "path to config file")
+	showVersion := flag.Bool("version", false, "print version and exit")
 	flag.Parse()
+
+	if *showVersion {
+		fmt.Println("webterm", version)
+		return
+	}
 
 	cfg, err := config.Load(*configPath)
 	if err != nil {
