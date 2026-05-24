@@ -1,5 +1,30 @@
-<svg width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-  <rect x="10" y="10" width="80" height="80" rx="15" fill="#1e1e1e" stroke="#3b82f6" stroke-width="4"/>
-  <path d="M25 30 L35 70 L50 40 L65 70 L75 30" fill="none" stroke="#3b82f6" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="60" y="75" font-family="monospace" font-size="20" fill="#3b82f6">_</text>
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="cyberGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00f2ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7000ff;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect x="10" y="10" width="80" height="80" rx="15" fill="#121212" stroke="url(#cyberGradient)" stroke-width="3"/>
+  
+  <path d="M28 33 L37 67 L47.5 33 L58 67 L67 33" 
+        fill="none" 
+        stroke="url(#cyberGradient)" 
+        stroke-width="4.5" 
+        stroke-linecap="round" 
+        stroke-linejoin="round" 
+        filter="url(#glow)"/>
+
+  <g transform="translate(8, -1)">
+    <polyline points="63,59 67.5,63.5 63,68" fill="none" stroke="#00f2ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+    <rect x="71" y="67" width="6" height="1.5" fill="#00f2ff" />
+  </g>
 </svg>
