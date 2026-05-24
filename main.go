@@ -11,22 +11,30 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/xf/webterm/auth"
-	"github.com/xf/webterm/config"
-	"github.com/xf/webterm/crypto"
-	"github.com/xf/webterm/handler"
-	"github.com/xf/webterm/sshmgr"
-	"github.com/xf/webterm/store"
+	"github.com/xufanchn/webterm/auth"
+	"github.com/xufanchn/webterm/config"
+	"github.com/xufanchn/webterm/crypto"
+	"github.com/xufanchn/webterm/handler"
+	"github.com/xufanchn/webterm/sshmgr"
+	"github.com/xufanchn/webterm/store"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/net/websocket"
 )
+
+var version = "dev"
 
 //go:embed frontend/dist
 var frontendDist embed.FS
 
 func main() {
 	configPath := flag.String("config", "config.yaml", "path to config file")
+	showVersion := flag.Bool("version", false, "print version and exit")
 	flag.Parse()
+
+	if *showVersion {
+		fmt.Println("webterm", version)
+		return
+	}
 
 	cfg, err := config.Load(*configPath)
 	if err != nil {

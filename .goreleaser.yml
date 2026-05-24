@@ -1,0 +1,64 @@
+version: 2
+
+builds:
+  - id: webterm
+    main: .
+    binary: webterm
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    ignore:
+      - goos: windows
+        goarch: arm64
+    ldflags:
+      - "-s -w -X main.version={{.Version}}"
+
+archives:
+  - formats: [tar.gz]
+    files:
+      - config.yaml
+      - src: scripts/run.sh
+        dst: run.sh
+      - src: scripts/webterm.bat
+        dst: webterm.bat
+      - src: scripts/webterm.service
+        dst: webterm.service
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+dockers:
+  - id: amd64
+    image_templates:
+      - "ghcr.io/xufanchn/webterm:{{.Version}}-amd64"
+    dockerfile: Dockerfile
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/amd64"
+  - id: arm64
+    image_templates:
+      - "ghcr.io/xufanchn/webterm:{{.Version}}-arm64"
+    dockerfile: Dockerfile
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/arm64"
+
+docker_manifests:
+  - name_template: "ghcr.io/xufanchn/webterm:{{.Version}}"
+    image_templates:
+      - "ghcr.io/xufanchn/webterm:{{.Version}}-amd64"
+      - "ghcr.io/xufanchn/webterm:{{.Version}}-arm64"
+  - name_template: "ghcr.io/xufanchn/webterm:latest"
+    image_templates:
+      - "ghcr.io/xufanchn/webterm:{{.Version}}-amd64"
+      - "ghcr.io/xufanchn/webterm:{{.Version}}-arm64"
+
+checksum:
+  name_template: "checksums.txt"
+
+release:
+  draft: false
+
+changelog:
+  use: github-native

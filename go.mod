@@ -1,4 +1,4 @@
-module github.com/xf/webterm
+module github.com/xufanchn/webterm
 
 go 1.26.3
 
