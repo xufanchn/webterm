@@ -11,8 +11,11 @@ builds:
     binary: webterm
     env:
       - CGO_ENABLED=0
-    goos: [linux]
+    goos: [linux, darwin, windows]
     goarch: [amd64, arm64]
+    ignore:
+      - goos: windows
+        goarch: arm64
     ldflags:
       - "-s -w -X main.version={{.Version}}"
 
@@ -20,6 +23,9 @@ archives:
   - formats: [tar.gz]
     files:
       - config.yaml
+    format_overrides:
+      - goos: windows
+        formats: [zip]
 
 dockers:
   - id: amd64

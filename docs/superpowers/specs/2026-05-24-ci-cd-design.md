@@ -2,7 +2,7 @@
 
 ## 目标
 
-推送 `v*` 标签自动触发：交叉编译（linux/amd64, arm64）、打包 tar.gz、构建多架构 Docker 镜像、创建 GitHub Release。
+推送 `v*` 标签自动触发：交叉编译（linux/amd64+arm64, darwin/amd64+arm64, windows/amd64）、打包 tar.gz/zip、构建 Docker 镜像、创建 GitHub Release。
 
 ## 工具选择
 
@@ -18,8 +18,11 @@ builds:
     main: .
     binary: webterm
     env: [CGO_ENABLED=0]
-    goos: [linux]
+    goos: [linux, darwin, windows]
     goarch: [amd64, arm64]
+    ignore:
+      - goos: windows
+        goarch: arm64
     ldflags: ["-s -w -X main.version={{.Version}}"]
     hooks:
       pre:
@@ -29,6 +32,9 @@ builds:
 archives:
   - formats: [tar.gz]
     files: [config.yaml]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
 
 dockers:
   - image_templates:
@@ -168,7 +174,10 @@ docker run -d -p 8443:8443 \
 
 每个 Release 包含：
 
-- `webterm_v1.0.0_linux_amd64.tar.gz`（含二进制 + config.yaml）
+- `webterm_v1.0.0_linux_amd64.tar.gz`
 - `webterm_v1.0.0_linux_arm64.tar.gz`
+- `webterm_v1.0.0_darwin_amd64.tar.gz`
+- `webterm_v1.0.0_darwin_arm64.tar.gz`
+- `webterm_v1.0.0_windows_amd64.zip`
 - `checksums.txt`
 - Docker 镜像 `ghcr.io/xufanchn/webterm:v1.0.0` 和 `:latest`
