@@ -1,4 +1,4 @@
-module io.github.xufanchn.webterm
+module github.com/xufanchn/webterm
 
 go 1.26.3
 

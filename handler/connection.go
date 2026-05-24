@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"io.github.xufanchn.webterm/auth"
-	"io.github.xufanchn.webterm/crypto"
-	"io.github.xufanchn.webterm/sshmgr"
-	"io.github.xufanchn.webterm/store"
+	"github.com/xufanchn/webterm/auth"
+	"github.com/xufanchn/webterm/crypto"
+	"github.com/xufanchn/webterm/sshmgr"
+	"github.com/xufanchn/webterm/store"
 )
 
 type ConnectionHandler struct {

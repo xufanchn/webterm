@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"io.github.xufanchn.webterm/store"
+	"github.com/xufanchn/webterm/store"
 )
 
 type GroupHandler struct {

@@ -8,12 +8,12 @@ import (
 	"strconv"
 	"time"
 
-	"io.github.xufanchn.webterm/auth"
-	"io.github.xufanchn.webterm/crypto"
-	"io.github.xufanchn.webterm/dbmgr"
-	"io.github.xufanchn.webterm/sftpmgr"
-	"io.github.xufanchn.webterm/sshmgr"
-	"io.github.xufanchn.webterm/store"
+	"github.com/xufanchn/webterm/auth"
+	"github.com/xufanchn/webterm/crypto"
+	"github.com/xufanchn/webterm/dbmgr"
+	"github.com/xufanchn/webterm/sftpmgr"
+	"github.com/xufanchn/webterm/sshmgr"
+	"github.com/xufanchn/webterm/store"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/net/websocket"
 )
