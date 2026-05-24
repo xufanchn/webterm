@@ -8,13 +8,19 @@ make dev     # Run Go server with config.yaml
 make dev-ui  # Vite dev server (hot reload)
 ```
 
+## Related Repos
+
+- [webterm-docs](https://github.com/xufanchn/webterm-docs) — 产品文档站（VitePress），`xufanchn.github.io/webterm-docs`
+
+Docs 站点有自动同步 Action，每 6 小时检测本仓库 release 更新 changelog。
+
 ## Architecture
 
 Web-based SSH/SFTP/Database terminal manager. Go backend + React (Vite) frontend, single binary.
 
 ### Backend (Go)
 
-- `main.go` — HTTP routes, `//go:embed frontend/dist`, admin seed
+- `main.go` — HTTP routes, `//go:embed frontend/dist`, admin seed, DB at `webterm.db`
 - `handler/ws.go` — HandleSSH, HandleSFTP, HandleDB (WebSocket), OSC 7 PROMPT_COMMAND injection
 - `handler/sftp.go` — SFTP upload/download (HTTP REST)
 - `handler/connection.go` — SSH connection CRUD; **Update merges with existing**
@@ -42,3 +48,4 @@ Web-based SSH/SFTP/Database terminal manager. Go backend + React (Vite) frontend
 - **SFTP per-connection cache** — `cacheRef` stores path+files per connId
 - **OSC 7 cd tracking** — `PROMPT_COMMAND` emits OSC 7 via stdinPipe; xterm.js OSC handler updates SFTP path
 - **Broadcast** — Three modes: off/pane/all
+- **Binary**: `webterm`, **DB**: `webterm.db`
