@@ -6,8 +6,8 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/xf/webterm/auth"
-	"github.com/xf/webterm/store"
+	"io.github.xufanchn.webterm/auth"
+	"io.github.xufanchn.webterm/store"
 )
 
 type AuthHandler struct {

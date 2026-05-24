@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/xf/webterm/auth"
-	"github.com/xf/webterm/crypto"
-	"github.com/xf/webterm/store"
+	"io.github.xufanchn.webterm/auth"
+	"io.github.xufanchn.webterm/crypto"
+	"io.github.xufanchn.webterm/store"
 )
 
 type DbConnHandler struct {

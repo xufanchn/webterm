@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/xf/webterm/crypto"
-	"github.com/xf/webterm/sftpmgr"
-	"github.com/xf/webterm/sshmgr"
-	"github.com/xf/webterm/store"
+	"io.github.xufanchn.webterm/crypto"
+	"io.github.xufanchn.webterm/sftpmgr"
+	"io.github.xufanchn.webterm/sshmgr"
+	"io.github.xufanchn.webterm/store"
 )
 
 func friendlyErr(err error) string {
