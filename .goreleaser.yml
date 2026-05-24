@@ -23,6 +23,10 @@ archives:
   - formats: [tar.gz]
     files:
       - config.yaml
+      - src: scripts/run.sh
+        dst: run.sh
+      - src: scripts/webterm.bat
+        dst: webterm.bat
     format_overrides:
       - goos: windows
         formats: [zip]
