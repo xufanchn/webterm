@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BIN="${SCRIPT_DIR}/webterm"
 CONFIG="${SCRIPT_DIR}/config.yaml"
 PID_FILE="${SCRIPT_DIR}/webterm.pid"
-PORT=$(grep -oP 'port:\s*\K\d+' "$CONFIG" 2>/dev/null || echo "8443")
+PORT=$(grep -oP 'port:\s*\K\d+' "$CONFIG" 2>/dev/null || echo "8888")
 
 running() {
     if [ -f "$PID_FILE" ]; then

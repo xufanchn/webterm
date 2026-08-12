@@ -16,7 +16,7 @@ func Load(path string) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	cfg := &Config{Port: 8443, LogLevel: "info"}
+	cfg := &Config{Port: 8888, LogLevel: "info"}
 	if err := yaml.Unmarshal(data, cfg); err != nil {
 		return nil, err
 	}

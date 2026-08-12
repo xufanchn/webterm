@@ -18,7 +18,7 @@ Web-based SSH/SFTP/Database terminal manager. Single binary, Go backend + React 
 
 ```bash
 make build          # build frontend + Go binary
-./webterm            # runs on :8443 by default (see config.yaml)
+./webterm            # runs on :8888 by default (see config.yaml)
 ```
 
 Default admin: `admin` / `admin`
@@ -51,7 +51,7 @@ Default admin: `admin` / `admin`
 
 `config.yaml`:
 ```yaml
-port: 8443
+port: 8888
 encryption_key: "64-char-hex-string"
 log_level: "info"
 ```
