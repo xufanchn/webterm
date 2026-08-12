@@ -11,6 +11,14 @@ import (
 	"github.com/xufanchn/webterm/store"
 )
 
+func canUseConnection(user *auth.Claims, c *store.Connection) bool {
+	return user != nil && (user.Role == "admin" || c.CreatedBy == user.UserID || c.Shared)
+}
+
+func canManageConnection(user *auth.Claims, c *store.Connection) bool {
+	return user != nil && (user.Role == "admin" || c.CreatedBy == user.UserID)
+}
+
 type ConnectionHandler struct {
 	Store     *store.Store
 	Pool      *sshmgr.Pool
@@ -29,9 +37,13 @@ func (h *ConnectionHandler) List(w http.ResponseWriter, r *http.Request) {
 		conns = []store.Connection{}
 	}
 	for i := range conns {
-		if conns[i].PasswordEncrypted != "" {
-			pwd, err := h.AESCipher.Decrypt(conns[i].PasswordEncrypted)
-			if err == nil { conns[i].Password = pwd }
+		if conns[i].CreatedBy == user.UserID || user.Role == "admin" {
+			if conns[i].PasswordEncrypted != "" {
+				pwd, err := h.AESCipher.Decrypt(conns[i].PasswordEncrypted)
+				if err == nil {
+					conns[i].Password = pwd
+				}
+			}
 		}
 	}
 	json.NewEncoder(w).Encode(conns)
@@ -81,17 +93,17 @@ func (h *ConnectionHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c := &store.Connection{
-		GroupID:                      req.GroupID,
-		Name:                         req.Name,
-		Host:                         req.Host,
-		Port:                         req.Port,
-		Username:                     req.Username,
-		AuthMethod:                   req.AuthMethod,
-		PasswordEncrypted:            pwdEnc,
-		PrivateKeyEncrypted:          keyEnc,
+		GroupID:                       req.GroupID,
+		Name:                          req.Name,
+		Host:                          req.Host,
+		Port:                          req.Port,
+		Username:                      req.Username,
+		AuthMethod:                    req.AuthMethod,
+		PasswordEncrypted:             pwdEnc,
+		PrivateKeyEncrypted:           keyEnc,
 		PrivateKeyPassphraseEncrypted: passEnc,
-		CreatedBy:                    user.UserID,
-		Shared:                       req.Shared,
+		CreatedBy:                     user.UserID,
+		Shared:                        req.Shared,
 	}
 	id, err := h.Store.CreateConnection(c)
 	if err != nil {
@@ -146,17 +158,17 @@ func (h *ConnectionHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c := &store.Connection{
-		ID:                           id,
-		GroupID:                      req.GroupID,
-		Name:                         req.Name,
-		Host:                         req.Host,
-		Port:                         req.Port,
-		Username:                     req.Username,
-		AuthMethod:                   req.AuthMethod,
-		PasswordEncrypted:            pwdEnc,
-		PrivateKeyEncrypted:          keyEnc,
+		ID:                            id,
+		GroupID:                       req.GroupID,
+		Name:                          req.Name,
+		Host:                          req.Host,
+		Port:                          req.Port,
+		Username:                      req.Username,
+		AuthMethod:                    req.AuthMethod,
+		PasswordEncrypted:             pwdEnc,
+		PrivateKeyEncrypted:           keyEnc,
 		PrivateKeyPassphraseEncrypted: passEnc,
-		Shared:                       req.Shared,
+		Shared:                        req.Shared,
 	}
 	// Merge with existing: keep old values for fields not provided
 	existing, err := h.Store.GetConnection(id)
@@ -164,28 +176,61 @@ func (h *ConnectionHandler) Update(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, `{"error":"connection not found"}`, http.StatusNotFound)
 		return
 	}
-	if req.Name == "" { c.Name = existing.Name }
-	if req.Host == "" { c.Host = existing.Host }
-	if req.Port == 0 { c.Port = existing.Port }
-	if req.Username == "" { c.Username = existing.Username }
-	if req.AuthMethod == "" { c.AuthMethod = existing.AuthMethod }
-	if pwdEnc == "" { c.PasswordEncrypted = existing.PasswordEncrypted }
-	if keyEnc == "" { c.PrivateKeyEncrypted = existing.PrivateKeyEncrypted }
-	if passEnc == "" { c.PrivateKeyPassphraseEncrypted = existing.PrivateKeyPassphraseEncrypted }
-	if req.GroupID == 0 { c.GroupID = existing.GroupID }
+	if req.Name == "" {
+		c.Name = existing.Name
+	}
+	if req.Host == "" {
+		c.Host = existing.Host
+	}
+	if req.Port == 0 {
+		c.Port = existing.Port
+	}
+	if req.Username == "" {
+		c.Username = existing.Username
+	}
+	if req.AuthMethod == "" {
+		c.AuthMethod = existing.AuthMethod
+	}
+	if pwdEnc == "" {
+		c.PasswordEncrypted = existing.PasswordEncrypted
+	}
+	if keyEnc == "" {
+		c.PrivateKeyEncrypted = existing.PrivateKeyEncrypted
+	}
+	if passEnc == "" {
+		c.PrivateKeyPassphraseEncrypted = existing.PrivateKeyPassphraseEncrypted
+	}
+	if req.GroupID == 0 {
+		c.GroupID = existing.GroupID
+	}
 	c.Shared = req.Shared || existing.Shared
-	_ = user
+	if !canManageConnection(user, existing) {
+		http.Error(w, `{"error":"forbidden"}`, http.StatusForbidden)
+		return
+	}
 	if err := h.Store.UpdateConnection(c); err != nil {
 		http.Error(w, `{"error":"update failed"}`, http.StatusInternalServerError)
 		return
 	}
 	// Invalidate cached SSH client so next connection uses updated credentials
-	if h.Pool != nil { h.Pool.Remove(id) }
+	if h.Pool != nil {
+		h.Pool.Remove(id)
+	}
 	w.Write([]byte(`{"status":"ok"}`))
 }
 
 func (h *ConnectionHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	user := auth.GetUser(r)
+	existing, err := h.Store.GetConnection(id)
+	if err != nil {
+		http.Error(w, `{"error":"connection not found"}`, http.StatusNotFound)
+		return
+	}
+	if !canManageConnection(user, existing) {
+		http.Error(w, `{"error":"forbidden"}`, http.StatusForbidden)
+		return
+	}
 	if err := h.Store.DeleteConnection(id); err != nil {
 		http.Error(w, `{"error":"delete failed"}`, http.StatusInternalServerError)
 		return

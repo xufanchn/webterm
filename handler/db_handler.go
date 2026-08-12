@@ -10,6 +10,14 @@ import (
 	"github.com/xufanchn/webterm/store"
 )
 
+func canUseDbConnection(user *auth.Claims, c *store.DbConnection) bool {
+	return user != nil && (user.Role == "admin" || c.CreatedBy == user.UserID || c.Shared)
+}
+
+func canManageDbConnection(user *auth.Claims, c *store.DbConnection) bool {
+	return user != nil && (user.Role == "admin" || c.CreatedBy == user.UserID)
+}
+
 type DbConnHandler struct {
 	Store     *store.Store
 	AESCipher *crypto.AESCipher
@@ -98,6 +106,17 @@ func (h *DbConnHandler) Update(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	user := auth.GetUser(r)
+	existing, err := h.Store.GetDbConnection(id)
+	if err != nil {
+		http.Error(w, `{"error":"db connection not found"}`, http.StatusNotFound)
+		return
+	}
+	if !canManageDbConnection(user, existing) {
+		http.Error(w, `{"error":"forbidden"}`, http.StatusForbidden)
+		return
+	}
+
 	c := &store.DbConnection{
 		ID:                id,
 		GroupID:           req.GroupID,
@@ -109,6 +128,29 @@ func (h *DbConnHandler) Update(w http.ResponseWriter, r *http.Request) {
 		DatabaseName:      req.DatabaseName,
 		Shared:            req.Shared,
 	}
+	// Merge with existing: keep old values for fields not provided
+	if req.Name == "" {
+		c.Name = existing.Name
+	}
+	if req.Host == "" {
+		c.Host = existing.Host
+	}
+	if req.Port == 0 {
+		c.Port = existing.Port
+	}
+	if req.Username == "" {
+		c.Username = existing.Username
+	}
+	if req.DatabaseName == "" {
+		c.DatabaseName = existing.DatabaseName
+	}
+	if req.GroupID == 0 {
+		c.GroupID = existing.GroupID
+	}
+	if pwdEnc == "" {
+		c.PasswordEncrypted = existing.PasswordEncrypted
+	}
+	c.Shared = req.Shared || existing.Shared
 	if err := h.Store.UpdateDbConnection(c); err != nil {
 		http.Error(w, `{"error":"update failed"}`, http.StatusInternalServerError)
 		return
@@ -118,6 +160,16 @@ func (h *DbConnHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 func (h *DbConnHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	user := auth.GetUser(r)
+	existing, err := h.Store.GetDbConnection(id)
+	if err != nil {
+		http.Error(w, `{"error":"db connection not found"}`, http.StatusNotFound)
+		return
+	}
+	if !canManageDbConnection(user, existing) {
+		http.Error(w, `{"error":"forbidden"}`, http.StatusForbidden)
+		return
+	}
 	if err := h.Store.DeleteDbConnection(id); err != nil {
 		http.Error(w, `{"error":"delete failed"}`, http.StatusInternalServerError)
 		return
