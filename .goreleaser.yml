@@ -36,6 +36,8 @@ dockers:
     use: buildx
     build_flag_templates:
       - "--platform=linux/amd64"
+    extra_files:
+      - config.yaml
   - id: arm64
     image_templates:
       - "ghcr.io/xufanchn/webterm:{{.Version}}-arm64"
@@ -43,6 +45,8 @@ dockers:
     use: buildx
     build_flag_templates:
       - "--platform=linux/arm64"
+    extra_files:
+      - config.yaml
 
 docker_manifests:
   - name_template: "ghcr.io/xufanchn/webterm:{{.Version}}"
