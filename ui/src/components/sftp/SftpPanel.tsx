@@ -41,6 +41,7 @@ export default function SftpPanel({ connId, tabId, localMode, currentPath, onPat
   const [, setNavTick] = useState(0);
 
   const wsRef = useRef<WebSocket | null>(null);
+  const [wsNonce, setWsNonce] = useState(0);
   const pathRef = useRef(path);
   pathRef.current = path;
   const prevKeyRef = useRef(sessionKey);
@@ -84,6 +85,9 @@ export default function SftpPanel({ connId, tabId, localMode, currentPath, onPat
 
     // If we have a socket for the new connId, reuse it
     const existing = poolRef.current.get(connId);
+    if (existing && existing.readyState !== WebSocket.OPEN) {
+      poolRef.current.delete(connId);
+    }
     if (existing && existing.readyState === WebSocket.OPEN) {
       wsRef.current = existing;
       setDisconnected(false);
@@ -97,9 +101,14 @@ export default function SftpPanel({ connId, tabId, localMode, currentPath, onPat
       return;
     }
 
-    // Save old socket to pool if old connId still has SSH tabs
-    if (prevId != null && prevId !== connId && connIsAlive(prevId)) {
-      poolRef.current.set(prevId, wsRef.current!);
+    // Save old socket to pool if old connId still has SSH tabs; otherwise close it
+    if (prevId != null && prevId !== connId) {
+      if (connIsAlive(prevId)) {
+        poolRef.current.set(prevId, wsRef.current!);
+      } else {
+        wsRef.current?.close();
+        wsRef.current = null;
+      }
     }
 
     setDisconnected(false);
@@ -147,7 +156,7 @@ export default function SftpPanel({ connId, tabId, localMode, currentPath, onPat
         }
       } catch {}
     };
-  }, [connId]);
+  }, [connId, wsNonce]);
 
   // Prune a specific connId from the pool when all its SSH tabs are gone
   const sftpPruneConn = useLayoutStore((s) => s.sftpPruneConn);
@@ -264,7 +273,7 @@ export default function SftpPanel({ connId, tabId, localMode, currentPath, onPat
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8, color: '#888' }}>
           <div style={{ fontSize: 24, opacity: 0.3 }}>◧</div>
           <div style={{ fontSize: 12 }}>{t("sftp_disconnected")}</div>
-          <button onClick={() => setFiles([])} style={{
+          <button onClick={() => { setError(''); setFiles([]); setDisconnected(false); setWsNonce((n) => n + 1); }} style={{
             background: '#7aa2f7', border: 'none', color: '#1a1b26', fontWeight: 600, padding: '4px 12px',
             borderRadius: 4, cursor: 'pointer', fontSize: 11,
           }}>{t("sftp_reconnect")}</button>

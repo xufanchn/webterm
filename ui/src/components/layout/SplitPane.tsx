@@ -124,10 +124,9 @@ function doRemovePane(paneId: string) {
   }
 
   const result = removeFrom(layoutRoot);
-  if (result && result.type === 'leaf' && result.id === 'root') {
+  if (result) {
     layoutRoot = result;
-  } else if (result) {
-    layoutRoot = result;
+    allPaneIds.delete(paneId);
   }
   notify();
 }
@@ -265,10 +264,12 @@ function LeafPane({ nodeId, onActiveSshChange, isInSplit }: {
 
   useEffect(() => {
     const iv = setInterval(() => {
-      const queue = drainTabQueue();
-      if (queue.length > 0 && focusedPaneId === nodeId) {
-        setTabs((prev) => { const ids = new Set(prev.map((t) => t.id)); return [...prev, ...queue.filter((t) => !ids.has(t.id))]; });
-        setActiveTabId(queue[queue.length - 1].id);
+      if (focusedPaneId === nodeId) {
+        const queue = drainTabQueue();
+        if (queue.length > 0) {
+          setTabs((prev) => { const ids = new Set(prev.map((t) => t.id)); return [...prev, ...queue.filter((t) => !ids.has(t.id))]; });
+          setActiveTabId(queue[queue.length - 1].id);
+        }
       }
       const removed = drainRemovedTabs();
       if (removed.length > 0) setTabs((prev) => prev.filter((t) => !removed.includes(t.id)));

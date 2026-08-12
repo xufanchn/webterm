@@ -18,7 +18,6 @@ interface LayoutState {
   broadcastScope: BroadcastScope;
   broadcastSourceId: string | null;
   terminalRegistry: string[];
-  registeredTabs: string[];
   removedTabQueue: string[];
   setActiveModule: (m: ModuleType) => void;
   requestTab: (tab: Tab) => void;
@@ -47,7 +46,6 @@ export const useLayoutStore = create<LayoutState>((set, get) => ({
       broadcastScope: 'off',
       broadcastSourceId: null,
       terminalRegistry: [],
-      registeredTabs: [],
       removedTabQueue: [],
       sftpDisconnectSignal: 0,
       sftpPruneConn: null,

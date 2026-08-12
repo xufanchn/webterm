@@ -52,9 +52,13 @@ export const useConnectionStore = create<ConnectionState>((set) => ({
   dbConnections: [],
   fetchConnections: async (groupId) => {
     set({ loading: true });
-    const qs = groupId ? `?group_id=${groupId}` : '';
-    const data = await apiGet(`/api/connections${qs}`);
-    set({ connections: data, loading: false });
+    try {
+      const qs = groupId ? `?group_id=${groupId}` : '';
+      const data = await apiGet(`/api/connections${qs}`);
+      set({ connections: data });
+    } finally {
+      set({ loading: false });
+    }
   },
   fetchDbConnections: async () => {
     try {

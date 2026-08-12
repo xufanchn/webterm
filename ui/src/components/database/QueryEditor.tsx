@@ -14,24 +14,51 @@ interface Props {
 export default function QueryEditor({ connId }: Props) {
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [result, setResult] = useState<{ columns: string[]; rows: Record<string,any>[]; rowsAffected?: number } | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
+    setWs(null);
+    wsRef.current = null;
+    let closed = false;
+    let retries = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     const token = localStorage.getItem('token') || '';
-    const socket = new WebSocket(`${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws/db/${connId}?token=${token}`);
-    socket.onopen = () => setWs(socket);
-    socket.onmessage = (e) => {
-      const msg = JSON.parse(e.data);
-      if (msg.type === 'query_result') {
-        setResult(msg.result);
-        setError('');
-      } else if (msg.type === 'error') {
-        setError(msg.error);
-      }
+
+    const connect = () => {
+      const socket = new WebSocket(`${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws/db/${connId}?token=${token}`);
+      wsRef.current = socket;
+      socket.onopen = () => { retries = 0; setWs(socket); };
+      socket.onmessage = (e) => {
+        const msg = JSON.parse(e.data);
+        if (msg.type === 'query_result') {
+          setResult(msg.result);
+          setError('');
+        } else if (msg.type === 'error') {
+          setError(msg.error);
+        }
+      };
+      socket.onclose = () => {
+        if (wsRef.current === socket) wsRef.current = null;
+        setWs((cur) => (cur === socket ? null : cur));
+        if (!closed && retries < 3) {
+          const delay = Math.min(1000 * Math.pow(2, retries), 8000);
+          retries++;
+          timer = setTimeout(connect, delay);
+        }
+      };
+      socket.onerror = () => socket.close();
     };
-    return () => socket.close();
+    connect();
+
+    return () => {
+      closed = true;
+      clearTimeout(timer);
+      wsRef.current?.close();
+      wsRef.current = null;
+    };
   }, [connId]);
 
   useEffect(() => {
@@ -43,8 +70,8 @@ export default function QueryEditor({ connId }: Props) {
         viewRef.current.state.selection.main.to
       );
       const sqlToRun = selection || query;
-      if (sqlToRun.trim() && ws) {
-        ws.send(JSON.stringify({ action: 'query', query: sqlToRun }));
+      if (sqlToRun.trim() && wsRef.current) {
+        wsRef.current.send(JSON.stringify({ action: 'query', query: sqlToRun }));
       }
     };
 
@@ -81,7 +108,7 @@ export default function QueryEditor({ connId }: Props) {
     viewRef.current = view;
 
     return () => view.destroy();
-  }, [ws]);
+  }, []);
 
   const exportCSV = () => {
     if (!result || !result.columns.length) return;
