@@ -35,21 +35,21 @@
   --c-warning: #e0af68;
   --c-warning-text: #cca700;
   --c-white: #fff;
-  --f-lg: calc(16px * var(--ui-scale));
-  --f-md: calc(15px * var(--ui-scale));
-  --f-sm: calc(14px * var(--ui-scale));
-  --f-xl: calc(17px * var(--ui-scale));
-  --f-xl2: calc(19px * var(--ui-scale));
-  --f-xl3: calc(21px * var(--ui-scale));
-  --f-xl4: calc(26px * var(--ui-scale));
-  --f-xl5: calc(29px * var(--ui-scale));
-  --f-xs: calc(13px * var(--ui-scale));
-  --f-xxs: calc(11px * var(--ui-scale));
+  --f-lg: calc(13px * var(--ui-scale));
+  --f-md: calc(12px * var(--ui-scale));
+  --f-sm: calc(11px * var(--ui-scale));
+  --f-xl: calc(14px * var(--ui-scale));
+  --f-xl2: calc(16px * var(--ui-scale));
+  --f-xl3: calc(17px * var(--ui-scale));
+  --f-xl4: calc(22px * var(--ui-scale));
+  --f-xl5: calc(24px * var(--ui-scale));
+  --f-xs: calc(10px * var(--ui-scale));
+  --f-xxs: calc(9px * var(--ui-scale));
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body, #root { height: 100%; width: 100%; overflow: hidden; }
-body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #1a1b26; color: #c0caf5; font-size: 18px; }
+body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #1a1b26; color: #c0caf5; font-size: 14px; }
 select:focus, input:focus, textarea:focus { outline: none; border-color: #7aa2f7 !important; box-shadow: 0 0 0 1px #7aa2f7; }
 .header-search:focus { border-color: transparent !important; box-shadow: none !important; }
 .login-input:focus { border-color: transparent !important; box-shadow: none !important; }

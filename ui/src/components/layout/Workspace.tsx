@@ -92,7 +92,7 @@ export default function Workspace() {
       )}
       {/* Global status bar */}
       <div style={{
-        height: 26, flexShrink: 0, background: colors.bg, borderTop: '1px solid var(--c-border)',
+        height: 22, flexShrink: 0, background: colors.bg, borderTop: '1px solid var(--c-border)',
         display: 'flex', alignItems: 'center', padding: '0 10px',
         fontSize: font.sm, color: colors.accent, gap: 10, lineHeight: '26px',
       }}>
