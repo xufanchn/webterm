@@ -1,5 +1,5 @@
 import { t } from '../../i18n';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { SearchAddon } from '@xterm/addon-search';
@@ -13,6 +13,7 @@ import '@xterm/xterm/css/xterm.css';
 import { getTheme } from '../../themes/presets';
 import ContextMenu from '../common/ContextMenu';
 import { colors } from '../../theme/tokens';
+import Zmodem from 'zmodem.js/src/zmodem_browser.js';
 
 interface Props {
   connId: number;
@@ -51,6 +52,11 @@ export default function ThemedTerminal({ connId, themeName: _themeName, onStatus
   const [termKey, setTermKey] = useState(0);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const rules = useHighlightRules();
+  const rulesRef = useRef(rules);
+  rulesRef.current = rules;
+  const zsentryRef = useRef<any>(null);
+  const zsessionRef = useRef<any>(null);
+  const zmodemActiveRef = useRef(false);
   const sendRef = useRef<(data: string) => void>(() => {});
   const onStatusRef = useRef(onStatus);
   const onResizeDimRef = useRef(onResizeDim);
@@ -209,7 +215,17 @@ export default function ThemedTerminal({ connId, themeName: _themeName, onStatus
       if (!term) return;
       try {
         const msg = JSON.parse(data);
-        if (msg.data) term.write(highlightText(msg.data, rules));
+        if (msg.data) {
+          let bytes: Uint8Array;
+          if (msg.b64) {
+            const bin = atob(msg.data);
+            bytes = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+          } else {
+            bytes = new TextEncoder().encode(msg.data);
+          }
+          zsentryRef.current?.consume(bytes);
+        }
         if (msg.error) term.write(`\r\n\x1b[31m${msg.error}\x1b[0m\r\n`);
       } catch {
         term.write(data);
@@ -235,6 +251,96 @@ export default function ThemedTerminal({ connId, themeName: _themeName, onStatus
   });
 
   sendRef.current = send;
+
+  const sendBinary = useCallback((octets: any) => {
+    const bytes = octets instanceof Uint8Array ? octets : new Uint8Array(octets);
+    let bin = '';
+    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    sendRef.current(JSON.stringify({ data: btoa(bin), b64: true }));
+  }, []);
+
+  const sendTextAsBinary = useCallback((s: string) => {
+    const bytes = new TextEncoder().encode(s);
+    let bin = '';
+    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    sendRef.current(JSON.stringify({ data: btoa(bin), b64: true }));
+  }, []);
+
+  // ZMODEM (sz/rz) support
+  useEffect(() => {
+    const makeSentry = () => {
+      const sentry = new Zmodem.Sentry({
+        to_terminal: (octets: any) => {
+          const term = termRef.current;
+          if (!term) return;
+          const bytes = octets instanceof Uint8Array ? octets : new Uint8Array(octets);
+          try {
+            const str = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+            term.write(highlightText(str, rulesRef.current));
+          } catch {
+            term.write(bytes);
+          }
+        },
+        sender: (octets: any) => sendBinary(octets),
+        on_detect: (detection: any) => {
+          try {
+            const session = detection.confirm();
+            zsessionRef.current = session;
+            zmodemActiveRef.current = true;
+            if (session.type === 'send') {
+              // Remote ran rz: let the user pick files to upload
+              const input = document.createElement('input');
+              input.type = 'file';
+              input.multiple = true;
+              input.onchange = async () => {
+                const files = input.files ? Array.from(input.files) : [];
+                try {
+                  if (files.length) {
+                    await Zmodem.Browser.send_files(session, files);
+                  } else {
+                    try { session.abort(); } catch {}
+                  }
+                } catch (e) {
+                  termRef.current?.write(`\r\n\x1b[31mZMODEM: ${e}\x1b[0m\r\n`);
+                }
+                zmodemActiveRef.current = false;
+                zsessionRef.current = null;
+              };
+              input.click();
+            } else {
+              // Remote ran sz: download offered files
+              session.on('offer', (xfer: any) => {
+                xfer.accept()
+                  .then(() => {
+                    Zmodem.Browser.save_to_disk(xfer.get_payloads(), xfer.get_details().name);
+                  })
+                  .catch(() => {});
+              });
+              session.on('session_end', () => {
+                zmodemActiveRef.current = false;
+                zsessionRef.current = null;
+                zsentryRef.current = makeSentry();
+              });
+              session.start();
+            }
+          } catch (e) {
+            zmodemActiveRef.current = false;
+            zsessionRef.current = null;
+            termRef.current?.write(`\r\n\x1b[31mZMODEM: ${e}\x1b[0m\r\n`);
+            zsentryRef.current = makeSentry();
+          }
+        },
+        on_retract: () => {},
+      });
+      zsentryRef.current = sentry;
+    };
+    makeSentry();
+    return () => {
+      zsentryRef.current = null;
+      zsessionRef.current = null;
+      zmodemActiveRef.current = false;
+    };
+  }, [sendBinary]);
 
   const broadcastScope = useLayoutStore((s) => s.broadcastScope);
   const broadcastSourceId = useLayoutStore((s) => s.broadcastSourceId);
@@ -269,6 +375,10 @@ export default function ThemedTerminal({ connId, themeName: _themeName, onStatus
     const term = termRef.current;
     if (!term) return;
     const disposable = term.onData((data) => {
+      if (zmodemActiveRef.current) {
+        sendTextAsBinary(data);
+        return;
+      }
       const isSource = myTabId === broadcastSourceId;
       const isTarget = broadcastScope !== 'off' && !isSource;
 

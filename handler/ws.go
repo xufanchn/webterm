@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -8,6 +9,7 @@ import (
 	"log"
 	"strconv"
 	"time"
+	"unicode/utf8"
 
 	"github.com/xufanchn/webterm/auth"
 	"github.com/xufanchn/webterm/crypto"
@@ -145,9 +147,16 @@ func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 			}
 			var dataMsg struct {
 				Data string `json:"data"`
+				B64  bool   `json:"b64"`
 			}
 			if err := json.Unmarshal(raw, &dataMsg); err == nil && dataMsg.Data != "" {
-				stdinPipe.Write([]byte(dataMsg.Data))
+				if dataMsg.B64 {
+					if bin, derr := base64.StdEncoding.DecodeString(dataMsg.Data); derr == nil {
+						stdinPipe.Write(bin)
+					}
+				} else {
+					stdinPipe.Write([]byte(dataMsg.Data))
+				}
 			}
 		}
 	}()
@@ -249,8 +258,13 @@ type wsWriter struct {
 }
 
 func (w *wsWriter) Write(p []byte) (int, error) {
-	err := websocket.JSON.Send(w.conn, map[string]string{"data": string(p)})
-	if err != nil {
+	msg := map[string]interface{}{"data": string(p)}
+	if !utf8.Valid(p) {
+		// Binary data (e.g. ZMODEM) must not be mangled by JSON/UTF-8
+		msg["data"] = base64.StdEncoding.EncodeToString(p)
+		msg["b64"] = true
+	}
+	if err := websocket.JSON.Send(w.conn, msg); err != nil {
 		return 0, err
 	}
 	return len(p), nil
