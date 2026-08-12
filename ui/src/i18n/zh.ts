@@ -40,7 +40,7 @@ const zh: Record<string, string> = {
   color_orange: '橙', color_purple: '紫', color_cyan: '青',
   color_pink: '粉', color_yellow: '黄', color_gray: '灰', color_brown: '棕',
   settings_title: '个人设置', settings_appearance: '外观', settings_highlights: '关键字高亮',
-  settings_connection: '连接', settings_theme: '主题', settings_font: '字体大小',
+  settings_connection: '连接', settings_theme: '主题', settings_font: '字体大小', settings_ui_scale: '界面缩放',
   settings_onekey_title: 'OneKey 密钥列表', settings_onekey_key: 'Key',
   settings_onekey_user: '用户名', settings_onekey_pwd: '密码',
   settings_add: '添加', settings_preset: '预设',

@@ -40,7 +40,7 @@ const en: Record<string, string> = {
   color_orange: 'Orange', color_purple: 'Purple', color_cyan: 'Cyan',
   color_pink: 'Pink', color_yellow: 'Yellow', color_gray: 'Gray', color_brown: 'Brown',
   settings_title: 'Settings', settings_appearance: 'Appearance', settings_highlights: 'Highlights',
-  settings_connection: 'Connection', settings_theme: 'Theme', settings_font: 'Font Size',
+  settings_connection: 'Connection', settings_theme: 'Theme', settings_font: 'Font Size', settings_ui_scale: 'UI Scale',
   settings_onekey_title: 'OneKey List', settings_onekey_key: 'Key',
   settings_onekey_user: 'Username', settings_onekey_pwd: 'Password',
   settings_add: 'Add', settings_preset: 'Preset',
