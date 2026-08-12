@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import Icon from './Icon';
+import { colors, font } from '../../theme/tokens';
 
 interface Props {
   title: string;
@@ -28,14 +29,14 @@ export default function Modal({ title, onClose, children, width = 600, height = 
       <div style={{
         background: 'rgba(26,27,38,0.88)', borderRadius: 12, width, height,
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px #3b4261',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px var(--c-border)',
       }} onClick={(e) => e.stopPropagation()}>
         <div style={{
           padding: '16px 24px 8px', display: 'flex',
-          justifyContent: 'space-between', alignItems: 'center', fontSize: 18,
+          justifyContent: 'space-between', alignItems: 'center', fontSize: font.xl2,
         }}>
-          <span style={{ color: '#7aa2f7', fontWeight: 600 }}>{title}</span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#565f89', cursor: 'pointer', display: 'flex', alignItems: 'center' }}><Icon name="x" size={18} /></button>
+          <span style={{ color: colors.accent, fontWeight: 600 }}>{title}</span>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: colors.textMuted, cursor: 'pointer', display: 'flex', alignItems: 'center' }}><Icon name="x" size={18} /></button>
         </div>
         <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
           {children}

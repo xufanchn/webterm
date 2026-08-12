@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import Icon from '../common/Icon';
 import { useLayoutStore } from '../../store/layout';
 import { useConnectionStore } from '../../store/connections';
+import { colors, font } from '../../theme/tokens';
 
 export default function HeaderSearch() {
   const [query, setQuery] = useState('');
@@ -61,25 +62,25 @@ export default function HeaderSearch() {
 
   return (
     <div ref={ref} style={{ flex: 1, display: 'flex', justifyContent: 'center', position: 'relative' }}>
-      <div style={{ display: 'flex', alignItems: 'center', borderRadius: 6, padding: '0 8px', height: 26, width: 360, background: '#1f2335',
-        border: focus ? '1px solid #7aa2f7' : '1px solid #3b4261',
+      <div style={{ display: 'flex', alignItems: 'center', borderRadius: 6, padding: '0 8px', height: 26, width: 360, background: colors.bgInput,
+        border: focus ? '1px solid var(--c-accent)' : '1px solid var(--c-border)',
         boxShadow: focus ? '0 0 0 2px rgba(122,162,247,0.25)' : 'none',
         transition: 'border-color 0.15s, box-shadow 0.15s',
       }}>
-        <Icon name="search" size={13} color="#565f89" />
+        <Icon name="search" size={13} color={colors.textMuted} />
         <input ref={inputRef} className="header-search" value={query} onChange={(e) => { setQuery(e.target.value); setActiveIdx(0); }}
           onFocus={() => setFocus(true)} onKeyDown={onKey}
           placeholder="Search..."
-          style={{ flex: 1, background: 'none', border: 'none', color: '#c0caf5', fontSize: 14, outline: 'none', marginLeft: 6 }} />
+          style={{ flex: 1, background: 'none', border: 'none', color: colors.text, fontSize: font.md, outline: 'none', marginLeft: 6 }} />
         {query && (
           <span onClick={() => { setQuery(''); setFocus(false); }}
-            style={{ cursor: 'pointer', color: '#565f89', display: 'flex' }}><Icon name="x" size={12} /></span>
+            style={{ cursor: 'pointer', color: colors.textMuted, display: 'flex' }}><Icon name="x" size={12} /></span>
         )}
       </div>
       {focus && results.length > 0 && (
         <div style={{
           position: 'absolute', top: 30, left: '50%', transform: 'translateX(-50%)', width: 360, zIndex: 5000,
-          background: '#1f2335', border: '1px solid #3b4261', borderRadius: 6,
+          background: colors.bgInput, border: '1px solid var(--c-border)', borderRadius: 6,
           boxShadow: '0 8px 24px rgba(0,0,0,0.5)', overflow: 'hidden',
         }}>
           {results.map((r, i) => (
@@ -87,12 +88,12 @@ export default function HeaderSearch() {
               onMouseEnter={() => setActiveIdx(i)}
               style={{
                 padding: '8px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
-                background: i === activeIdx ? '#2a2e42' : 'transparent',
-                borderBottom: i < results.length - 1 ? '1px solid #3b4261' : 'none',
+                background: i === activeIdx ? 'var(--c-bg-input-alt)' : 'transparent',
+                borderBottom: i < results.length - 1 ? '1px solid var(--c-border)' : 'none',
               }}>
-              <Icon name={r.icon} size={14} color="#7aa2f7" />
-              <span style={{ color: '#c0caf5', fontSize: 14, flex: 1 }}>{r.label}</span>
-              <span style={{ color: '#565f89', fontSize: 12 }}>{r.sub}</span>
+              <Icon name={r.icon} size={14} color={colors.accent} />
+              <span style={{ color: colors.text, fontSize: font.md, flex: 1 }}>{r.label}</span>
+              <span style={{ color: colors.textMuted, fontSize: font.xs }}>{r.sub}</span>
             </div>
           ))}
         </div>

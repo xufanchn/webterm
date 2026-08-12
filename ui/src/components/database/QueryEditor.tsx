@@ -6,6 +6,7 @@ import { basicSetup } from 'codemirror';
 import { format } from 'sql-formatter';
 import ResultTable from './ResultTable';
 import DbTree from './DbTree';
+import { colors, font } from '../../theme/tokens';
 
 interface Props {
   connId: number;
@@ -102,8 +103,8 @@ export default function QueryEditor({ connId }: Props) {
         EditorView.theme({
           '&': { height: '100%' },
           '.cm-scroller': { overflow: 'auto' },
-          '.cm-content': { fontFamily: 'Menlo, Monaco, monospace', fontSize: '15px' },
-          '.cm-gutters': { background: '#1e1e1e', color: '#888', border: 'none' },
+          '.cm-content': { fontFamily: 'Menlo, Monaco, monospace', fontSize: font.lg },
+          '.cm-gutters': { background: colors.bgDeep, color: colors.textDim, border: 'none' },
         }, { dark: true }),
       ],
       parent: editorRef.current,
@@ -133,7 +134,7 @@ export default function QueryEditor({ connId }: Props) {
 
   return (
     <div style={{ display: 'flex', height: '100%' }}>
-      <div style={{ width: 200, background: '#252526', borderRight: '1px solid #3b4261', flexShrink: 0 }}>
+      <div style={{ width: 200, background: colors.bgRaised, borderRight: '1px solid var(--c-border)', flexShrink: 0 }}>
         <DbTree ws={ws} onQuery={(sql) => {
           if (viewRef.current) {
             viewRef.current.dispatch({
@@ -144,9 +145,9 @@ export default function QueryEditor({ connId }: Props) {
       </div>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <div style={{ flex: 1, minHeight: 0 }} ref={editorRef} />
-        {error && <div style={{ padding: '8px 12px', color: '#f44747', fontSize: 14, background: '#2d1b1b' }}>{error}</div>}
+        {error && <div style={{ padding: '8px 12px', color: colors.danger, fontSize: font.md, background: colors.bgError }}>{error}</div>}
         {result && (
-          <div style={{ flex: 1, minHeight: 0, overflow: 'auto', borderTop: '1px solid #3b4261' }}>
+          <div style={{ flex: 1, minHeight: 0, overflow: 'auto', borderTop: '1px solid var(--c-border)' }}>
             <ResultTable columns={result.columns} rows={result.rows} rowsAffected={result.rowsAffected} onExportCSV={exportCSV} />
           </div>
         )}

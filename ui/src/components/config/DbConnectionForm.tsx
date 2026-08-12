@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Modal from '../common/Modal';
 import CustomSelect from '../common/CustomSelect';
 import { apiPost, apiPut, apiGet } from '../../api/client';
+import { colors, font } from '../../theme/tokens';
 
 interface Group {
   id: number;
@@ -58,7 +59,7 @@ export default function DbConnectionForm({ connection, onClose, onSaved }: Props
   return (
     <Modal title={connection ? t('db_conn_edit') : t('db_conn_new')} onClose={onClose} width={550} height={420}>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        {error && <div style={{ color: '#f44747', fontSize: 14, padding: '6px 10px', background: '#2d1b1b', borderRadius: 4, margin: '8px 16px 0' }}>{error}</div>}
+        {error && <div style={{ color: colors.danger, fontSize: font.md, padding: '6px 10px', background: colors.bgError, borderRadius: 4, margin: '8px 16px 0' }}>{error}</div>}
 
         <div style={{ flex: 1, overflow: 'auto', padding: '12px 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <FormField label={t("conn_name")} value={form.name} onChange={(v) => update('name', v)} required />
@@ -80,7 +81,7 @@ export default function DbConnectionForm({ connection, onClose, onSaved }: Props
             </CustomSelect>
           </div>
 
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#ccc', fontSize: 14, paddingBottom: 8 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: colors.textLight, fontSize: font.md, paddingBottom: 8 }}>
             <input type="checkbox" checked={form.shared} onChange={(e) => update('shared', e.target.checked)} />
             共享连接
           </label>
@@ -89,7 +90,7 @@ export default function DbConnectionForm({ connection, onClose, onSaved }: Props
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, padding: '12px 24px', flexShrink: 0 }}>
           <button onClick={onClose} style={btnSecondary}>{t("conn_cancel")}</button>
           <button onClick={handleSubmit} disabled={saving || !form.name || !form.host}
-            style={saving ? { ...btnPrimary, background: '#3b4261', cursor: 'default' } : btnPrimary}>
+            style={saving ? { ...btnPrimary, background: colors.border, cursor: 'default' } : btnPrimary}>
             {saving ? t('conn_saving') : t('conn_save')}
           </button>
         </div>
@@ -110,10 +111,10 @@ function FormField({ label, value, onChange, type = 'text', placeholder, require
   );
 }
 
-const labelStyle: React.CSSProperties = { color: '#565f89', fontSize: 14, display: 'block', marginBottom: 4 };
+const labelStyle: React.CSSProperties = { color: colors.textMuted, fontSize: font.md, display: 'block', marginBottom: 4 };
 const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '10px 12px', background: 'rgba(31,35,53,0.5)', border: '1px solid #3b4261',
-  borderRadius: 4, color: '#c0caf5', fontSize: 16, boxSizing: 'border-box',
+  width: '100%', padding: '10px 12px', background: 'rgba(31,35,53,0.5)', border: '1px solid var(--c-border)',
+  borderRadius: 4, color: colors.text, fontSize: font.xl, boxSizing: 'border-box',
 };
-const btnSecondary: React.CSSProperties = { padding: '8px 20px', background: 'transparent', border: '1px solid #3b4261', color: '#c0caf5', borderRadius: 4, cursor: 'pointer', fontSize: 16 };
-const btnPrimary: React.CSSProperties = { padding: '8px 20px', background: '#7aa2f7', border: 'none', color: '#1a1b26', borderRadius: 4, cursor: 'pointer', fontSize: 16, fontWeight: 600 };
+const btnSecondary: React.CSSProperties = { padding: '8px 20px', background: 'transparent', border: '1px solid var(--c-border)', color: colors.text, borderRadius: 4, cursor: 'pointer', fontSize: font.xl };
+const btnPrimary: React.CSSProperties = { padding: '8px 20px', background: colors.accent, border: 'none', color: colors.bg, borderRadius: 4, cursor: 'pointer', fontSize: font.xl, fontWeight: 600 };

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { colors, font } from '../../theme/tokens';
 
 interface MenuItem {
   label: string;
@@ -26,15 +27,15 @@ export default function ContextMenu({ x, y, items, onClose }: Props) {
   return (
     <div ref={ref} style={{
       position: 'fixed', left: x, top: y, zIndex: 1000,
-      background: '#1f2335', border: '1px solid #3b4261', borderRadius: 4, overflow: 'hidden',
+      background: colors.bgInput, border: '1px solid var(--c-border)', borderRadius: 4, overflow: 'hidden',
       minWidth: 140, boxShadow: '0 0 16px rgba(0,0,0,0.6), 0 0 4px rgba(0,255,255,0.1)',
     }}>
       {items.map((item, i) => (
         <div key={i} onClick={() => { item.action(); onClose(); }}
           style={{
-            padding: '8px 16px', fontSize: 14, color: '#c0caf5', cursor: 'pointer',
+            padding: '8px 16px', fontSize: font.md, color: colors.text, cursor: 'pointer',
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = '#3b4261')}
+          onMouseEnter={(e) => (e.currentTarget.style.background = colors.border)}
           onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
           {item.label}
         </div>

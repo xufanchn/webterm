@@ -8,6 +8,7 @@ import { json } from '@codemirror/lang-json';
 import { javascript } from '@codemirror/lang-javascript';
 import { python } from '@codemirror/lang-python';
 import Modal from './Modal';
+import { colors, font } from '../../theme/tokens';
 
 interface Props {
   filePath: string;
@@ -81,8 +82,8 @@ export default function FileEditor({ filePath, fileName, ws, onClose, onSaved }:
       EditorView.theme({
         '&': { height: '100%' },
         '.cm-scroller': { overflow: 'auto' },
-        '.cm-content': { fontFamily: 'Menlo, Monaco, monospace', fontSize: '15px' },
-        '.cm-gutters': { background: '#1e1e1e', color: '#888', border: 'none' },
+        '.cm-content': { fontFamily: 'Menlo, Monaco, monospace', fontSize: font.lg },
+        '.cm-gutters': { background: colors.bgDeep, color: colors.textDim, border: 'none' },
       }, { dark: true }),
     ];
 
@@ -140,16 +141,16 @@ export default function FileEditor({ filePath, fileName, ws, onClose, onSaved }:
   return (
     <Modal title={`${t('file_edit')}: ${fileName}`} onClose={onClose} width={800} height={600}>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        {loading && <div style={{ padding: 16, color: '#888' }}>{t("file_loading")}</div>}
+        {loading && <div style={{ padding: 16, color: colors.textDim }}>{t("file_loading")}</div>}
         {error && (
-          <div style={{ padding: '6px 12px', color: '#f44747', background: '#2d1b1b', fontSize: 14 }}>{error}</div>
+          <div style={{ padding: '6px 12px', color: colors.danger, background: colors.bgError, fontSize: font.md }}>{error}</div>
         )}
         <div ref={editorRef} style={{ flex: 1, minHeight: 0 }} />
         <div style={{
-          padding: '8px 16px', background: '#333', display: 'flex',
+          padding: '8px 16px', background: colors.bgBar, display: 'flex',
           justifyContent: 'space-between', alignItems: 'center',
         }}>
-          <span style={{ color: '#888', fontSize: 13, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ color: colors.textDim, fontSize: font.sm, display: 'flex', alignItems: 'center', gap: 10 }}>
             <span>{filePath} — Ctrl+S {t("conn_save")}</span>
             <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
               <input type="checkbox" checked={backup} onChange={(e) => setBackup(e.target.checked)} />
@@ -157,8 +158,8 @@ export default function FileEditor({ filePath, fileName, ws, onClose, onSaved }:
             </label>
           </span>
           <button onClick={handleSave} disabled={saving} style={{
-            background: saving ? '#3b4261' : '#007acc', border: 'none',
-            color: '#fff', padding: '6px 16px', borderRadius: 4, cursor: 'pointer', fontSize: 14,
+            background: saving ? colors.border : colors.info, border: 'none',
+            color: colors.white, padding: '6px 16px', borderRadius: 4, cursor: 'pointer', fontSize: font.md,
           }}>
             {saving ? t('conn_saving') : t('conn_save')}
           </button>

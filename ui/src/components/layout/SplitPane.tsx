@@ -9,6 +9,7 @@ import { t } from '../../i18n';
 import MatrixRain from '../common/MatrixRain';
 import { useAuthStore } from '../../store/auth';
 import { apiPost } from '../../api/client';
+import { colors, font } from '../../theme/tokens';
 type Direction = 'horizontal' | 'vertical';
 
 // Tree node for layout computation only (NOT used for rendering)
@@ -383,7 +384,7 @@ function LeafPane({ nodeId, onActiveSshChange, isInSplit }: {
         {tabs.map((tab) => (
           <div key={tab.id} style={{ flex: 1, display: tab.id === activeTabId ? 'flex' : 'none', overflow: 'hidden' }}>
             {tab.type === 'ssh' && tab.connId && (
-              <Suspense fallback={<div style={{ padding: 12, fontSize: 14, color: '#565f89' }}>Loading…</div>}>
+              <Suspense fallback={<div style={{ padding: 12, fontSize: font.md, color: colors.textMuted }}>Loading…</div>}>
                 <TerminalTab connId={tab.connId} myTabId={tab.id} paneTabs={tabs} extraMenuItems={[
                   { label: t('term_split_h'), action: () => handleSplit('horizontal') },
                   { label: t('term_split_v'), action: () => handleSplit('vertical') },
@@ -393,7 +394,7 @@ function LeafPane({ nodeId, onActiveSshChange, isInSplit }: {
               </Suspense>
             )}
             {tab.type === 'database' && tab.connId && (
-              <Suspense fallback={<div style={{ padding: 12, fontSize: 14, color: '#565f89' }}>Loading…</div>}>
+              <Suspense fallback={<div style={{ padding: 12, fontSize: font.md, color: colors.textMuted }}>Loading…</div>}>
                 <QueryEditor connId={tab.connId} />
               </Suspense>
             )}
@@ -434,7 +435,7 @@ function GridContainer({ onActiveSshChange }: { onActiveSshChange?: (connId: num
       gridTemplateRows: `repeat(${rows}, 1fr)`,
       gridTemplateAreas,
       flex: 1, overflow: 'hidden', minWidth: 0, minHeight: 0,
-      gap: 1, background: '#3b4261',
+      gap: 1, background: colors.border,
     }}>
       {paneIds.map((id) => {
         const cell = cellMap.get(id);
@@ -489,8 +490,8 @@ function SessionWelcome() {
       }
       setStep('done');
       setLines([
-        `<span style="color:#7aa2f7">login:</span> ${user}`,
-        `<span style="color:#7aa2f7">password:</span>`,
+        `<span style="color:var(--c-accent)">login:</span> ${user}`,
+        `<span style="color:var(--c-accent)">password:</span>`,
         `<span style="color:#9ece6a">Welcome, ${data.user.username}!</span>`,
       ]);
       setTimeout(() => {
@@ -502,9 +503,9 @@ function SessionWelcome() {
     } catch {
       setStep('done');
       setLines([
-        `<span style="color:#7aa2f7">login:</span> ${user}`,
-        `<span style="color:#7aa2f7">password:</span>`,
-        `<span style="color:#f7768e">${t('login_error')}</span>`,
+        `<span style="color:var(--c-accent)">login:</span> ${user}`,
+        `<span style="color:var(--c-accent)">password:</span>`,
+        `<span style="color:var(--c-danger-bright)">${t('login_error')}</span>`,
       ]);
       setTimeout(() => { setLines([]); setStep('user'); setUsername(''); setPassword(''); }, 1000);
     }
@@ -516,7 +517,7 @@ function SessionWelcome() {
     if (step === 'user') {
       const u = username.trim();
       if (!u) return;
-      append(`<span style="color:#7aa2f7">login:</span> ${u}`);
+      append(`<span style="color:var(--c-accent)">login:</span> ${u}`);
       if (remember && savedPwd && u === localStorage.getItem('webterm-rm-user')) {
         handleLogin(u, savedPwd);
         return;
@@ -531,26 +532,26 @@ function SessionWelcome() {
   useEffect(() => { inputRef.current?.focus(); }, [step]);
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', flexDirection: 'column', background: '#1a1b26', position: 'relative', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', flexDirection: 'column', background: colors.bg, position: 'relative', overflow: 'hidden' }}>
       <MatrixRain key={tick} fontSize={22} columns={24} opacity={0.5} />
       <div onClick={() => setTick((n) => n + 1)}
         style={{ position: 'absolute', top: '60%', left: '50%', transform: 'translate(-50%, -50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, cursor: 'pointer', zIndex: 1, fontFamily: '"JetBrains Maple Mono", "JetBrains Mono", "Courier New", monospace' }}>
           <pre style={{
-            margin: 0, fontSize: 20, lineHeight: 1.25, fontWeight: 700,
-            color: '#7aa2f7',
+            margin: 0, fontSize: font.xl3, lineHeight: 1.25, fontWeight: 700,
+            color: colors.accent,
             textShadow: `
-              1px 1px 0 #bb9af7,
-              2px 2px 0 #7aa2f7,
-              3px 3px 0 #7aa2f7cc,
-              4px 4px 0 #7aa2f799,
-              5px 5px 0 #7aa2f766,
-              6px 6px 0 #7aa2f733,
-              0 0 20px #7aa2f766
+              1px 1px 0 var(--c-purple),
+              2px 2px 0 var(--c-accent),
+              3px 3px 0 var(--c-accent80),
+              4px 4px 0 var(--c-accent60),
+              5px 5px 0 var(--c-accent-mid),
+              6px 6px 0 var(--c-accent-faint),
+              0 0 20px var(--c-accent-mid)
             `,
           }}>
             {banner.join('\n')}
           </pre>
-          <div style={{ color: '#565f89', fontSize: 16, letterSpacing: 1 }}>{t('app_slogan')}</div>
+          <div style={{ color: colors.textMuted, fontSize: font.xl, letterSpacing: 1 }}>{t('app_slogan')}</div>
         </div>
 
         {!token && (
@@ -558,16 +559,16 @@ function SessionWelcome() {
             style={{
               position: 'absolute', top: '70%', left: '50%', transform: 'translateX(-50%)',
               fontFamily: '"JetBrains Maple Mono", "JetBrains Mono", "Courier New", monospace',
-              fontSize: 16, color: '#c0caf5', width: 320, zIndex: 1,
+              fontSize: font.xl, color: colors.text, width: 320, zIndex: 1,
               padding: '16px 20px', cursor: 'text',
             }}>
             {lines.map((l, i) => (
               <div key={i} style={{ lineHeight: 1.8 }} dangerouslySetInnerHTML={{ __html: l }} />
             ))}
-            {error && <div style={{ color: '#f7768e', lineHeight: 1.8 }}>{error}</div>}
+            {error && <div style={{ color: colors.dangerBright, lineHeight: 1.8 }}>{error}</div>}
             {step !== 'done' && (
             <div style={{ display: 'flex', alignItems: 'center', lineHeight: 1.8 }}>
-              <span style={{ color: '#7aa2f7', marginRight: 8 }}>
+              <span style={{ color: colors.accent, marginRight: 8 }}>
                 {step === 'user' ? 'login:' : 'password:'}
               </span>
               <input ref={inputRef}
@@ -578,9 +579,9 @@ function SessionWelcome() {
                 onKeyDown={onKey}
                 autoFocus
                 style={{
-                  flex: 1, background: 'none', border: 'none', color: '#c0caf5',
-                  fontSize: 16, outline: 'none', fontFamily: 'inherit',
-                  caretColor: '#7aa2f7', caretShape: 'block',
+                  flex: 1, background: 'none', border: 'none', color: colors.text,
+                  fontSize: font.xl, outline: 'none', fontFamily: 'inherit',
+                  caretColor: colors.accent, caretShape: 'block',
                 }} />
             </div>
             )}
@@ -589,11 +590,11 @@ function SessionWelcome() {
               onClick={() => setRemember(!remember)}>
               <span style={{
                 width: 13, height: 13, borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                border: '1px solid #3b4261', background: remember ? '#7aa2f7' : 'rgba(31,35,53,0.5)', flexShrink: 0,
+                border: '1px solid var(--c-border)', background: remember ? colors.accent : 'rgba(31,35,53,0.5)', flexShrink: 0,
               }}>
-                {remember && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#1a1b26" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                {remember && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={colors.bg} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
               </span>
-              <span style={{ color: '#565f89', fontSize: 14, userSelect: 'none' }}>
+              <span style={{ color: colors.textMuted, fontSize: font.md, userSelect: 'none' }}>
                 remember
               </span>
             </div>

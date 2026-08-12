@@ -5,6 +5,7 @@ import { apiPost } from '../../api/client';
 import { t, getLang, setLang } from '../../i18n';
 import MatrixRain from '../common/MatrixRain';
 import Icon from '../common/Icon';
+import { colors, font } from '../../theme/tokens';
 
 export default function LoginPage() {
   const [username, setUsername] = useState(localStorage.getItem('webterm-rm-user') || '');
@@ -36,15 +37,15 @@ export default function LoginPage() {
   };
 
   const inputStyle: React.CSSProperties = {
-    padding: '10px 14px', border: '1px solid #3b4261', height: 42,
-    background: 'rgba(31,35,53,0.6)', color: '#c0caf5', fontSize: 16,
+    padding: '10px 14px', border: '1px solid var(--c-border)', height: 42,
+    background: 'rgba(31,35,53,0.6)', color: colors.text, fontSize: font.xl,
     width: '100%', boxSizing: 'border-box', outline: 'none', borderRadius: 4,
   };
 
   return (
     <div style={{
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      height: '100vh', background: '#1a1b26', position: 'relative', overflow: 'hidden', cursor: 'default',
+      height: '100vh', background: colors.bg, position: 'relative', overflow: 'hidden', cursor: 'default',
     }} onClick={() => setTick((n) => n + 1)}>
       <MatrixRain key={tick} fontSize={22} radial />
       <form onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()} style={{
@@ -56,19 +57,19 @@ export default function LoginPage() {
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
           <div>
-            <div style={{ fontSize: 25, fontWeight: 700, color: '#7aa2f7', letterSpacing: 1, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Icon name="terminal" size={22} color="#7aa2f7" /> WebTerm
+            <div style={{ fontSize: font.xl4, fontWeight: 700, color: colors.accent, letterSpacing: 1, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Icon name="terminal" size={22} color={colors.accent} /> WebTerm
             </div>
-            <div style={{ color: '#565f89', fontSize: 13, marginTop: 2 }}>{t('app_slogan')}</div>
+            <div style={{ color: colors.textMuted, fontSize: font.sm, marginTop: 2 }}>{t('app_slogan')}</div>
           </div>
           <span onClick={() => { const lang = getLang() === 'zh' ? 'en' : 'zh'; setLang(lang); window.location.reload(); }}
-            style={{ color: '#565f89', fontSize: 14, cursor: 'pointer', userSelect: 'none', padding: '2px 6px', borderRadius: 3, background: '#1f2335' }}>
+            style={{ color: colors.textMuted, fontSize: font.md, cursor: 'pointer', userSelect: 'none', padding: '2px 6px', borderRadius: 3, background: colors.bgInput }}>
             {getLang() === 'zh' ? 'EN' : '中'}
           </span>
         </div>
 
         {error && (
-          <div style={{ color: '#f7768e', fontSize: 15, padding: '8px 12px', background: '#f7768e15', borderRadius: 4 }}>
+          <div style={{ color: colors.dangerBright, fontSize: font.lg, padding: '8px 12px', background: colors.dangerSoft, borderRadius: 4 }}>
             {error}
           </div>
         )}
@@ -81,20 +82,20 @@ export default function LoginPage() {
             style={{ ...inputStyle, paddingRight: 40 }}
             placeholder={t('login_password')} value={password} onChange={(e) => setPassword(e.target.value)} />
           <span onClick={() => setShowPwd(!showPwd)}
-            style={{ position: 'absolute', right: 12, top: 11, cursor: 'pointer', color: '#565f89', userSelect: 'none', display: 'flex', alignItems: 'center' }}>
+            style={{ position: 'absolute', right: 12, top: 11, cursor: 'pointer', color: colors.textMuted, userSelect: 'none', display: 'flex', alignItems: 'center' }}>
             {showPwd ? <Icon name="eye-off" size={16} /> : <Icon name="eye" size={16} />}
           </span>
         </div>
 
-        <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#565f89', fontSize: 15, cursor: 'pointer' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: colors.textMuted, fontSize: font.lg, cursor: 'pointer' }}>
           <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)}
-            style={{ accentColor: '#7aa2f7' }} />
+            style={{ accentColor: colors.accent }} />
           {t('login_remember')}
         </label>
 
         <button type="submit" style={{
           padding: '10px', border: 'none', borderRadius: 4, height: 40,
-          background: '#7aa2f7', color: '#1a1b26', cursor: 'pointer', fontSize: 16,
+          background: colors.accent, color: colors.bg, cursor: 'pointer', fontSize: font.xl,
           fontWeight: 600, letterSpacing: 1, boxSizing: 'border-box',
         }}>
           {t('login_submit')}

@@ -5,6 +5,7 @@ import { apiPost, apiPut, apiGet } from '../../api/client';
 import { usePreferencesStore, parseOnekey } from '../../store/preferences';
 import { t } from '../../i18n';
 import Icon from '../common/Icon';
+import { colors, font } from '../../theme/tokens';
 
 interface Group {
   id: number;
@@ -33,7 +34,7 @@ export default function ConnectionForm({ connection, onClose, onSaved }: Props) 
     shared: connection?.shared || false,
     max_sessions: connection?.max_sessions || 10,
     tag: (connection as any)?.tag || '',
-    color: (connection as any)?.color || '#7aa2f7',
+    color: (connection as any)?.color || colors.accent,
   });
   const onekeyPwd = usePreferencesStore((s) => s.onekeyPwd);
   const onekeyKvs = parseOnekey(onekeyPwd || '[]');
@@ -68,7 +69,7 @@ export default function ConnectionForm({ connection, onClose, onSaved }: Props) 
   return (
     <Modal title={connection ? t('conn_edit') : t('conn_new')} onClose={onClose} width={520} height={form.auth_method === 'private_key' ? 530 : 410}>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        {error && <div style={{ color: '#f44747', fontSize: 14, padding: '4px 10px', background: '#2d1b1b', borderRadius: 4, margin: '4px 12px 0' }}>{error}</div>}
+        {error && <div style={{ color: colors.danger, fontSize: font.md, padding: '4px 10px', background: colors.bgError, borderRadius: 4, margin: '4px 12px 0' }}>{error}</div>}
 
         <div style={{ padding: '16px 28px', flex: 1, display: 'flex', flexDirection: 'column', gap: 10, overflow: 'auto' }}>
           {/* All rows use same 4-column grid for perfect vertical alignment */}
@@ -84,10 +85,10 @@ export default function ConnectionForm({ connection, onClose, onSaved }: Props) 
             <div style={{ gridColumn: '3 / 4' }}><FormField label={t("conn_port")} value={String(form.port)} onChange={(v) => update('port', Number(v) || 22)} type="number" /></div>
             <div style={{ gridColumn: '4 / 5' }}>
               <label style={labelStyle}>{t("conn_color")}</label>
-              <CustomSelect value={form.color || '#7aa2f7'} onChange={(v) => update('color', v)}
-                style={{ ...selectStyle, color: form.color || '#7aa2f7' }}>
+              <CustomSelect value={form.color || colors.accent} onChange={(v) => update('color', v)}
+                style={{ ...selectStyle, color: form.color || colors.accent }}>
                 {[
-                  {v:'#7aa2f7',n:t('color_blue')},{v:'#4caf50',n:t('color_green')},{v:'#f44336',n:t('color_red')},
+                  {v:colors.accent,n:t('color_blue')},{v:colors.success,n:t('color_green')},{v:'#f44336',n:t('color_red')},
                   {v:'#ff9800',n:t('color_orange')},{v:'#9c27b0',n:t('color_purple')},{v:'#00bcd4',n:t('color_cyan')},
                   {v:'#e91e63',n:t('color_pink')},{v:'#ffeb3b',n:t('color_yellow')},{v:'#607d8b',n:t('color_gray')},{v:'#795548',n:t('color_brown')},
                 ].map(c => (
@@ -122,7 +123,7 @@ export default function ConnectionForm({ connection, onClose, onSaved }: Props) 
                 <div style={{ gridColumn: '3 / 5', position: 'relative' }}>
                   <FormField label={t('conn_auth_password')} value={form.password} onChange={(v) => update('password', v)} type={showPwd ? 'text' : 'password'} />
                   <span onClick={() => setShowPwd(!showPwd)}
-                    style={{ position: 'absolute', right: 8, top: '50%', cursor: 'pointer', color: '#565f89', userSelect: 'none', display: 'flex', alignItems: 'center' }}>
+                    style={{ position: 'absolute', right: 8, top: '50%', cursor: 'pointer', color: colors.textMuted, userSelect: 'none', display: 'flex', alignItems: 'center' }}>
                     {showPwd ? <Icon name="eye-off" size={14} /> : <Icon name="eye" size={14} />}
                   </span>
                 </div>
@@ -142,7 +143,7 @@ export default function ConnectionForm({ connection, onClose, onSaved }: Props) 
                       {onekeyKvs.map((kv) => (<option key={kv.k} value={kv.k}>{kv.k}</option>))}
                     </CustomSelect>
                   ) : (
-                    <div style={{ color: '#565f89', fontSize: 13, padding: '8px 0' }}>{t("sftp_no_key")}</div>
+                    <div style={{ color: colors.textMuted, fontSize: font.sm, padding: '8px 0' }}>{t("sftp_no_key")}</div>
                   )}
                 </div>
                 <div style={{ gridColumn: '3 / 4' }}><FormField label={t("conn_username")} value={form.username} onChange={(v) => update('username', v)} placeholder="root" readOnly={onekeyKvs.length > 0} /></div>
@@ -150,7 +151,7 @@ export default function ConnectionForm({ connection, onClose, onSaved }: Props) 
                   <FormField label={t('conn_auth_password')} value={form.password} onChange={(v) => update('password', v)} type={showPwd ? 'text' : 'password'} readOnly={onekeyKvs.length > 0} />
                   {onekeyKvs.length > 0 && (
                     <span onClick={() => setShowPwd(!showPwd)}
-                      style={{ position: 'absolute', right: 8, top: '50%', cursor: 'pointer', color: '#565f89', userSelect: 'none', display: 'flex', alignItems: 'center' }}>
+                      style={{ position: 'absolute', right: 8, top: '50%', cursor: 'pointer', color: colors.textMuted, userSelect: 'none', display: 'flex', alignItems: 'center' }}>
                       {showPwd ? <Icon name="eye-off" size={14} /> : <Icon name="eye" size={14} />}
                     </span>
                   )}
@@ -168,7 +169,7 @@ export default function ConnectionForm({ connection, onClose, onSaved }: Props) 
             <div>
               <label style={labelStyle}>{t("conn_private_key")}</label>
               <textarea value={form.private_key} onChange={(e) => update('private_key', e.target.value)}
-                style={{ ...inputStyle, height: 80, fontFamily: 'Consolas, monospace', fontSize: 13, resize: 'none' }}
+                style={{ ...inputStyle, height: 80, fontFamily: 'Consolas, monospace', fontSize: font.sm, resize: 'none' }}
                 placeholder="-----BEGIN OPENSSH PRIVATE KEY-----" />
             </div>
           )}
@@ -195,7 +196,7 @@ export default function ConnectionForm({ connection, onClose, onSaved }: Props) 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, padding: '12px 24px', flexShrink: 0 }}>
           <button onClick={onClose} style={btnSecondary}>{t("conn_cancel")}</button>
           <button onClick={handleSubmit} disabled={saving || !form.name || !form.host}
-            style={saving ? { ...btnPrimary, background: '#565f89', cursor: 'default' } : btnPrimary}>
+            style={saving ? { ...btnPrimary, background: colors.textMuted, cursor: 'default' } : btnPrimary}>
             {saving ? t('conn_saving') : t('conn_save')}
           </button>
         </div>
@@ -217,10 +218,10 @@ function FormField({ label, value, onChange, type = 'text', placeholder, require
 }
 
 const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '10px 12px', background: 'rgba(31,35,53,0.5)', border: '1px solid #3b4261',
-  borderRadius: 4, color: '#c0caf5', fontSize: 16, boxSizing: 'border-box', outline: 'none',
+  width: '100%', padding: '10px 12px', background: 'rgba(31,35,53,0.5)', border: '1px solid var(--c-border)',
+  borderRadius: 4, color: colors.text, fontSize: font.xl, boxSizing: 'border-box', outline: 'none',
 };
 const selectStyle: React.CSSProperties = { ...inputStyle };
-const btnSecondary: React.CSSProperties = { padding: '8px 20px', background: 'transparent', border: '1px solid #3b4261', color: '#c0caf5', borderRadius: 4, cursor: 'pointer', fontSize: 16 };
-const btnPrimary: React.CSSProperties = { padding: '8px 20px', background: '#7aa2f7', border: 'none', color: '#1a1b26', borderRadius: 4, cursor: 'pointer', fontSize: 16, fontWeight: 600 };
-const labelStyle: React.CSSProperties = { color: '#565f89', fontSize: 14, display: 'block', marginBottom: 4 };
+const btnSecondary: React.CSSProperties = { padding: '8px 20px', background: 'transparent', border: '1px solid var(--c-border)', color: colors.text, borderRadius: 4, cursor: 'pointer', fontSize: font.xl };
+const btnPrimary: React.CSSProperties = { padding: '8px 20px', background: colors.accent, border: 'none', color: colors.bg, borderRadius: 4, cursor: 'pointer', fontSize: font.xl, fontWeight: 600 };
+const labelStyle: React.CSSProperties = { color: colors.textMuted, fontSize: font.md, display: 'block', marginBottom: 4 };

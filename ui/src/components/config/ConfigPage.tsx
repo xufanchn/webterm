@@ -5,6 +5,7 @@ import { useAuthStore } from '../../store/auth';
 import UserManager from './UserManager';
 import ConnectionTable from './ConnectionTable';
 import { apiGet, apiPost, apiDelete } from '../../api/client';
+import { colors, font } from '../../theme/tokens';
 
 const tabs = [
   { key: 'users', label: t('config_users') },
@@ -18,20 +19,20 @@ export default function ConfigPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div style={{ display: 'flex', background: '#1a1b26', borderBottom: '1px solid #3b4261', flexShrink: 0, height: 36, alignItems: 'center', padding: '0 6px' }}>
+      <div style={{ display: 'flex', background: colors.bg, borderBottom: '1px solid var(--c-border)', flexShrink: 0, height: 36, alignItems: 'center', padding: '0 6px' }}>
         {tabs.map((tab, idx) => (
           <React.Fragment key={tab.key}>
             {idx > 0 && (
               <span style={{
                 width: 1, height: 16, flexShrink: 0, alignSelf: 'center',
-                background: (activeTab !== tab.key && activeTab !== tabs[idx-1].key) ? '#3b4261' : 'transparent',
+                background: (activeTab !== tab.key && activeTab !== tabs[idx-1].key) ? colors.border : 'transparent',
               }} />
             )}
             <div onClick={() => setActiveTab(tab.key)}
               style={{
-                padding: '4px 14px', cursor: 'pointer', fontSize: 14, borderRadius: 5,
-                color: activeTab === tab.key ? '#1a1b26' : '#787e99',
-                background: activeTab === tab.key ? '#7aa2f7' : 'transparent',
+                padding: '4px 14px', cursor: 'pointer', fontSize: font.md, borderRadius: 5,
+                color: activeTab === tab.key ? colors.bg : colors.textMuted2,
+                background: activeTab === tab.key ? colors.accent : 'transparent',
                 height: 28, display: 'flex', alignItems: 'center',
               }}>
               {tab.label}
@@ -115,31 +116,31 @@ function GroupManager() {
     catch { setError(t('config_delete_failed')); }
   };
 
-  if (loading) return <div style={{ padding: 16, color: '#565f89' }}>{t("file_loading")}</div>;
+  if (loading) return <div style={{ padding: 16, color: colors.textMuted }}>{t("file_loading")}</div>;
 
   return (
     <div style={{ padding: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h3 style={{ color: '#ccc', margin: 0, fontSize: 18 }}>{t("config_groups")}</h3>
+        <h3 style={{ color: colors.textLight, margin: 0, fontSize: font.xl2 }}>{t("config_groups")}</h3>
       </div>
-      {error && <div style={{ color: '#f44747', fontSize: 14, padding: '6px 10px', background: '#2d1b1b', borderRadius: 4, marginBottom: 12 }}>{error}</div>}
+      {error && <div style={{ color: colors.danger, fontSize: font.md, padding: '6px 10px', background: colors.bgError, borderRadius: 4, marginBottom: 12 }}>{error}</div>}
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
         <input value={newName} onChange={(e) => setNewName(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-          placeholder={t("sidebar_group_name")} style={{ padding: '6px 10px', background: '#1f2335', border: '1px solid #3b4261', borderRadius: 4, color: '#ccc', fontSize: 14, width: 200 }} />
+          placeholder={t("sidebar_group_name")} style={{ padding: '6px 10px', background: colors.bgInput, border: '1px solid var(--c-border)', borderRadius: 4, color: colors.textLight, fontSize: font.md, width: 200 }} />
         <CustomSelect value={newType} onChange={(v) => setNewType(v)}
-          style={{ padding: '6px 10px', background: '#1f2335', border: '1px solid #3b4261', borderRadius: 4, color: '#ccc', fontSize: 14 }}>
+          style={{ padding: '6px 10px', background: colors.bgInput, border: '1px solid var(--c-border)', borderRadius: 4, color: colors.textLight, fontSize: font.md }}>
           <option value="ssh">SSH</option>
           <option value="database">{t("config_database")}</option>
           <option value="sftp_bookmark">{t("config_sftp_bookmark")}</option>
         </CustomSelect>
-        <button onClick={handleCreate} style={{ padding: '6px 16px', background: '#7aa2f7', border: 'none', color: '#1a1b26', borderRadius: 4, cursor: 'pointer', fontSize: 14 }}>{t("config_create")}</button>
+        <button onClick={handleCreate} style={{ padding: '6px 16px', background: colors.accent, border: 'none', color: colors.bg, borderRadius: 4, cursor: 'pointer', fontSize: font.md }}>{t("config_create")}</button>
       </div>
 
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: font.md }}>
         <thead>
-          <tr style={{ background: '#1a1b26' }}>
+          <tr style={{ background: colors.bg }}>
             <th style={thStyle}>ID</th>
             <th style={thStyle}>{t("conn_name")}</th>
             <th style={thStyle}>{t("config_type")}</th>
@@ -148,12 +149,12 @@ function GroupManager() {
         </thead>
         <tbody>
           {groups.map((g, i) => (
-            <tr key={g.id} style={{ background: i % 2 === 0 ? '#1a1b26' : '#1f2335' }}>
+            <tr key={g.id} style={{ background: i % 2 === 0 ? colors.bg : colors.bgInput }}>
               <td style={tdStyle}>{g.id}</td>
               <td style={tdStyle}>{g.name}</td>
               <td style={tdStyle}>{g.type}</td>
               <td style={{ ...tdStyle, textAlign: 'center' }}>
-                <button onClick={() => handleDelete(g.id)} style={{ background: 'none', border: 'none', color: '#f44747', cursor: 'pointer', fontSize: 13 }}>{t("menu_delete")}</button>
+                <button onClick={() => handleDelete(g.id)} style={{ background: 'none', border: 'none', color: colors.danger, cursor: 'pointer', fontSize: font.sm }}>{t("menu_delete")}</button>
               </td>
             </tr>
           ))}
@@ -163,5 +164,5 @@ function GroupManager() {
   );
 }
 
-const thStyle: React.CSSProperties = { padding: '8px 12px', textAlign: 'left', color: '#7aa2f7', borderBottom: '1px solid #3b4261' };
-const tdStyle: React.CSSProperties = { padding: '6px 12px', color: '#ccc', borderBottom: '1px solid #3b4261' };
+const thStyle: React.CSSProperties = { padding: '8px 12px', textAlign: 'left', color: colors.accent, borderBottom: '1px solid var(--c-border)' };
+const tdStyle: React.CSSProperties = { padding: '6px 12px', color: colors.textLight, borderBottom: '1px solid var(--c-border)' };

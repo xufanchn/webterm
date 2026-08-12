@@ -10,6 +10,7 @@ import CustomSelect from '../common/CustomSelect';
 import { apiPost, apiPut, apiDelete } from '../../api/client';
 import { t } from '../../i18n';
 import Icon from '../common/Icon';
+import { colors, font } from '../../theme/tokens';
 
 export default function Sidebar({ collapsed, width }: { collapsed: boolean; width: number }) {
   const activeModule = useLayoutStore((s) => s.activeModule);
@@ -145,30 +146,30 @@ export default function Sidebar({ collapsed, width }: { collapsed: boolean; widt
         : handleDblClick(c)}
       onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setConnMenu({ x: e.clientX, y: e.clientY, conn: c }); }}
       style={{
-        padding: indent ? '3px 8px 3px 22px' : '3px 8px 3px 10px', color: '#ccc', cursor: 'pointer',
+        padding: indent ? '3px 8px 3px 22px' : '3px 8px 3px 10px', color: colors.textLight, cursor: 'pointer',
         display: 'flex', alignItems: 'center', gap: 4,
         opacity: dragConn === c.id ? 0.3 : 1,
       }}
-      onMouseEnter={(e) => e.currentTarget.style.background = '#3b4261'}
+      onMouseEnter={(e) => e.currentTarget.style.background = colors.border}
       onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
       {multiMode && (
         <span onClick={(e) => { e.stopPropagation(); toggleSelect(c.id); }}
           style={{ flexShrink: 0, display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
           <span style={{
             width: 13, height: 13, borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            border: '1px solid #3b4261', background: selectedIds.has(c.id) ? '#7aa2f7' : 'rgba(31,35,53,0.5)',
+            border: '1px solid var(--c-border)', background: selectedIds.has(c.id) ? colors.accent : 'rgba(31,35,53,0.5)',
           }}>
-            {selectedIds.has(c.id) && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#1a1b26" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+            {selectedIds.has(c.id) && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={colors.bg} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
           </span>
         </span>
       )}
-      <span style={{ color: (c as any).color || '#ccc', fontSize: 14, lineHeight: 1 }}>●</span>
+      <span style={{ color: (c as any).color || colors.textLight, fontSize: font.md, lineHeight: 1 }}>●</span>
       <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
       {(c as any).tag && (
         <span onClick={(e) => { e.stopPropagation(); setTagFilter(tagFilter === (c as any).tag ? '' : (c as any).tag); }}
           style={{
-            padding: '1px 4px', borderRadius: 4, fontSize: 10, background: tagFilter === (c as any).tag ? '#7aa2f740' : '#333',
-            color: tagFilter === (c as any).tag ? '#7aa2f7' : '#888', whiteSpace: 'nowrap', flexShrink: 0,
+            padding: '1px 4px', borderRadius: 4, fontSize: font.xxs, background: tagFilter === (c as any).tag ? colors.accentSoft : colors.bgBar,
+            color: tagFilter === (c as any).tag ? colors.accent : colors.textDim, whiteSpace: 'nowrap', flexShrink: 0,
           }}>{(c as any).tag}</span>
       )}
     </div>
@@ -191,13 +192,13 @@ export default function Sidebar({ collapsed, width }: { collapsed: boolean; widt
               }}
               onBlur={(e) => { handleRenameGroup(g.id, e.currentTarget.value); }}
               autoFocus
-              style={{ flex: 1, padding: '2px 6px', background: '#1f2335', border: '1px solid #3b4261', borderRadius: 4, color: '#fff', fontSize: 13 }} />
+              style={{ flex: 1, padding: '2px 6px', background: colors.bgInput, border: '1px solid var(--c-border)', borderRadius: 4, color: colors.white, fontSize: font.sm }} />
           </div>
         ) : (
           <div data-sidebar-item
             onClick={() => toggleGroup(g.id)}
             onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setGroupMenu({ x: e.clientX, y: e.clientY, group: g }); }}
-            style={{ padding: '4px 10px', color: '#ccc', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+            style={{ padding: '4px 10px', color: colors.textLight, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
             {collapsedGroups.has(g.id) ? <Icon name="chevron-right" size={12} /> : <Icon name="chevron-down" size={12} />}
             <Icon name="folder" size={12} /> {g.name}
           </div>
@@ -208,13 +209,13 @@ export default function Sidebar({ collapsed, width }: { collapsed: boolean; widt
   };
 
   return (
-    <div style={{ width: collapsed ? 0 : width, flexShrink: 0, fontSize: 14, display: 'flex', flexDirection: 'column', background: '#1a1b26', borderRight: '1px solid #3b4261', overflow: 'hidden' }}
+    <div style={{ width: collapsed ? 0 : width, flexShrink: 0, fontSize: font.md, display: 'flex', flexDirection: 'column', background: colors.bg, borderRight: '1px solid var(--c-border)', overflow: 'hidden' }}
       onContextMenu={(e) => {
         if ((e.target as HTMLElement).closest('[data-sidebar-item]')) return;
         e.preventDefault();
         setBlankMenu({ x: e.clientX, y: e.clientY });
       }}>
-      <div style={{ height: 36, padding: '0 10px', color: '#c0caf5', fontWeight: 600, borderBottom: '1px solid #3b4261', flexShrink: 0, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6, boxSizing: 'border-box' }}>
+      <div style={{ height: 36, padding: '0 10px', color: colors.text, fontWeight: 600, borderBottom: '1px solid var(--c-border)', flexShrink: 0, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6, boxSizing: 'border-box' }}>
         {activeModule === 'ssh' ? <Icon name="terminal" size={14} /> : activeModule === 'sftp' ? <Icon name="folder-open" size={14} /> : activeModule === 'database' ? <Icon name="database" size={14} /> : <Icon name="settings" size={14} />}
         <span style={{ flex: 1 }}>{activeModule === 'ssh' ? t('sidebar_ssh') : activeModule === 'sftp' ? t('sidebar_sftp') : activeModule === 'database' ? t('sidebar_database') : t('activity_config')}</span>
         {!collapsed && (
@@ -222,9 +223,9 @@ export default function Sidebar({ collapsed, width }: { collapsed: boolean; widt
             style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
             <span style={{
               width: 13, height: 13, borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              border: '1px solid #3b4261', background: multiMode ? '#7aa2f7' : 'rgba(31,35,53,0.5)', flexShrink: 0,
+              border: '1px solid var(--c-border)', background: multiMode ? colors.accent : 'rgba(31,35,53,0.5)', flexShrink: 0,
             }}>
-              {multiMode && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#1a1b26" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+              {multiMode && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={colors.bg} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
             </span>
           </span>
         )}
@@ -232,23 +233,23 @@ export default function Sidebar({ collapsed, width }: { collapsed: boolean; widt
       {!collapsed && (<>
         {tagFilter && (
           <div style={{ padding: '0 8px 4px', display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ fontSize: 12, color: '#7aa2f7', background: '#7aa2f720', padding: '1px 6px', borderRadius: 4 }}>
+            <span style={{ fontSize: font.xs, color: colors.accent, background: colors.accentDim, padding: '1px 6px', borderRadius: 4 }}>
               {t("batch_label")} {tagFilter}
-              <span onClick={() => setTagFilter('')} style={{ cursor: 'pointer', marginLeft: 4, color: '#888', display: 'flex', alignItems: 'center' }}><Icon name="x" size={10} /></span>
+              <span onClick={() => setTagFilter('')} style={{ cursor: 'pointer', marginLeft: 4, color: colors.textDim, display: 'flex', alignItems: 'center' }}><Icon name="x" size={10} /></span>
             </span>
           </div>
         )}
         {selectedIds.size > 0 && (
-          <div style={{ padding: '4px 8px', background: '#7aa2f720', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-            <span style={{ color: '#7aa2f7', fontSize: 13 }}>{t("multi_selected")} {selectedIds.size} {t("multi_items")}</span>
+          <div style={{ padding: '4px 8px', background: colors.accentDim, display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+            <span style={{ color: colors.accent, fontSize: font.sm }}>{t("multi_selected")} {selectedIds.size} {t("multi_items")}</span>
             <CustomSelect value="-1" onChange={(v) => { const n = Number(v); if (n >= 0) handleBatchMove(n); }}
-              style={{ background: '#1f2335', border: '1px solid #3b4261', color: '#ccc', borderRadius: 4, padding: '2px 4px', fontSize: 12 }}>
+              style={{ background: colors.bgInput, border: '1px solid var(--c-border)', color: colors.textLight, borderRadius: 4, padding: '2px 4px', fontSize: font.xs }}>
               <option value={-1}>{t("multi_move")}</option>
               <option value={0}>{t("conn_ungrouped")}</option>
               {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
             </CustomSelect>
-            <button onClick={handleBatchDelete} style={{ background: '#d32f2f', border: 'none', color: '#fff', borderRadius: 4, padding: '2px 8px', cursor: 'pointer', fontSize: 12 }}>{t("multi_delete")}</button>
-            <button onClick={() => setSelectedIds(new Set())} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: 12, marginLeft: 'auto' }}>{t("multi_cancel")}</button>
+            <button onClick={handleBatchDelete} style={{ background: colors.dangerBg, border: 'none', color: colors.white, borderRadius: 4, padding: '2px 8px', cursor: 'pointer', fontSize: font.xs }}>{t("multi_delete")}</button>
+            <button onClick={() => setSelectedIds(new Set())} style={{ background: 'none', border: 'none', color: colors.textDim, cursor: 'pointer', fontSize: font.xs, marginLeft: 'auto' }}>{t("multi_cancel")}</button>
           </div>
         )}
         <div style={{ overflow: 'auto', flex: 1 }}>
@@ -261,9 +262,9 @@ export default function Sidebar({ collapsed, width }: { collapsed: boolean; widt
           {isDb && dbConnections.map((c: DbConnection) => renderConnItem(c, true))}
         </div>
         {(isSsh || isDb) && (
-          <div style={{ borderTop: '1px solid #3b4261', padding: '4px 8px', marginTop: 'auto' }}>
+          <div style={{ borderTop: '1px solid var(--c-border)', padding: '4px 8px', marginTop: 'auto' }}>
             <div onClick={() => { if (isSsh) { setEditingConn(null); setShowConnForm(true); } else { setEditingDbConn(null); setShowDbForm(true); } }}
-            style={{ padding: '4px 8px', color: '#ccc', cursor: 'pointer', fontSize: 13 }}>{t("sidebar_new_conn")}</div>
+            style={{ padding: '4px 8px', color: colors.textLight, cursor: 'pointer', fontSize: font.sm }}>{t("sidebar_new_conn")}</div>
           {showGroupInput ? (
             <div style={{ display: 'flex', gap: 4, padding: '4px 0' }}>
               <input value={newGroupName} onChange={(e) => setNewGroupName(e.target.value)}
@@ -273,15 +274,15 @@ export default function Sidebar({ collapsed, width }: { collapsed: boolean; widt
                 }}
                 onBlur={() => { setShowGroupInput(false); setNewGroupName(''); }}
                 placeholder={t("sidebar_group_name")} autoFocus
-                style={{ flex: 1, padding: '2px 6px', background: '#1f2335', border: '1px solid #3b4261', borderRadius: 4, color: '#fff', fontSize: 12 }} />
+                style={{ flex: 1, padding: '2px 6px', background: colors.bgInput, border: '1px solid var(--c-border)', borderRadius: 4, color: colors.white, fontSize: font.xs }} />
               <button onClick={() => handleCreateGroup(newGroupName)}
-                style={{ background: '#7aa2f7', border: 'none', color: '#1a1b26', fontWeight: 600, borderRadius: 4, padding: '2px 6px', cursor: 'pointer', fontSize: 12 }}>{t("config_create")}</button>
+                style={{ background: colors.accent, border: 'none', color: colors.bg, fontWeight: 600, borderRadius: 4, padding: '2px 6px', cursor: 'pointer', fontSize: font.xs }}>{t("config_create")}</button>
               <button onClick={() => { setShowGroupInput(false); setNewGroupName(''); }}
-                style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', padding: '2px 4px', display: 'flex', alignItems: 'center' }}><Icon name="x" size={10} /></button>
+                style={{ background: 'none', border: 'none', color: colors.textDim, cursor: 'pointer', padding: '2px 4px', display: 'flex', alignItems: 'center' }}><Icon name="x" size={10} /></button>
             </div>
           ) : (
             <div onClick={() => setShowGroupInput(true)}
-              style={{ padding: '4px 8px', color: '#888', cursor: 'pointer', fontSize: 13 }}>{t("sidebar_new_group")}</div>
+              style={{ padding: '4px 8px', color: colors.textDim, cursor: 'pointer', fontSize: font.sm }}>{t("sidebar_new_group")}</div>
           )}
         </div>
       )}

@@ -1,6 +1,7 @@
 import { t } from "../../i18n";
 import { useState } from 'react';
 import Icon from '../common/Icon';
+import { colors, font } from '../../theme/tokens';
 
 interface Props {
   ws: WebSocket | null;
@@ -48,18 +49,18 @@ export default function DbTree({ ws, onQuery }: Props) {
   };
 
   return (
-    <div style={{ fontSize: 13, overflow: 'auto', height: '100%' }}>
-      <div style={{ padding: '4px 8px', cursor: 'pointer', color: '#7aa2f7', display: 'flex', alignItems: 'center', gap: 4 }} onClick={fetchDbs}>
+    <div style={{ fontSize: font.sm, overflow: 'auto', height: '100%' }}>
+      <div style={{ padding: '4px 8px', cursor: 'pointer', color: colors.accent, display: 'flex', alignItems: 'center', gap: 4 }} onClick={fetchDbs}>
         <Icon name="refresh-cw" size={12} /> {loading ? t('file_loading') : t('db_refresh')}
       </div>
       {dbs.map((db) => (
         <div key={db}>
-          <div onClick={() => fetchTables(db)} style={{ padding: '3px 8px', cursor: 'pointer', color: '#ccc', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <div onClick={() => fetchTables(db)} style={{ padding: '3px 8px', cursor: 'pointer', color: colors.textLight, display: 'flex', alignItems: 'center', gap: 4 }}>
             {expandedDb === db ? <Icon name="chevron-down" size={12} /> : <Icon name="chevron-right" size={12} />} <Icon name="database" size={12} /> {db}
           </div>
           {expandedDb === db && (tables[db] || []).map((table) => (
             <div key={table} onDoubleClick={() => handleTableDblClick(db, table)}
-              style={{ padding: '2px 8px 2px 28px', cursor: 'pointer', color: '#888' }}>
+              style={{ padding: '2px 8px 2px 28px', cursor: 'pointer', color: colors.textDim }}>
               <Icon name="table" size={11} style={{ marginRight: 4 }} /> {table}
             </div>
           ))}

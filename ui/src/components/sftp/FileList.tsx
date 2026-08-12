@@ -3,6 +3,7 @@ import type { SftpFile } from './SftpPanel';
 import { t } from '../../i18n';
 import ContextMenu from '../common/ContextMenu';
 import Icon from '../common/Icon';
+import { colors, font } from '../../theme/tokens';
 interface Props {
   files: SftpFile[];
   loading: boolean;
@@ -59,11 +60,11 @@ function NewFolderInput({ value, onChange, onConfirm, onCancel, confirmLabel = t
           if (e.key === 'Escape') onCancel();
         }}
         autoFocus placeholder={t("file_folder_name")}
-        style={{ flex: 1, padding: '2px 6px', background: '#1f2335', border: '1px solid #3b4261', borderRadius: 4, color: '#fff', fontSize: 12 }} />
+        style={{ flex: 1, padding: '2px 6px', background: colors.bgInput, border: '1px solid var(--c-border)', borderRadius: 4, color: colors.white, fontSize: font.xs }} />
       <button onClick={onConfirm}
-        style={{ background: '#7aa2f7', border: 'none', color: '#1a1b26', fontWeight: 600, borderRadius: 4, padding: '2px 8px', cursor: 'pointer', fontSize: 12 }}>{confirmLabel}</button>
+        style={{ background: colors.accent, border: 'none', color: colors.bg, fontWeight: 600, borderRadius: 4, padding: '2px 8px', cursor: 'pointer', fontSize: font.xs }}>{confirmLabel}</button>
       <button onClick={onCancel}
-        style={{ background: '#3b4261', border: 'none', color: '#ccc', borderRadius: 4, padding: '2px 8px', cursor: 'pointer', fontSize: 12 }}>{t("conn_cancel")}</button>
+        style={{ background: colors.border, border: 'none', color: colors.textLight, borderRadius: 4, padding: '2px 8px', cursor: 'pointer', fontSize: font.xs }}>{t("conn_cancel")}</button>
     </div>
   );
 }
@@ -195,7 +196,7 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
   const sortArrow = (key: SortKey) => sortKey === key ? (sortDir === 'asc' ? <Icon name="arrow-up" size={10} style={{ verticalAlign: 'middle' }} /> : <Icon name="arrow-down" size={10} style={{ verticalAlign: 'middle' }} />) : '';
 
   return (
-    <div style={{ flex: 1, overflow: 'auto', outline: dragOver ? '2px solid #7aa2f7' : 'none', outlineOffset: -2 }}
+    <div style={{ flex: 1, overflow: 'auto', outline: dragOver ? '2px solid var(--c-accent)' : 'none', outlineOffset: -2 }}
       onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
       onDragLeave={() => setDragOver(false)}
       onDrop={(e) => { setDragOver(false); handleDrop(e); }}
@@ -213,21 +214,21 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
           if (e.target.files && e.target.files.length > 0) doUpload(e.target.files);
           e.target.value = '';
         }} />
-      {uploading && <div style={{ padding: '2px 8px', color: '#7aa2f7', fontSize: 12 }}>{t("sftp_uploading")} {uploadProgress}%</div>}
+      {uploading && <div style={{ padding: '2px 8px', color: colors.accent, fontSize: font.xs }}>{t("sftp_uploading")} {uploadProgress}%</div>}
       {/* Column headers */}
-      <div style={{ padding: '2px 8px', borderBottom: '1px solid #3b4261', display: 'flex', alignItems: 'center', gap: 4, color: '#888', fontSize: 12, flexShrink: 0 }}>
+      <div style={{ padding: '2px 8px', borderBottom: '1px solid var(--c-border)', display: 'flex', alignItems: 'center', gap: 4, color: colors.textDim, fontSize: font.xs, flexShrink: 0 }}>
         <span style={{ width: 16, flexShrink: 0 }} />
         <span onClick={() => toggleSort('name')} style={{ flex: 1, cursor: 'pointer', userSelect: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t('file_name')}{sortArrow('name')}</span>
         <span onClick={() => toggleSort('size')} style={{ width: 55, cursor: 'pointer', userSelect: 'none', textAlign: 'right', flexShrink: 0 }}>{t('file_size')}{sortArrow('size')}</span>
         <span onClick={() => toggleSort('time')} style={{ width: 105, cursor: 'pointer', userSelect: 'none', textAlign: 'right', flexShrink: 0 }}>{t('file_time')}{sortArrow('time')}</span>
       </div>
-      {loading && <div style={{ padding: 8, color: '#888' }}>{t("file_loading")}</div>}
+      {loading && <div style={{ padding: 8, color: colors.textDim }}>{t("file_loading")}</div>}
       {!loading && currentPath !== '/' && (
         <div data-file-row onDoubleClick={onGoParent}
-          style={{ padding: '2px 8px', color: '#7aa2f7', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
-          onMouseEnter={(e) => e.currentTarget.style.background = '#3b4261'}
+          style={{ padding: '2px 8px', color: colors.accent, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+          onMouseEnter={(e) => e.currentTarget.style.background = colors.border}
           onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-          <span style={{ width: 16, textAlign: 'center', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="folder-open" size={14} color="#7aa2f7" /></span>
+          <span style={{ width: 16, textAlign: 'center', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="folder-open" size={14} color={colors.accent} /></span>
           <span style={{ flex: 1 }}>..</span>
           <span style={{ width: 55, flexShrink: 0 }} />
           <span style={{ width: 105, flexShrink: 0 }} />
@@ -238,17 +239,17 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
           onDoubleClick={() => f.is_dir ? onNavigate(f.path) : onEdit(f.path, f.name)}
           onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, file: f }); }}
           style={{
-            padding: '2px 8px', color: '#ccc', cursor: 'pointer',
+            padding: '2px 8px', color: colors.textLight, cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: 4,
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = '#3b4261')}
+          onMouseEnter={(e) => (e.currentTarget.style.background = colors.border)}
           onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
           <span style={{ width: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {f.is_dir ? <Icon name="folder" size={14} color="#7aa2f7" /> : f.is_link ? <Icon name="link" size={14} color="#e0af68" /> : <Icon name="file" size={14} color="#888" />}
+            {f.is_dir ? <Icon name="folder" size={14} color={colors.accent} /> : f.is_link ? <Icon name="link" size={14} color={colors.warning} /> : <Icon name="file" size={14} color={colors.textDim} />}
           </span>
           <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
-          <span style={{ color: '#888', fontSize: 12, width: 55, textAlign: 'right', flexShrink: 0 }}>{!f.is_dir ? sizeFormat(f.size) : ''}</span>
-          <span style={{ color: '#666', fontSize: 12, width: 105, textAlign: 'right', flexShrink: 0 }}>{timeFormat(f.mod_time)}</span>
+          <span style={{ color: colors.textDim, fontSize: font.xs, width: 55, textAlign: 'right', flexShrink: 0 }}>{!f.is_dir ? sizeFormat(f.size) : ''}</span>
+          <span style={{ color: colors.textFaint, fontSize: font.xs, width: 105, textAlign: 'right', flexShrink: 0 }}>{timeFormat(f.mod_time)}</span>
         </div>
       ))}
       {showNewFolder && (
@@ -324,8 +325,8 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
       {(uploadError || downloadError) && (
         <div style={{
           position: 'absolute', bottom: 8, left: 8, right: 8,
-          background: '#d32f2f', color: '#fff', padding: '6px 12px',
-          borderRadius: 4, fontSize: 13, zIndex: 10,
+          background: colors.dangerBg, color: colors.white, padding: '6px 12px',
+          borderRadius: 4, fontSize: font.sm, zIndex: 10,
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         }}>
           <span>{uploadError || downloadError}</span>

@@ -2,6 +2,7 @@ import { t } from '../../i18n';
 import { useLayoutStore } from '../../store/layout';
 import type { ModuleType } from '../../store/layout';
 import Icon from '../common/Icon';
+import { colors } from '../../theme/tokens';
 
 const modules: { type: ModuleType; label: string; icon: string }[] = [
   { type: 'ssh', label: 'SSH', icon: 'terminal' },
@@ -13,9 +14,9 @@ const modules: { type: ModuleType; label: string; icon: string }[] = [
 const btnStyle = (active: boolean): React.CSSProperties => ({
   width: 32, height: 32, display: 'flex', alignItems: 'center',
   justifyContent: 'center', cursor: 'pointer',
-  borderRadius: 4, color: active ? '#1a1b26' : '#565f89',
-  background: active ? '#7aa2f7' : 'transparent',
-  borderLeft: active ? '2px solid #1a1b26' : '2px solid transparent',
+  borderRadius: 4, color: active ? colors.bg : colors.textMuted,
+  background: active ? colors.accent : 'transparent',
+  borderLeft: active ? '2px solid var(--c-bg)' : '2px solid transparent',
 });
 
 export default function ActivityBar({ onOpenSettings, sidebarCollapsed, onToggleSidebar }: {
@@ -28,7 +29,7 @@ export default function ActivityBar({ onOpenSettings, sidebarCollapsed, onToggle
 
   return (
     <div style={{
-      width: 44, background: '#1a1b26', display: 'flex', flexDirection: 'column', borderRight: '1px solid #3b4261',
+      width: 44, background: colors.bg, display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--c-border)',
       alignItems: 'center', paddingTop: 4, gap: 4, flexShrink: 0,
     }}>
       <div className="activity-btn" title={sidebarCollapsed ? t('sidebar_expand') : t('sidebar_collapse')} onClick={onToggleSidebar}

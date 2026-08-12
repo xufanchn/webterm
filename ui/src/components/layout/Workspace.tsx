@@ -8,6 +8,7 @@ import Icon from '../common/Icon';
 import { useAuthStore } from '../../store/auth';
 import { useLayoutStore } from '../../store/layout';
 import { t, getLang, setLang } from '../../i18n';
+import { colors, font } from '../../theme/tokens';
 
 export default function Workspace() {
   const user = useAuthStore((s) => s.user);
@@ -37,24 +38,24 @@ export default function Workspace() {
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ height: 36, padding: '0 12px', background: '#1a1b26', borderBottom: '1px solid #3b4261', display: 'flex', alignItems: 'center', flexShrink: 0, fontSize: 14 }}>
-        <span style={{ color: '#7aa2f7', fontWeight: 700, fontSize: 15, fontFamily: '"JetBrains Mono", "JetBrains Maple Mono", Consolas, monospace', textShadow: '0 0 8px #7aa2f766', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Icon name="terminal" size={16} color="#7aa2f7" style={{ filter: 'drop-shadow(0 0 6px #7aa2f766)' }} /> WEBTERM
+      <div style={{ height: 36, padding: '0 12px', background: colors.bg, borderBottom: '1px solid var(--c-border)', display: 'flex', alignItems: 'center', flexShrink: 0, fontSize: font.md }}>
+        <span style={{ color: colors.accent, fontWeight: 700, fontSize: font.lg, fontFamily: '"JetBrains Mono", "JetBrains Maple Mono", Consolas, monospace', textShadow: '0 0 8px var(--c-accent-mid)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Icon name="terminal" size={16} color={colors.accent} style={{ filter: 'drop-shadow(0 0 6px var(--c-accent-mid))' }} /> WEBTERM
         </span>
         <HeaderSearch />
         {/* Right side */}
         <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           <span onClick={() => { const lang = getLang() === 'zh' ? 'en' : 'zh'; setLang(lang); window.location.reload(); }}
             className="header-btn"
-            style={{ color: '#565f89', cursor: 'pointer', userSelect: 'none', padding: '2px 8px', borderRadius: 4, border: '1px solid #3b4261', textAlign: 'center', flexShrink: 0 }}>
+            style={{ color: colors.textMuted, cursor: 'pointer', userSelect: 'none', padding: '2px 8px', borderRadius: 4, border: '1px solid var(--c-border)', textAlign: 'center', flexShrink: 0 }}>
             {getLang() === 'zh' ? 'EN' : '中'}
           </span>
           <span className="header-btn"
-            style={{ color: user ? '#c0caf5' : '#565f89', flexShrink: 0, padding: '2px 8px', borderRadius: 4, border: '1px solid #3b4261' }}>
+            style={{ color: user ? colors.text : colors.textMuted, flexShrink: 0, padding: '2px 8px', borderRadius: 4, border: '1px solid var(--c-border)' }}>
             {user?.username || t('login_submit')}
           </span>
           <button onClick={token ? logout : undefined} className="header-btn logout-btn"
-            style={{ background: 'transparent', color: token ? '#565f89' : '#3b4261', border: '1px solid #3b4261', padding: '2px 10px', borderRadius: 4, cursor: token ? 'pointer' : 'default', flexShrink: 0, opacity: token ? 1 : 0.4 }}>
+            style={{ background: 'transparent', color: token ? colors.textMuted : colors.border, border: '1px solid var(--c-border)', padding: '2px 10px', borderRadius: 4, cursor: token ? 'pointer' : 'default', flexShrink: 0, opacity: token ? 1 : 0.4 }}>
             {t('logout')}
           </button>
         </span>
@@ -73,7 +74,7 @@ export default function Workspace() {
             }}
             onMouseEnter={(e) => {
               const line = e.currentTarget.firstChild as HTMLElement;
-              line.style.width = '2px'; line.style.background = '#3b4261';
+              line.style.width = '2px'; line.style.background = colors.border;
               (e.currentTarget.lastChild as HTMLElement).style.opacity = '1';
             }}
             onMouseLeave={(e) => {
@@ -81,8 +82,8 @@ export default function Workspace() {
               line.style.width = '0px';
               (e.currentTarget.lastChild as HTMLElement).style.opacity = '0';
             }}>
-            <div style={{ width: 0, height: '100%', background: '#7aa2f7', transition: 'width 0.1s' }} />
-            <span style={{ position: 'absolute', color: '#7aa2f7', userSelect: 'none', background: '#1a1b26', padding: '2px 0', opacity: 0, transition: 'opacity 0.1s', display: 'flex', alignItems: 'center' }}><Icon name="grip-vertical" size={12} /></span>
+            <div style={{ width: 0, height: '100%', background: colors.accent, transition: 'width 0.1s' }} />
+            <span style={{ position: 'absolute', color: colors.accent, userSelect: 'none', background: colors.bg, padding: '2px 0', opacity: 0, transition: 'opacity 0.1s', display: 'flex', alignItems: 'center' }}><Icon name="grip-vertical" size={12} /></span>
           </div>
         )}
       </div>
@@ -91,22 +92,22 @@ export default function Workspace() {
       )}
       {/* Global status bar */}
       <div style={{
-        height: 22, flexShrink: 0, background: '#1a1b26', borderTop: '1px solid #3b4261',
+        height: 22, flexShrink: 0, background: colors.bg, borderTop: '1px solid var(--c-border)',
         display: 'flex', alignItems: 'center', padding: '0 10px',
-        fontSize: 13, color: '#7aa2f7', gap: 10, lineHeight: '22px',
+        fontSize: font.sm, color: colors.accent, gap: 10, lineHeight: '22px',
       }}>
         <span style={{ opacity: 0.7, flexShrink: 0 }}>webterm</span>
         <span style={{ flex: 1 }} />
         {statusConn ? (
           <>
             <span style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-              background: statusConn.connected ? '#4caf50' : '#f44747',
+              background: statusConn.connected ? colors.success : colors.danger,
             }} />
             <span style={{ width: 40, textAlign: 'center', flexShrink: 0 }}>{statusConn.connected ? t('status_connected') : t('status_disconnected')}</span>
             <span style={{ flexShrink: 0 }}>{statusConn.name}{statusConn.host ? ` (${statusConn.host})` : ''}</span>
           </>
         ) : (
-          <span style={{ color: '#888', flexShrink: 0 }}>{t('status_disconnected')}</span>
+          <span style={{ color: colors.textDim, flexShrink: 0 }}>{t('status_disconnected')}</span>
         )}
       </div>
     </div>

@@ -12,6 +12,7 @@ import { usePreferencesStore } from '../../store/preferences';
 import '@xterm/xterm/css/xterm.css';
 import { getTheme } from '../../themes/presets';
 import ContextMenu from '../common/ContextMenu';
+import { colors } from '../../theme/tokens';
 
 interface Props {
   connId: number;
@@ -65,9 +66,9 @@ export default function ThemedTerminal({ connId, themeName: _themeName, onStatus
       theme: {
         background: themeConfig.background,
         foreground: themeConfig.foreground,
-        scrollbarSliderBackground: '#3b4261',
-        scrollbarSliderHoverBackground: '#565f89',
-        scrollbarSliderActiveBackground: '#7aa2f7',
+        scrollbarSliderBackground: colors.border,
+        scrollbarSliderHoverBackground: colors.textMuted,
+        scrollbarSliderActiveBackground: colors.accent,
         cursor: themeConfig.cursor,
         cursorAccent: themeConfig.cursorAccent,
         selectionBackground: themeConfig.selectionBackground,
@@ -123,10 +124,10 @@ export default function ThemedTerminal({ connId, themeName: _themeName, onStatus
           if (!container) return true;
           const bar = document.createElement('div');
           bar.id = 'xterm-search-bar';
-          bar.style.cssText = 'position:absolute;top:0;right:0;z-index:10;display:flex;gap:4px;padding:4px 8px;background:#333;border-radius:0 0 0 6px;';
+          bar.style.cssText = 'position:absolute;top:0;right:0;z-index:10;display:flex;gap:4px;padding:4px 8px;background:var(--c-bg-bar);border-radius:0 0 0 6px;';
           const input = document.createElement('input');
           input.id = 'xterm-search-input';
-          input.style.cssText = 'width:160px;padding:2px 6px;border:1px solid #3b4261;border-radius:3px;background:#1e1e1e;color:#fff;font-size:12px;outline:none;';
+          input.style.cssText = 'width:160px;padding:2px 6px;border:1px solid var(--c-border);border-radius:3px;background:var(--c-bg-deep);color:var(--c-white);font-size:12px;outline:none;';
           input.placeholder = t('term_find_placeholder');
 
           input.onkeydown = (ke) => {

@@ -4,6 +4,7 @@ import { t } from '../../i18n';
 const FileEditor = lazy(() => import('../common/FileEditor'));
 import { useLayoutStore } from '../../store/layout';
 import Icon from '../common/Icon';
+import { colors, font } from '../../theme/tokens';
 
 export interface SftpFile {
   name: string;
@@ -255,30 +256,30 @@ export default function SftpPanel({ connId, tabId, localMode, currentPath, onPat
   };
 
   return (
-    <div style={{ background: '#1a1b26', fontSize: 13, display: 'flex', flexDirection: 'column', height: '100%', ...style }}>
-      <div style={{ height: 36, padding: '0 4px', background: '#1a1b26', display: 'flex', gap: 2, alignItems: 'center', borderBottom: '1px solid #3b4261', flexShrink: 0 }}>
+    <div style={{ background: colors.bg, fontSize: font.sm, display: 'flex', flexDirection: 'column', height: '100%', ...style }}>
+      <div style={{ height: 36, padding: '0 4px', background: colors.bg, display: 'flex', gap: 2, alignItems: 'center', borderBottom: '1px solid var(--c-border)', flexShrink: 0 }}>
         <button onClick={handleBack} title={t("sftp_back")}
-          style={{ background: 'none', border: 'none', color: canGoBack ? '#ccc' : '#3b4261', cursor: canGoBack ? 'pointer' : 'default', padding: '2px', display: 'flex', alignItems: 'center' }}><Icon name="chevron-left" size={14} /></button>
+          style={{ background: 'none', border: 'none', color: canGoBack ? colors.textLight : colors.border, cursor: canGoBack ? 'pointer' : 'default', padding: '2px', display: 'flex', alignItems: 'center' }}><Icon name="chevron-left" size={14} /></button>
         <button onClick={handleForward} title={t("sftp_forward")}
-          style={{ background: 'none', border: 'none', color: canGoForward ? '#ccc' : '#3b4261', cursor: canGoForward ? 'pointer' : 'default', padding: '2px', display: 'flex', alignItems: 'center' }}><Icon name="chevron-right" size={14} /></button>
+          style={{ background: 'none', border: 'none', color: canGoForward ? colors.textLight : colors.border, cursor: canGoForward ? 'pointer' : 'default', padding: '2px', display: 'flex', alignItems: 'center' }}><Icon name="chevron-right" size={14} /></button>
         <button onClick={handleGoParent} title={t("sftp_parent")}
-          style={{ background: 'none', border: 'none', color: '#ccc', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}><Icon name="corner-left-up" size={14} /></button>
+          style={{ background: 'none', border: 'none', color: colors.textLight, cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}><Icon name="corner-left-up" size={14} /></button>
         <button onClick={handleHome} title={t("sftp_home")}
-          style={{ background: 'none', border: 'none', color: '#ccc', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}><Icon name="home" size={14} /></button>
+          style={{ background: 'none', border: 'none', color: colors.textLight, cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}><Icon name="home" size={14} /></button>
         <input value={path} onChange={(e) => setPath(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleNavigate(path); }}
-          style={{ flex: 1, padding: '2px 6px', background: '#1a1b26', border: '1px solid #3b4261', borderRadius: 4, color: '#fff', fontSize: 13, fontFamily: 'Consolas, monospace', minWidth: 0 }} />
+          style={{ flex: 1, padding: '2px 6px', background: colors.bg, border: '1px solid var(--c-border)', borderRadius: 4, color: colors.white, fontSize: font.sm, fontFamily: 'Consolas, monospace', minWidth: 0 }} />
 
 
       </div>
-      {error && <div style={{ padding: '4px 8px', color: '#f44747', fontSize: 12 }}>{error}</div>}
+      {error && <div style={{ padding: '4px 8px', color: colors.danger, fontSize: font.xs }}>{error}</div>}
       {disconnected ? (
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8, color: '#888' }}>
-          <div style={{ fontSize: 28, opacity: 0.3 }}>◧</div>
-          <div style={{ fontSize: 14 }}>{t("sftp_disconnected")}</div>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8, color: colors.textDim }}>
+          <div style={{ fontSize: font.xl5, opacity: 0.3 }}>◧</div>
+          <div style={{ fontSize: font.md }}>{t("sftp_disconnected")}</div>
           <button onClick={() => { setError(''); setFiles([]); setDisconnected(false); setWsNonce((n) => n + 1); }} style={{
-            background: '#7aa2f7', border: 'none', color: '#1a1b26', fontWeight: 600, padding: '4px 12px',
-            borderRadius: 4, cursor: 'pointer', fontSize: 13,
+            background: colors.accent, border: 'none', color: colors.bg, fontWeight: 600, padding: '4px 12px',
+            borderRadius: 4, cursor: 'pointer', fontSize: font.sm,
           }}>{t("sftp_reconnect")}</button>
         </div>
       ) : (<>
@@ -291,7 +292,7 @@ export default function SftpPanel({ connId, tabId, localMode, currentPath, onPat
           onToggleFollow={() => setFollowCd(!followCd)} followCd={followCd}
         />
         {editFile && (
-          <Suspense fallback={<div style={{ padding: 12, fontSize: 14, color: '#565f89' }}>Loading…</div>}>
+          <Suspense fallback={<div style={{ padding: 12, fontSize: font.md, color: colors.textMuted }}>Loading…</div>}>
             <FileEditor
               filePath={editFile.path} fileName={editFile.name}
               ws={wsRef.current}

@@ -4,6 +4,7 @@ import { apiGet, apiDelete } from '../../api/client';
 import { useAuthStore } from '../../store/auth';
 import ConnectionForm from './ConnectionForm';
 import DbConnectionForm from './DbConnectionForm';
+import { colors, font } from '../../theme/tokens';
 
 interface Column {
   key: string;
@@ -61,48 +62,48 @@ export default function ConnectionTable({ type, title, apiPrefix, groupType, col
   const groupMap: Record<number, string> = {};
   groups.forEach((g: any) => { groupMap[g.id] = g.name; });
 
-  if (loading) return <div style={{ padding: 24, color: '#565f89' }}>{t("file_loading")}</div>;
+  if (loading) return <div style={{ padding: 24, color: colors.textMuted }}>{t("file_loading")}</div>;
 
   return (
     <div style={{ padding: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h3 style={{ color: '#ccc', margin: 0, fontSize: 18 }}>{title} <span style={{ color: '#565f89', fontSize: 14, fontWeight: 400 }}>{t("config_total")} {items.length} {t("config_items")}</span></h3>
+        <h3 style={{ color: colors.textLight, margin: 0, fontSize: font.xl2 }}>{title} <span style={{ color: colors.textMuted, fontSize: font.md, fontWeight: 400 }}>{t("config_total")} {items.length} {t("config_items")}</span></h3>
         <button onClick={() => { setEditingItem(null); setShowForm(true); }}
-          style={{ padding: '6px 16px', background: '#7aa2f7', border: 'none', color: '#1a1b26', borderRadius: 4, cursor: 'pointer', fontSize: 14 }}>
+          style={{ padding: '6px 16px', background: colors.accent, border: 'none', color: colors.bg, borderRadius: 4, cursor: 'pointer', fontSize: font.md }}>
           {t("config_create")}{type === 'ssh' ? 'SSH' : t("config_database")}{t("config_conn")}
         </button>
       </div>
 
-      {error && <div style={{ color: '#f44747', fontSize: 14, padding: '6px 10px', background: '#2d1b1b', borderRadius: 4, marginBottom: 12 }}>{error}</div>}
+      {error && <div style={{ color: colors.danger, fontSize: font.md, padding: '6px 10px', background: colors.bgError, borderRadius: 4, marginBottom: 12 }}>{error}</div>}
 
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: font.md }}>
         <thead>
-          <tr style={{ background: '#1a1b26' }}>
+          <tr style={{ background: colors.bg }}>
             {columns.map((col) => (
-              <th key={col.key} style={{ padding: '8px 12px', textAlign: 'left', color: '#7aa2f7', borderBottom: '1px solid #3b4261', width: col.width }}>{col.label}</th>
+              <th key={col.key} style={{ padding: '8px 12px', textAlign: 'left', color: colors.accent, borderBottom: '1px solid var(--c-border)', width: col.width }}>{col.label}</th>
             ))}
-            <th style={{ padding: '8px 12px', textAlign: 'center', color: '#7aa2f7', borderBottom: '1px solid #3b4261', width: '120px' }}>{t("config_actions")}</th>
+            <th style={{ padding: '8px 12px', textAlign: 'center', color: colors.accent, borderBottom: '1px solid var(--c-border)', width: '120px' }}>{t("config_actions")}</th>
           </tr>
         </thead>
         <tbody>
           {items.map((item: any, i: number) => (
-            <tr key={item.id} style={{ background: i % 2 === 0 ? '#1a1b26' : '#1f2335' }}
+            <tr key={item.id} style={{ background: i % 2 === 0 ? colors.bg : colors.bgInput }}
               onDoubleClick={() => { setEditingItem(item); setShowForm(true); }}>
               {columns.map((col) => (
-                <td key={col.key} style={{ padding: '6px 12px', color: '#ccc', borderBottom: '1px solid #3b4261' }}>
+                <td key={col.key} style={{ padding: '6px 12px', color: colors.textLight, borderBottom: '1px solid var(--c-border)' }}>
                   {col.render ? col.render(item[col.key]) : String(item[col.key] ?? '')}
                 </td>
               ))}
-              <td style={{ padding: '6px 12px', borderBottom: '1px solid #3b4261', textAlign: 'center' }}>
+              <td style={{ padding: '6px 12px', borderBottom: '1px solid var(--c-border)', textAlign: 'center' }}>
                 <button onClick={() => { setEditingItem(item); setShowForm(true); }}
-                  style={{ background: 'none', border: 'none', color: '#7aa2f7', cursor: 'pointer', fontSize: 13, marginRight: 8 }}>{t("menu_edit")}</button>
+                  style={{ background: 'none', border: 'none', color: colors.accent, cursor: 'pointer', fontSize: font.sm, marginRight: 8 }}>{t("menu_edit")}</button>
                 <button onClick={() => handleDelete(item.id)}
-                  style={{ background: 'none', border: 'none', color: '#f44747', cursor: 'pointer', fontSize: 13 }}>{t("menu_delete")}</button>
+                  style={{ background: 'none', border: 'none', color: colors.danger, cursor: 'pointer', fontSize: font.sm }}>{t("menu_delete")}</button>
               </td>
             </tr>
           ))}
           {items.length === 0 && (
-            <tr><td colSpan={columns.length + 1} style={{ padding: 24, textAlign: 'center', color: '#565f89' }}>{t("config_no_data")}</td></tr>
+            <tr><td colSpan={columns.length + 1} style={{ padding: 24, textAlign: 'center', color: colors.textMuted }}>{t("config_no_data")}</td></tr>
           )}
         </tbody>
       </table>

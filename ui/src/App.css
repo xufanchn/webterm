@@ -1,3 +1,51 @@
+:root {
+  --c-accent: #7aa2f7;
+  --c-accent60: #7aa2f799;
+  --c-accent80: #7aa2f7cc;
+  --c-accent-dim: #7aa2f720;
+  --c-accent-faint: #7aa2f733;
+  --c-accent-mid: #7aa2f766;
+  --c-accent-soft: #7aa2f740;
+  --c-bg: #1a1b26;
+  --c-bg-bar: #333;
+  --c-bg-deep: #1e1e1e;
+  --c-bg-error: #2d1b1b;
+  --c-bg-header: #2d2d2d;
+  --c-bg-input: #1f2335;
+  --c-bg-input-alt: #2a2e42;
+  --c-bg-raised: #252526;
+  --c-border: #3b4261;
+  --c-danger: #f44747;
+  --c-danger-bg: #d32f2f;
+  --c-danger-bright: #f7768e;
+  --c-danger-soft: #f7768e15;
+  --c-gray: #808080;
+  --c-info: #007acc;
+  --c-purple: #bb9af7;
+  --c-success: #4caf50;
+  --c-success-text: #6a9955;
+  --c-text: #c0caf5;
+  --c-text-dim: #888;
+  --c-text-faint: #666;
+  --c-text-gray: #999;
+  --c-text-light: #ccc;
+  --c-text-muted: #565f89;
+  --c-text-muted2: #787e99;
+  --c-warning: #e0af68;
+  --c-warning-text: #cca700;
+  --c-white: #fff;
+  --f-lg: 15px;
+  --f-md: 14px;
+  --f-sm: 13px;
+  --f-xl: 16px;
+  --f-xl2: 18px;
+  --f-xl3: 20px;
+  --f-xl4: 25px;
+  --f-xl5: 28px;
+  --f-xs: 12px;
+  --f-xxs: 10px;
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body, #root { height: 100%; width: 100%; overflow: hidden; }
 body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #1a1b26; color: #c0caf5; font-size: 18px; }
