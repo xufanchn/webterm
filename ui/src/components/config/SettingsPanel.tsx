@@ -17,6 +17,8 @@ export default function SettingsPanel({ onClose }: Props) {
   const setFontSize = usePreferencesStore((s) => s.setFontSize);
   const onekeyPwd = usePreferencesStore((s) => s.onekeyPwd);
   const setOnekeyPwd = usePreferencesStore((s) => s.setOnekeyPwd);
+  const highlightRules = usePreferencesStore((s) => s.highlightRules);
+  const setHighlightRules = usePreferencesStore((s) => s.setHighlightRules);
   const [activeSection, setActiveSection] = useState<'appearance' | 'highlights' | 'connection'>('appearance');
   const [showIdx, setShowIdx] = useState(-1);
 
@@ -36,6 +38,19 @@ export default function SettingsPanel({ onClose }: Props) {
     const list = parseOnekey(onekeyPwd);
     list.splice(i, 1);
     setOnekeyPwd(formatOnekey(list));
+  };
+  const updateRule = (i: number, rule: { keyword: string; color: string; regex: boolean }) => {
+    const list = [...highlightRules];
+    list[i] = rule;
+    setHighlightRules(list);
+  };
+  const removeRule = (i: number) => {
+    const list = [...highlightRules];
+    list.splice(i, 1);
+    setHighlightRules(list);
+  };
+  const addRule = () => {
+    setHighlightRules([...highlightRules, { keyword: '', color: '#f44747', regex: false }]);
   };
 
   const cellStyle: React.CSSProperties = {
@@ -97,12 +112,22 @@ export default function SettingsPanel({ onClose }: Props) {
 
         {activeSection === 'highlights' && (
           <div>
-            {[{k:'ERROR',c:'#f44747'},{k:'WARN',c:'#cca700'},{k:'INFO',c:'#6a9955'},{k:'DEBUG',c:'#808080'}].map(r => (
-              <div key={r.k} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: '1px solid #3b4261' }}>
-                <span style={{ color: r.c, fontWeight: 'bold', width: 60, fontSize: 13 }}>{r.k}</span>
-                <span style={{ color: '#565f89', fontSize: 12 }}>{t("settings_preset")}</span>
+            {highlightRules.map((r, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: '1px solid #3b4261' }}>
+                <input value={r.keyword} onChange={(e) => updateRule(i, { ...r, keyword: e.target.value })}
+                  placeholder="INFO" style={{ background: 'rgba(31,35,53,0.5)', border: '1px solid #3b4261', borderRadius: 4, color: '#c0caf5', padding: '3px 6px', width: 100, fontSize: 12 }} />
+                <input type="color" value={r.color} onChange={(e) => updateRule(i, { ...r, color: e.target.value })}
+                  style={{ width: 32, height: 24, background: 'transparent', border: 'none', cursor: 'pointer' }} />
+                <label style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#565f89', fontSize: 11, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={r.regex} onChange={(e) => updateRule(i, { ...r, regex: e.target.checked })} />
+                  regex
+                </label>
+                <span onClick={() => removeRule(i)} style={{ cursor: 'pointer', color: '#f44747', marginLeft: 'auto', display: 'flex', alignItems: 'center' }}><Icon name="x" size={14} /></span>
               </div>
             ))}
+            <button onClick={addRule} style={{ marginTop: 8, padding: '6px 16px', background: '#7aa2f7', border: 'none', borderRadius: 4, color: '#1a1b26', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+              {t("settings_add")}
+            </button>
           </div>
         )}
 

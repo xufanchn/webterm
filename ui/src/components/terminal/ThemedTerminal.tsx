@@ -32,13 +32,14 @@ function hexToRgb(hex: string): string {
 
 function highlightText(text: string, rules: HighlightRule[]): string {
   for (const rule of rules) {
-    if (text.includes(rule.keyword)) {
-      const escaped = rule.keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      text = text.replace(
-        new RegExp(`(${escaped})`, 'g'),
-        `\x1b[1m\x1b[38;2;${hexToRgb(rule.color)}m$1\x1b[0m`
-      );
-    }
+    if (!rule.keyword) continue;
+    try {
+      const pattern = rule.regex ? rule.keyword : rule.keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const re = new RegExp(`(${pattern})`, 'g');
+      if (!re.test(text)) continue;
+      re.lastIndex = 0;
+      text = text.replace(re, `\x1b[1m\x1b[38;2;${hexToRgb(rule.color)}m$1\x1b[0m`);
+    } catch { /* invalid regex - skip rule */ }
   }
   return text;
 }

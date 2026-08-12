@@ -69,8 +69,11 @@ export default function QueryEditor({ connId }: Props) {
         viewRef.current.state.selection.main.from,
         viewRef.current.state.selection.main.to
       );
-      const sqlToRun = selection || query;
-      if (sqlToRun.trim() && wsRef.current) {
+      const sqlToRun = (selection || query).trim();
+      if (sqlToRun && wsRef.current) {
+        if (/^\s*(CREATE|ALTER|DROP|TRUNCATE)\b/i.test(sqlToRun)) {
+          if (!window.confirm(t('db_ddl_confirm'))) return;
+        }
         wsRef.current.send(JSON.stringify({ action: 'query', query: sqlToRun }));
       }
     };

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"strconv"
 	"time"
@@ -330,6 +331,7 @@ func (h *WSHandler) HandleSFTP(conn *websocket.Conn) {
 		Path    string `json:"path"`
 		NewPath string `json:"new_path"`
 		Content string `json:"content"`
+		Mode    string `json:"mode"`
 	}
 	for {
 		if err := websocket.JSON.Receive(conn, &msg); err != nil {
@@ -377,6 +379,18 @@ func (h *WSHandler) HandleSFTP(conn *websocket.Conn) {
 				websocket.JSON.Send(conn, map[string]interface{}{"type": "error", "error": err.Error()})
 			} else {
 				websocket.JSON.Send(conn, map[string]interface{}{"type": "mkdir_done", "path": msg.Path})
+			}
+		case "chmod":
+			mode, perr := strconv.ParseUint(msg.Mode, 8, 32)
+			if perr != nil {
+				websocket.JSON.Send(conn, map[string]interface{}{"type": "error", "error": "invalid mode: " + msg.Mode})
+				continue
+			}
+			err := sftpClient.Chmod(msg.Path, fs.FileMode(mode))
+			if err != nil {
+				websocket.JSON.Send(conn, map[string]interface{}{"type": "error", "error": err.Error()})
+			} else {
+				websocket.JSON.Send(conn, map[string]interface{}{"type": "chmod_done", "path": msg.Path})
 			}
 		case "getwd":
 			wd, err := sftpClient.Getwd()

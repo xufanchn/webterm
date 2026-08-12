@@ -39,6 +39,8 @@ export default function FileEditor({ filePath, fileName, ws, onClose, onSaved }:
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [backup, setBackup] = useState(true);
+  const origContentRef = useRef('');
   const saveHandlerRef = useRef<() => void>(() => {});
 
   // Read file from remote
@@ -50,6 +52,7 @@ export default function FileEditor({ filePath, fileName, ws, onClose, onSaved }:
       const msg = JSON.parse(e.data);
       if (msg.type === 'file_content' && msg.path === filePath) {
         setContent(msg.content || '');
+        origContentRef.current = msg.content || '';
         setLoading(false);
         ws.removeEventListener('message', handler);
       } else if (msg.type === 'error') {
@@ -103,14 +106,9 @@ export default function FileEditor({ filePath, fileName, ws, onClose, onSaved }:
   const handleSave = () => {
     if (!ws || !viewRef.current) return;
     const text = viewRef.current.state.doc.toString();
+    const bakPath = filePath + '.bak';
     setSaving(true);
     setError('');
-
-    ws.send(JSON.stringify({
-      action: 'write',
-      path: filePath,
-      content: text,
-    }));
 
     const handler = (e: MessageEvent) => {
       const msg = JSON.parse(e.data);
@@ -123,9 +121,17 @@ export default function FileEditor({ filePath, fileName, ws, onClose, onSaved }:
         setError(msg.error);
         setSaving(false);
         ws.removeEventListener('message', handler);
+      } else if (backup && msg.type === 'write_done' && msg.path === bakPath) {
+        ws.send(JSON.stringify({ action: 'write', path: filePath, content: text }));
       }
     };
     ws.addEventListener('message', handler);
+
+    if (backup) {
+      ws.send(JSON.stringify({ action: 'write', path: bakPath, content: origContentRef.current }));
+    } else {
+      ws.send(JSON.stringify({ action: 'write', path: filePath, content: text }));
+    }
   };
 
   // Keep saveHandlerRef up to date
@@ -143,8 +149,12 @@ export default function FileEditor({ filePath, fileName, ws, onClose, onSaved }:
           padding: '8px 16px', background: '#333', display: 'flex',
           justifyContent: 'space-between', alignItems: 'center',
         }}>
-          <span style={{ color: '#888', fontSize: 11 }}>
-            {filePath} — Ctrl+S {t("conn_save")}
+          <span style={{ color: '#888', fontSize: 11, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span>{filePath} — Ctrl+S {t("conn_save")}</span>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+              <input type="checkbox" checked={backup} onChange={(e) => setBackup(e.target.checked)} />
+              {t('file_bak')}
+            </label>
           </span>
           <button onClick={handleSave} disabled={saving} style={{
             background: saving ? '#3b4261' : '#007acc', border: 'none',

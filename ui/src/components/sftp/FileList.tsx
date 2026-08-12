@@ -14,6 +14,7 @@ interface Props {
   onMkdir: (name: string) => void;
   onUpload: () => void;
   onEdit: (path: string, name: string) => void;
+  onChmod: (path: string, mode: string) => void;
   onGoParent?: () => void;
   onToggleFollow?: () => void;
   followCd?: boolean;
@@ -67,7 +68,7 @@ function NewFolderInput({ value, onChange, onConfirm, onCancel, confirmLabel = t
   );
 }
 
-export default function FileList({ files, loading, connId, currentPath, onNavigate, onDelete, onRename, onMkdir, onUpload, onEdit, onGoParent, onToggleFollow, followCd }: Props) {
+export default function FileList({ files, loading, connId, currentPath, onNavigate, onDelete, onRename, onMkdir, onUpload, onEdit, onChmod, onGoParent, onToggleFollow, followCd }: Props) {
   const [showNewFolder, setShowNewFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [contextMenu, setContextMenu] = useState<{x: number; y: number; file: SftpFile} | null>(null);
@@ -280,6 +281,13 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
               label: t('file_edit'),
               action: () => { onEdit(contextMenu.file.path, contextMenu.file.name); setContextMenu(null); },
             }]),
+            { label: t('file_chmod'),
+              action: () => {
+                const mode = window.prompt(`${t('file_chmod_prompt')} (${contextMenu.file.name})`, contextMenu.file.is_dir ? '755' : '644');
+                if (mode) onChmod(contextMenu.file.path, mode.trim());
+                setContextMenu(null);
+              },
+            },
             { label: t('file_rename'),
               action: () => {
                 setRenaming({ path: contextMenu.file.path, name: contextMenu.file.name });

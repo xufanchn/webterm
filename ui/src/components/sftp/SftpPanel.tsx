@@ -250,6 +250,9 @@ export default function SftpPanel({ connId, tabId, localMode, currentPath, onPat
   const handleEditFile = (filePath: string, fileName: string) => {
     setEditFile({ path: filePath, name: fileName });
   };
+  const handleChmod = (filePath: string, mode: string) => {
+    wsRef.current?.send(JSON.stringify({ action: 'chmod', path: filePath, mode }));
+  };
 
   return (
     <div style={{ background: '#1a1b26', fontSize: 11, display: 'flex', flexDirection: 'column', height: '100%', ...style }}>
@@ -283,7 +286,7 @@ export default function SftpPanel({ connId, tabId, localMode, currentPath, onPat
           files={files} loading={loading}
           onNavigate={handleNavigate} onDelete={handleDelete}
           onRename={handleRename} connId={connId} currentPath={path}
-          onUpload={() => fetchDir(path)} onEdit={handleEditFile}
+          onUpload={() => fetchDir(path)} onEdit={handleEditFile} onChmod={handleChmod}
           onMkdir={(name) => handleMkdir(name)} onGoParent={handleGoParent}
           onToggleFollow={() => setFollowCd(!followCd)} followCd={followCd}
         />
