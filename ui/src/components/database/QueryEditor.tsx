@@ -112,16 +112,16 @@ export default function QueryEditor({ connId }: Props) {
 
   const exportCSV = () => {
     if (!result || !result.columns.length) return;
-    const header = result.columns.join(',');
-    const body = result.rows.map((row) =>
-      result.columns.map((col) => {
-        const val = row[col];
-        if (val === null) return '';
-        const str = String(val);
-        return str.includes(',') || str.includes('"') ? `"${str.replace(/"/g, '""')}"` : str;
-      }).join(',')
-    ).join('\n');
-    const blob = new Blob([header + '\n' + body], { type: 'text/csv' });
+    const escapeField = (val: unknown): string => {
+      if (val === null || val === undefined) return '';
+      const str = String(val);
+      const needsQuote = str.includes(',') || str.includes('"') || /[\r\n]/.test(str);
+      return needsQuote ? `"${str.replace(/"/g, '""')}"` : str;
+    };
+    const header = result.columns.map(escapeField).join(',');
+    const body = result.rows.map((row) => result.columns.map((col) => escapeField(row[col])).join(',')).join('\r\n');
+    // BOM + CRLF so Excel/WPS open UTF-8 CSV correctly
+    const blob = new Blob(['\uFEFF' + header + '\r\n' + body], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = 'query_result.csv'; a.click();
