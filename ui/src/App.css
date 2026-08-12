@@ -34,16 +34,16 @@
   --c-warning: #e0af68;
   --c-warning-text: #cca700;
   --c-white: #fff;
-  --f-lg: 15px;
-  --f-md: 14px;
-  --f-sm: 13px;
-  --f-xl: 16px;
-  --f-xl2: 18px;
-  --f-xl3: 20px;
-  --f-xl4: 25px;
-  --f-xl5: 28px;
-  --f-xs: 12px;
-  --f-xxs: 10px;
+  --f-lg: 16px;
+  --f-md: 15px;
+  --f-sm: 14px;
+  --f-xl: 17px;
+  --f-xl2: 19px;
+  --f-xl3: 21px;
+  --f-xl4: 26px;
+  --f-xl5: 29px;
+  --f-xs: 13px;
+  --f-xxs: 11px;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }

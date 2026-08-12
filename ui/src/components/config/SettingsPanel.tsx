@@ -104,7 +104,7 @@ export default function SettingsPanel({ onClose }: Props) {
               <label style={{ color: colors.textMuted, fontSize: font.md, display: 'block', marginBottom: 6 }}>
                 {t("settings_font")}: {fontSize}px
               </label>
-              <input type="range" min="10" max="24" value={fontSize}
+              <input type="range" min="12" max="28" value={fontSize}
                 onChange={(e) => setFontSize(Number(e.target.value))}
                 style={{ width: '100%', accentColor: colors.accent }} />
             </div>

@@ -40,14 +40,14 @@ export const colors = {
 } as const;
 
 export const font = {
-  lg: 15,
-  md: 14,
-  sm: 13,
-  xl: 16,
-  xl2: 18,
-  xl3: 20,
-  xl4: 25,
-  xl5: 28,
-  xs: 12,
-  xxs: 10,
+  lg: 16,
+  md: 15,
+  sm: 14,
+  xl: 17,
+  xl2: 19,
+  xl3: 21,
+  xl4: 26,
+  xl5: 29,
+  xs: 13,
+  xxs: 11,
 } as const;
