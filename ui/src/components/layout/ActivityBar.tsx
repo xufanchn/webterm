@@ -1,5 +1,6 @@
 import { t } from '../../i18n';
 import { useLayoutStore } from '../../store/layout';
+import { useAuthStore } from '../../store/auth';
 import type { ModuleType } from '../../store/layout';
 import Icon from '../common/Icon';
 import { colors } from '../../theme/tokens';
@@ -26,6 +27,7 @@ export default function ActivityBar({ onOpenSettings, sidebarCollapsed, onToggle
 }) {
   const activeModule = useLayoutStore((s) => s.activeModule);
   const setActiveModule = useLayoutStore((s) => s.setActiveModule);
+  const token = useAuthStore((s) => s.token);
 
   return (
     <div style={{
@@ -37,7 +39,7 @@ export default function ActivityBar({ onOpenSettings, sidebarCollapsed, onToggle
         {sidebarCollapsed ? <Icon name="panel-left-open" size={14} /> : <Icon name="panel-left-close" size={14} />}
       </div>
       {modules.map(({ type, label, icon }) => (
-        <div key={type} className="activity-btn" title={label} onClick={() => setActiveModule(type)}
+        <div key={type} className="activity-btn" title={label} onClick={() => { if (token) setActiveModule(type); }}
           style={btnStyle(activeModule === type)}>
           <Icon name={icon} size={16} />
         </div>

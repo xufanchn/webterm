@@ -52,7 +52,7 @@ export default function Workspace() {
           </span>
           <span className="header-btn"
             style={{ color: user ? colors.text : colors.textMuted, flexShrink: 0, padding: '2px 8px', borderRadius: 4, border: '1px solid var(--c-border)' }}>
-            {user?.username || t('login_submit')}
+            {user?.username || t('not_logged_in')}
           </span>
           <button onClick={token ? logout : undefined} className="header-btn logout-btn"
             style={{ background: 'transparent', color: token ? colors.textMuted : colors.border, border: '1px solid var(--c-border)', padding: '2px 10px', borderRadius: 4, cursor: token ? 'pointer' : 'default', flexShrink: 0, opacity: token ? 1 : 0.4 }}>
