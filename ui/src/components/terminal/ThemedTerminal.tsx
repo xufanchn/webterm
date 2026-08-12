@@ -57,6 +57,7 @@ export default function ThemedTerminal({ connId, themeName: _themeName, onStatus
   const zsentryRef = useRef<any>(null);
   const zsessionRef = useRef<any>(null);
   const zmodemActiveRef = useRef(false);
+  const pendingUploadRef = useRef<any>(null);
   const sendRef = useRef<(data: string) => void>(() => {});
   const onStatusRef = useRef(onStatus);
   const onResizeDimRef = useRef(onResizeDim);
@@ -224,7 +225,13 @@ export default function ThemedTerminal({ connId, themeName: _themeName, onStatus
           } else {
             bytes = new TextEncoder().encode(msg.data);
           }
-          zsentryRef.current?.consume(bytes);
+          try {
+            zsentryRef.current?.consume(bytes);
+          } catch (e) {
+            // Repeated ZMODEM handshakes (rz retries) can make the session throw;
+            // swallow them instead of dumping raw JSON into the terminal.
+            console.warn('zmodem consume:', e);
+          }
         }
         if (msg.error) term.write(`\r\n\x1b[31m${msg.error}\x1b[0m\r\n`);
       } catch {
@@ -283,30 +290,25 @@ export default function ThemedTerminal({ connId, themeName: _themeName, onStatus
         },
         sender: (octets: any) => sendBinary(octets),
         on_detect: (detection: any) => {
+          if (zsessionRef.current) {
+            try { detection.deny(); } catch {}
+            return;
+          }
           try {
             const session = detection.confirm();
             zsessionRef.current = session;
             zmodemActiveRef.current = true;
             if (session.type === 'send') {
-              // Remote ran rz: let the user pick files to upload
-              const input = document.createElement('input');
-              input.type = 'file';
-              input.multiple = true;
-              input.onchange = async () => {
-                const files = input.files ? Array.from(input.files) : [];
-                try {
-                  if (files.length) {
-                    await Zmodem.Browser.send_files(session, files);
-                  } else {
-                    try { session.abort(); } catch {}
-                  }
-                } catch (e) {
-                  termRef.current?.write(`\r\n\x1b[31mZMODEM: ${e}\x1b[0m\r\n`);
-                }
+              // Remote ran rz: browsers require a user gesture to open a file picker,
+              // so ask the user to press Enter first.
+              pendingUploadRef.current = session;
+              termRef.current?.write('\r\n\x1b[33m[ZMODEM] 按 Enter 选择要上传的文件 / press Enter to choose files\x1b[0m\r\n');
+              session.on('session_end', () => {
                 zmodemActiveRef.current = false;
                 zsessionRef.current = null;
-              };
-              input.click();
+                pendingUploadRef.current = null;
+                zsentryRef.current = makeSentry();
+              });
             } else {
               // Remote ran sz: download offered files
               session.on('offer', (xfer: any) => {
@@ -375,6 +377,29 @@ export default function ThemedTerminal({ connId, themeName: _themeName, onStatus
     const term = termRef.current;
     if (!term) return;
     const disposable = term.onData((data) => {
+      if (pendingUploadRef.current && (data === '\r' || data === '\n')) {
+        const session = pendingUploadRef.current;
+        pendingUploadRef.current = null;
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.multiple = true;
+        input.onchange = async () => {
+          const files = input.files ? Array.from(input.files) : [];
+          try {
+            if (files.length) {
+              await Zmodem.Browser.send_files(session, files);
+            } else {
+              try { session.abort(); } catch {}
+            }
+          } catch (e) {
+            termRef.current?.write(`\r\n\x1b[31mZMODEM: ${e}\x1b[0m\r\n`);
+          }
+          zmodemActiveRef.current = false;
+          zsessionRef.current = null;
+        };
+        input.click();
+        return;
+      }
       if (zmodemActiveRef.current) {
         sendTextAsBinary(data);
         return;
