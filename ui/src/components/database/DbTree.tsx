@@ -55,12 +55,12 @@ export default function DbTree({ ws, onQuery }: Props) {
       </div>
       {dbs.map((db) => (
         <div key={db}>
-          <div onClick={() => fetchTables(db)} style={{ padding: '3px 8px', cursor: 'pointer', color: colors.textLight, display: 'flex', alignItems: 'center', gap: 4 }}>
+          <div onClick={() => fetchTables(db)} style={{ padding: '3px 8px', cursor: 'pointer', color: colors.textLight, display: 'flex', alignItems: 'center', gap: 4, overflow: 'hidden', whiteSpace: 'nowrap' }}>
             {expandedDb === db ? <Icon name="chevron-down" size={12} /> : <Icon name="chevron-right" size={12} />} <Icon name="database" size={12} /> {db}
           </div>
           {expandedDb === db && (tables[db] || []).map((table) => (
             <div key={table} onDoubleClick={() => handleTableDblClick(db, table)}
-              style={{ padding: '2px 8px 2px 28px', cursor: 'pointer', color: colors.textDim }}>
+              style={{ padding: '2px 8px 2px 28px', cursor: 'pointer', color: colors.textDim, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
               <Icon name="table" size={11} style={{ marginRight: 4 }} /> {table}
             </div>
           ))}

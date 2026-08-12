@@ -219,8 +219,8 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
       <div style={{ padding: '2px 8px', borderBottom: '1px solid var(--c-border)', display: 'flex', alignItems: 'center', gap: 4, color: colors.textDim, fontSize: font.xs, flexShrink: 0 }}>
         <span style={{ width: 16, flexShrink: 0 }} />
         <span onClick={() => toggleSort('name')} style={{ flex: 1, cursor: 'pointer', userSelect: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t('file_name')}{sortArrow('name')}</span>
-        <span onClick={() => toggleSort('size')} style={{ width: 55, cursor: 'pointer', userSelect: 'none', textAlign: 'right', flexShrink: 0 }}>{t('file_size')}{sortArrow('size')}</span>
-        <span onClick={() => toggleSort('time')} style={{ width: 105, cursor: 'pointer', userSelect: 'none', textAlign: 'right', flexShrink: 0 }}>{t('file_time')}{sortArrow('time')}</span>
+        <span onClick={() => toggleSort('size')} style={{ width: 55, cursor: 'pointer', userSelect: 'none', textAlign: 'right', flexShrink: 0, whiteSpace: 'nowrap' }}>{t('file_size')}{sortArrow('size')}</span>
+        <span onClick={() => toggleSort('time')} style={{ width: 105, cursor: 'pointer', userSelect: 'none', textAlign: 'right', flexShrink: 0, whiteSpace: 'nowrap' }}>{t('file_time')}{sortArrow('time')}</span>
       </div>
       {loading && <div style={{ padding: 8, color: colors.textDim }}>{t("file_loading")}</div>}
       {!loading && currentPath !== '/' && (
@@ -248,8 +248,8 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
             {f.is_dir ? <Icon name="folder" size={14} color={colors.accent} /> : f.is_link ? <Icon name="link" size={14} color={colors.warning} /> : <Icon name="file" size={14} color={colors.textDim} />}
           </span>
           <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
-          <span style={{ color: colors.textDim, fontSize: font.xs, width: 55, textAlign: 'right', flexShrink: 0 }}>{!f.is_dir ? sizeFormat(f.size) : ''}</span>
-          <span style={{ color: colors.textFaint, fontSize: font.xs, width: 105, textAlign: 'right', flexShrink: 0 }}>{timeFormat(f.mod_time)}</span>
+          <span style={{ color: colors.textDim, fontSize: font.xs, width: 55, textAlign: 'right', flexShrink: 0, whiteSpace: 'nowrap' }}>{!f.is_dir ? sizeFormat(f.size) : ''}</span>
+          <span style={{ color: colors.textFaint, fontSize: font.xs, width: 105, textAlign: 'right', flexShrink: 0, whiteSpace: 'nowrap' }}>{timeFormat(f.mod_time)}</span>
         </div>
       ))}
       {showNewFolder && (

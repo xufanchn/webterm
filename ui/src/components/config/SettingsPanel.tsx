@@ -20,8 +20,6 @@ export default function SettingsPanel({ onClose }: Props) {
   const setOnekeyPwd = usePreferencesStore((s) => s.setOnekeyPwd);
   const highlightRules = usePreferencesStore((s) => s.highlightRules);
   const setHighlightRules = usePreferencesStore((s) => s.setHighlightRules);
-  const uiScale = usePreferencesStore((s) => s.uiScale);
-  const setUIScale = usePreferencesStore((s) => s.setUIScale);
   const [activeSection, setActiveSection] = useState<'appearance' | 'highlights' | 'connection'>('appearance');
   const [showIdx, setShowIdx] = useState(-1);
 
@@ -108,14 +106,6 @@ export default function SettingsPanel({ onClose }: Props) {
               </label>
               <input type="range" min="10" max="24" value={fontSize}
                 onChange={(e) => setFontSize(Number(e.target.value))}
-                style={{ width: '100%', accentColor: colors.accent }} />
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ color: colors.textMuted, fontSize: font.sm, display: 'block', marginBottom: 6 }}>
-                {t("settings_ui_scale")}: {Math.round(uiScale * 100)}%
-              </label>
-              <input type="range" min="0.85" max="1.3" step="0.05" value={uiScale}
-                onChange={(e) => setUIScale(Number(e.target.value))}
                 style={{ width: '100%', accentColor: colors.accent }} />
             </div>
           </div>

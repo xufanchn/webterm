@@ -80,9 +80,9 @@ export default function ConnectionTable({ type, title, apiPrefix, groupType, col
         <thead>
           <tr style={{ background: colors.bg }}>
             {columns.map((col) => (
-              <th key={col.key} style={{ padding: '8px 12px', textAlign: 'left', color: colors.accent, borderBottom: '1px solid var(--c-border)', width: col.width }}>{col.label}</th>
+              <th key={col.key} style={{ padding: '8px 12px', textAlign: 'left', color: colors.accent, borderBottom: '1px solid var(--c-border)', width: col.width, whiteSpace: 'nowrap' }}>{col.label}</th>
             ))}
-            <th style={{ padding: '8px 12px', textAlign: 'center', color: colors.accent, borderBottom: '1px solid var(--c-border)', width: '120px' }}>{t("config_actions")}</th>
+            <th style={{ padding: '8px 12px', textAlign: 'center', color: colors.accent, borderBottom: '1px solid var(--c-border)', width: '120px', whiteSpace: 'nowrap' }}>{t("config_actions")}</th>
           </tr>
         </thead>
         <tbody>
@@ -90,11 +90,11 @@ export default function ConnectionTable({ type, title, apiPrefix, groupType, col
             <tr key={item.id} style={{ background: i % 2 === 0 ? colors.bg : colors.bgInput }}
               onDoubleClick={() => { setEditingItem(item); setShowForm(true); }}>
               {columns.map((col) => (
-                <td key={col.key} style={{ padding: '6px 12px', color: colors.textLight, borderBottom: '1px solid var(--c-border)' }}>
+                <td key={col.key} style={{ padding: '6px 12px', color: colors.textLight, borderBottom: '1px solid var(--c-border)', whiteSpace: 'nowrap' }}>
                   {col.render ? col.render(item[col.key]) : String(item[col.key] ?? '')}
                 </td>
               ))}
-              <td style={{ padding: '6px 12px', borderBottom: '1px solid var(--c-border)', textAlign: 'center' }}>
+              <td style={{ padding: '6px 12px', borderBottom: '1px solid var(--c-border)', textAlign: 'center', whiteSpace: 'nowrap' }}>
                 <button onClick={() => { setEditingItem(item); setShowForm(true); }}
                   style={{ background: 'none', border: 'none', color: colors.accent, cursor: 'pointer', fontSize: font.sm, marginRight: 8 }}>{t("menu_edit")}</button>
                 <button onClick={() => handleDelete(item.id)}

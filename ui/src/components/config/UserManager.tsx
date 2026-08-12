@@ -102,25 +102,25 @@ export default function UserManager() {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: font.md }}>
           <thead>
             <tr style={{ background: colors.bg }}>
-              <th style={{ padding: '8px 12px', textAlign: 'left', color: colors.accent, borderBottom: '1px solid var(--c-border)' }}>ID</th>
-              <th style={{ padding: '8px 12px', textAlign: 'left', color: colors.accent, borderBottom: '1px solid var(--c-border)' }}>{t("config_user")}</th>
-              <th style={{ padding: '8px 12px', textAlign: 'left', color: colors.accent, borderBottom: '1px solid var(--c-border)' }}>{t("config_role")}</th>
-              <th style={{ padding: '8px 12px', textAlign: 'left', color: colors.accent, borderBottom: '1px solid var(--c-border)' }}>{t("config_status")}</th>
-              <th style={{ padding: '8px 12px', textAlign: 'left', color: colors.accent, borderBottom: '1px solid var(--c-border)' }}>{t("config_created")}</th>
-              <th style={{ padding: '8px 12px', textAlign: 'center', color: colors.accent, borderBottom: '1px solid var(--c-border)' }}>{t("config_actions")}</th>
+              <th style={{ padding: '8px 12px', textAlign: 'left', color: colors.accent, borderBottom: '1px solid var(--c-border)', whiteSpace: 'nowrap' }}>ID</th>
+              <th style={{ padding: '8px 12px', textAlign: 'left', color: colors.accent, borderBottom: '1px solid var(--c-border)', whiteSpace: 'nowrap' }}>{t("config_user")}</th>
+              <th style={{ padding: '8px 12px', textAlign: 'left', color: colors.accent, borderBottom: '1px solid var(--c-border)', whiteSpace: 'nowrap' }}>{t("config_role")}</th>
+              <th style={{ padding: '8px 12px', textAlign: 'left', color: colors.accent, borderBottom: '1px solid var(--c-border)', whiteSpace: 'nowrap' }}>{t("config_status")}</th>
+              <th style={{ padding: '8px 12px', textAlign: 'left', color: colors.accent, borderBottom: '1px solid var(--c-border)', whiteSpace: 'nowrap' }}>{t("config_created")}</th>
+              <th style={{ padding: '8px 12px', textAlign: 'center', color: colors.accent, borderBottom: '1px solid var(--c-border)', whiteSpace: 'nowrap' }}>{t("config_actions")}</th>
             </tr>
           </thead>
           <tbody>
             {users.map((u) => (
               <tr key={u.id} style={{ background: u.id % 2 === 0 ? colors.bg : colors.bgInput }}>
-                <td style={{ padding: '6px 12px', color: colors.textLight, borderBottom: '1px solid var(--c-border)' }}>{u.id}</td>
-                <td style={{ padding: '6px 12px', color: colors.textLight, borderBottom: '1px solid var(--c-border)' }}>{u.username}</td>
-                <td style={{ padding: '6px 12px', color: u.role === 'admin' ? colors.accent : colors.textLight, borderBottom: '1px solid var(--c-border)' }}>{u.role}</td>
-                <td style={{ padding: '6px 12px', borderBottom: '1px solid var(--c-border)' }}>
+                <td style={{ padding: '6px 12px', color: colors.textLight, borderBottom: '1px solid var(--c-border)', whiteSpace: 'nowrap' }}>{u.id}</td>
+                <td style={{ padding: '6px 12px', color: colors.textLight, borderBottom: '1px solid var(--c-border)', whiteSpace: 'nowrap' }}>{u.username}</td>
+                <td style={{ padding: '6px 12px', color: u.role === 'admin' ? colors.accent : colors.textLight, borderBottom: '1px solid var(--c-border)', whiteSpace: 'nowrap' }}>{u.role}</td>
+                <td style={{ padding: '6px 12px', borderBottom: '1px solid var(--c-border)', whiteSpace: 'nowrap' }}>
                   <span style={{ color: u.disabled ? colors.danger : colors.successText }}>{u.disabled ? t('config_disabled') : t('config_active')}</span>
                 </td>
-                <td style={{ padding: '6px 12px', color: colors.textDim, borderBottom: '1px solid var(--c-border)', fontSize: font.sm }}>{u.created_at}</td>
-                <td style={{ padding: '6px 12px', borderBottom: '1px solid var(--c-border)', textAlign: 'center' }}>
+                <td style={{ padding: '6px 12px', color: colors.textDim, borderBottom: '1px solid var(--c-border)', fontSize: font.sm, whiteSpace: 'nowrap' }}>{u.created_at}</td>
+                <td style={{ padding: '6px 12px', borderBottom: '1px solid var(--c-border)', textAlign: 'center', whiteSpace: 'nowrap' }}>
                   <button onClick={() => openEdit(u)}
                     style={{ background: 'none', border: 'none', color: colors.accent, cursor: 'pointer', fontSize: font.sm, marginRight: 8 }}>{t("menu_edit")}</button>
                   <button onClick={() => handleDelete(u.id)}

@@ -48,22 +48,15 @@ function persistHighlightRules(rules: HighlightRule[]) {
   localStorage.setItem('webterm-highlight-rules', JSON.stringify(rules));
 }
 
-function loadUIScale(): number {
-  const v = Number(localStorage.getItem('webterm-ui-scale'));
-  return v >= 0.85 && v <= 1.3 ? v : 1;
-}
-
 interface PreferencesState {
   themeName: string;
   fontSize: number;
   onekeyPwd: string;
   highlightRules: HighlightRule[];
-  uiScale: number;
   setThemeName: (name: string) => void;
   setFontSize: (size: number) => void;
   setOnekeyPwd: (pwd: string) => void;
   setHighlightRules: (rules: HighlightRule[]) => void;
-  setUIScale: (v: number) => void;
 }
 
 export const usePreferencesStore = create<PreferencesState>((set) => ({
@@ -71,7 +64,6 @@ export const usePreferencesStore = create<PreferencesState>((set) => ({
   fontSize: Number(localStorage.getItem('webterm-fontSize')) || 16,
   onekeyPwd: localStorage.getItem('webterm-onekey') || '[]',
   highlightRules: loadHighlightRules(),
-  uiScale: loadUIScale(),
   setThemeName: (name) => {
     localStorage.setItem('webterm-theme', name);
     set({ themeName: name });
@@ -87,11 +79,6 @@ export const usePreferencesStore = create<PreferencesState>((set) => ({
   setHighlightRules: (rules) => {
     persistHighlightRules(rules);
     set({ highlightRules: rules });
-  },
-  setUIScale: (v) => {
-    localStorage.setItem('webterm-ui-scale', String(v));
-    document.documentElement.style.setProperty('--ui-scale', String(v));
-    set({ uiScale: v });
   },
 }));
 

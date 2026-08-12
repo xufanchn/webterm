@@ -35,7 +35,7 @@ export default function Modal({ title, onClose, children, width = 600, height = 
           padding: '16px 24px 8px', display: 'flex',
           justifyContent: 'space-between', alignItems: 'center', fontSize: font.xl2,
         }}>
-          <span style={{ color: colors.accent, fontWeight: 600 }}>{title}</span>
+          <span style={{ color: colors.accent, fontWeight: 600, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: colors.textMuted, cursor: 'pointer', display: 'flex', alignItems: 'center' }}><Icon name="x" size={18} /></button>
         </div>
         <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
