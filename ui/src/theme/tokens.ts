@@ -40,14 +40,14 @@ export const colors = {
 } as const;
 
 export const font = {
-  lg: 16,
-  md: 15,
-  sm: 14,
-  xl: 17,
-  xl2: 19,
-  xl3: 21,
-  xl4: 26,
-  xl5: 29,
-  xs: 13,
-  xxs: 11,
+  lg: 'var(--f-lg)',
+  md: 'var(--f-md)',
+  sm: 'var(--f-sm)',
+  xl: 'var(--f-xl)',
+  xl2: 'var(--f-xl2)',
+  xl3: 'var(--f-xl3)',
+  xl4: 'var(--f-xl4)',
+  xl5: 'var(--f-xl5)',
+  xs: 'var(--f-xs)',
+  xxs: 'var(--f-xxs)',
 } as const;
