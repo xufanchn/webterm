@@ -55,7 +55,7 @@ export default function SettingsPanel({ onClose }: Props) {
 
   const cellStyle: React.CSSProperties = {
     flex: 2, padding: '5px 4px', background: 'transparent', border: 'none',
-    color: '#ccc', fontSize: 12, width: '100%', boxSizing: 'border-box', outline: 'none',
+    color: '#ccc', fontSize: 14, width: '100%', boxSizing: 'border-box', outline: 'none',
   };
 
   const sections = [
@@ -76,7 +76,7 @@ export default function SettingsPanel({ onClose }: Props) {
               }} />
             )}
             <div onClick={() => setActiveSection(s.key)} style={{
-              padding: '4px 14px', cursor: 'pointer', fontSize: 12, borderRadius: 5,
+              padding: '4px 14px', cursor: 'pointer', fontSize: 14, borderRadius: 5,
               color: activeSection === s.key ? '#1a1b26' : '#787e99',
               background: activeSection === s.key ? '#7aa2f7' : 'transparent',
               height: 28, display: 'flex', alignItems: 'center',
@@ -88,11 +88,11 @@ export default function SettingsPanel({ onClose }: Props) {
         {activeSection === 'appearance' && (
           <div>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ color: '#565f89', fontSize: 12, display: 'block', marginBottom: 6 }}>{t("settings_theme")}</label>
+              <label style={{ color: '#565f89', fontSize: 14, display: 'block', marginBottom: 6 }}>{t("settings_theme")}</label>
               <CustomSelect value={themeName} onChange={(v) => setThemeName(v)}
                 style={{
                   width: '100%', padding: '8px 10px', background: 'rgba(31,35,53,0.5)', border: '1px solid #3b4261',
-                  borderRadius: 4, color: '#c0caf5', fontSize: 14,
+                  borderRadius: 4, color: '#c0caf5', fontSize: 16,
                 }}>
                 {presets.map((t) => (
                   <option key={t.name} value={t.name}>{t.name}</option>
@@ -100,7 +100,7 @@ export default function SettingsPanel({ onClose }: Props) {
               </CustomSelect>
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label style={{ color: '#565f89', fontSize: 12, display: 'block', marginBottom: 6 }}>
+              <label style={{ color: '#565f89', fontSize: 14, display: 'block', marginBottom: 6 }}>
                 {t("settings_font")}: {fontSize}px
               </label>
               <input type="range" min="10" max="24" value={fontSize}
@@ -115,17 +115,17 @@ export default function SettingsPanel({ onClose }: Props) {
             {highlightRules.map((r, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: '1px solid #3b4261' }}>
                 <input value={r.keyword} onChange={(e) => updateRule(i, { ...r, keyword: e.target.value })}
-                  placeholder="INFO" style={{ background: 'rgba(31,35,53,0.5)', border: '1px solid #3b4261', borderRadius: 4, color: '#c0caf5', padding: '3px 6px', width: 100, fontSize: 12 }} />
+                  placeholder="INFO" style={{ background: 'rgba(31,35,53,0.5)', border: '1px solid #3b4261', borderRadius: 4, color: '#c0caf5', padding: '3px 6px', width: 100, fontSize: 14 }} />
                 <input type="color" value={r.color} onChange={(e) => updateRule(i, { ...r, color: e.target.value })}
                   style={{ width: 32, height: 24, background: 'transparent', border: 'none', cursor: 'pointer' }} />
-                <label style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#565f89', fontSize: 11, cursor: 'pointer' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#565f89', fontSize: 13, cursor: 'pointer' }}>
                   <input type="checkbox" checked={r.regex} onChange={(e) => updateRule(i, { ...r, regex: e.target.checked })} />
                   regex
                 </label>
                 <span onClick={() => removeRule(i)} style={{ cursor: 'pointer', color: '#f44747', marginLeft: 'auto', display: 'flex', alignItems: 'center' }}><Icon name="x" size={14} /></span>
               </div>
             ))}
-            <button onClick={addRule} style={{ marginTop: 8, padding: '6px 16px', background: '#7aa2f7', border: 'none', borderRadius: 4, color: '#1a1b26', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+            <button onClick={addRule} style={{ marginTop: 8, padding: '6px 16px', background: '#7aa2f7', border: 'none', borderRadius: 4, color: '#1a1b26', cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>
               {t("settings_add")}
             </button>
           </div>
@@ -133,7 +133,7 @@ export default function SettingsPanel({ onClose }: Props) {
 
         {activeSection === 'connection' && (
           <div>
-            <div style={{ display: 'flex', color: '#565f89', fontSize: 10, padding: '4px 0', borderBottom: '1px solid #3b4261', marginBottom: 2 }}>
+            <div style={{ display: 'flex', color: '#565f89', fontSize: 12, padding: '4px 0', borderBottom: '1px solid #3b4261', marginBottom: 2 }}>
               <span style={{ flex: 2 }}>{t("settings_onekey_key")}</span><span style={{ flex: 2 }}>{t("settings_onekey_user")}</span><span style={{ flex: 2 }}>{t("settings_onekey_pwd")}</span><span style={{ width: 20 }} />
             </div>
             {onekeyList.map((kv, i) => (
@@ -155,7 +155,7 @@ export default function SettingsPanel({ onClose }: Props) {
               </div>
             ))}
             <button onClick={addOnekeyItem}
-              style={{ marginTop: 8, padding: '6px 16px', background: '#7aa2f7', border: 'none', borderRadius: 4, color: '#1a1b26', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+              style={{ marginTop: 8, padding: '6px 16px', background: '#7aa2f7', border: 'none', borderRadius: 4, color: '#1a1b26', cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>
               {t("settings_add")}
             </button>
           </div>

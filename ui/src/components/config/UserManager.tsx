@@ -80,16 +80,16 @@ export default function UserManager() {
   return (
     <div style={{ padding: 16, overflow: 'auto', height: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h3 style={{ color: '#ccc', margin: 0, fontSize: 16 }}>{t("config_users")}</h3>
+        <h3 style={{ color: '#ccc', margin: 0, fontSize: 18 }}>{t("config_users")}</h3>
         <button onClick={() => { resetForm(); setEditingUser(null); setShowForm(true); }}
           style={{
             background: '#7aa2f7', border: 'none', color: '#1a1b26', padding: '6px 16px',
-            borderRadius: 4, cursor: 'pointer', fontSize: 12,
+            borderRadius: 4, cursor: 'pointer', fontSize: 14,
           }}>{t("config_new_user")}</button>
       </div>
 
       {error && (
-        <div style={{ padding: '8px 12px', color: '#f44747', background: '#2d1b1b', borderRadius: 4, marginBottom: 12, fontSize: 12 }}>
+        <div style={{ padding: '8px 12px', color: '#f44747', background: '#2d1b1b', borderRadius: 4, marginBottom: 12, fontSize: 14 }}>
           {error}
           <button onClick={() => setError('')} style={{ marginLeft: 8, background: 'none', border: 'none', color: '#f44747', cursor: 'pointer', display: 'flex', alignItems: 'center' }}><Icon name="x" size={14} /></button>
         </div>
@@ -98,7 +98,7 @@ export default function UserManager() {
       {loading ? (
         <div style={{ color: '#565f89' }}>{t("file_loading")}</div>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
           <thead>
             <tr style={{ background: '#1a1b26' }}>
               <th style={{ padding: '8px 12px', textAlign: 'left', color: '#7aa2f7', borderBottom: '1px solid #3b4261' }}>ID</th>
@@ -118,12 +118,12 @@ export default function UserManager() {
                 <td style={{ padding: '6px 12px', borderBottom: '1px solid #3b4261' }}>
                   <span style={{ color: u.disabled ? '#f44747' : '#6a9955' }}>{u.disabled ? t('config_disabled') : t('config_active')}</span>
                 </td>
-                <td style={{ padding: '6px 12px', color: '#888', borderBottom: '1px solid #3b4261', fontSize: 11 }}>{u.created_at}</td>
+                <td style={{ padding: '6px 12px', color: '#888', borderBottom: '1px solid #3b4261', fontSize: 13 }}>{u.created_at}</td>
                 <td style={{ padding: '6px 12px', borderBottom: '1px solid #3b4261', textAlign: 'center' }}>
                   <button onClick={() => openEdit(u)}
-                    style={{ background: 'none', border: 'none', color: '#7aa2f7', cursor: 'pointer', fontSize: 11, marginRight: 8 }}>{t("menu_edit")}</button>
+                    style={{ background: 'none', border: 'none', color: '#7aa2f7', cursor: 'pointer', fontSize: 13, marginRight: 8 }}>{t("menu_edit")}</button>
                   <button onClick={() => handleDelete(u.id)}
-                    style={{ background: 'none', border: 'none', color: '#f44747', cursor: 'pointer', fontSize: 11 }}>{t("menu_delete")}</button>
+                    style={{ background: 'none', border: 'none', color: '#f44747', cursor: 'pointer', fontSize: 13 }}>{t("menu_delete")}</button>
                 </td>
               </tr>
             ))}
@@ -135,29 +135,29 @@ export default function UserManager() {
         <Modal title={editingUser ? t('config_edit_user') : t('config_new_user')} onClose={() => { setShowForm(false); setEditingUser(null); }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 16 }}>
             <div>
-              <label style={{ color: '#ccc', fontSize: 12, display: 'block', marginBottom: 4 }}>{t("config_user")}</label>
+              <label style={{ color: '#ccc', fontSize: 14, display: 'block', marginBottom: 4 }}>{t("config_user")}</label>
               <input value={formData.username} onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                 style={{
                   width: '100%', padding: '6px 10px', background: '#1f2335', border: '1px solid #3b4261',
-                  borderRadius: 4, color: '#ccc', fontSize: 12, boxSizing: 'border-box',
+                  borderRadius: 4, color: '#ccc', fontSize: 14, boxSizing: 'border-box',
                 }} />
             </div>
             <div>
-              <label style={{ color: '#ccc', fontSize: 12, display: 'block', marginBottom: 4 }}>
+              <label style={{ color: '#ccc', fontSize: 14, display: 'block', marginBottom: 4 }}>
                 {t("conn_password")}{editingUser ? t('config_keep_pwd') : ''}
               </label>
               <input type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 style={{
                   width: '100%', padding: '6px 10px', background: '#1f2335', border: '1px solid #3b4261',
-                  borderRadius: 4, color: '#ccc', fontSize: 12, boxSizing: 'border-box',
+                  borderRadius: 4, color: '#ccc', fontSize: 14, boxSizing: 'border-box',
                 }} />
             </div>
             <div>
-              <label style={{ color: '#ccc', fontSize: 12, display: 'block', marginBottom: 4 }}>{t("config_role")}</label>
+              <label style={{ color: '#ccc', fontSize: 14, display: 'block', marginBottom: 4 }}>{t("config_role")}</label>
               <CustomSelect value={formData.role} onChange={(v) => setFormData({ ...formData, role: v })}
                 style={{
                   width: '100%', padding: '6px 10px', background: '#1f2335', border: '1px solid #3b4261',
-                  borderRadius: 4, color: '#ccc', fontSize: 12,
+                  borderRadius: 4, color: '#ccc', fontSize: 14,
                 }}>
                 <option value="user">user</option>
                 <option value="admin">admin</option>
@@ -167,13 +167,13 @@ export default function UserManager() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <input type="checkbox" checked={formData.disabled} onChange={(e) => setFormData({ ...formData, disabled: e.target.checked })}
                   id="user-disabled" />
-                <label htmlFor="user-disabled" style={{ color: '#ccc', fontSize: 12 }}>{t("config_disable")}</label>
+                <label htmlFor="user-disabled" style={{ color: '#ccc', fontSize: 14 }}>{t("config_disable")}</label>
               </div>
             )}
             <button onClick={editingUser ? handleUpdate : handleCreate}
               style={{
                 padding: '8px 16px', background: '#7aa2f7', border: 'none', color: '#1a1b26',
-                borderRadius: 4, cursor: 'pointer', fontSize: 12, alignSelf: 'flex-end',
+                borderRadius: 4, cursor: 'pointer', fontSize: 14, alignSelf: 'flex-end',
               }}>
               {editingUser ? t('conn_save') : t('config_create')}
             </button>

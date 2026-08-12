@@ -66,16 +66,16 @@ export default function ConnectionTable({ type, title, apiPrefix, groupType, col
   return (
     <div style={{ padding: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h3 style={{ color: '#ccc', margin: 0, fontSize: 16 }}>{title} <span style={{ color: '#565f89', fontSize: 12, fontWeight: 400 }}>{t("config_total")} {items.length} {t("config_items")}</span></h3>
+        <h3 style={{ color: '#ccc', margin: 0, fontSize: 18 }}>{title} <span style={{ color: '#565f89', fontSize: 14, fontWeight: 400 }}>{t("config_total")} {items.length} {t("config_items")}</span></h3>
         <button onClick={() => { setEditingItem(null); setShowForm(true); }}
-          style={{ padding: '6px 16px', background: '#7aa2f7', border: 'none', color: '#1a1b26', borderRadius: 4, cursor: 'pointer', fontSize: 12 }}>
+          style={{ padding: '6px 16px', background: '#7aa2f7', border: 'none', color: '#1a1b26', borderRadius: 4, cursor: 'pointer', fontSize: 14 }}>
           {t("config_create")}{type === 'ssh' ? 'SSH' : t("config_database")}{t("config_conn")}
         </button>
       </div>
 
-      {error && <div style={{ color: '#f44747', fontSize: 12, padding: '6px 10px', background: '#2d1b1b', borderRadius: 4, marginBottom: 12 }}>{error}</div>}
+      {error && <div style={{ color: '#f44747', fontSize: 14, padding: '6px 10px', background: '#2d1b1b', borderRadius: 4, marginBottom: 12 }}>{error}</div>}
 
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
         <thead>
           <tr style={{ background: '#1a1b26' }}>
             {columns.map((col) => (
@@ -95,9 +95,9 @@ export default function ConnectionTable({ type, title, apiPrefix, groupType, col
               ))}
               <td style={{ padding: '6px 12px', borderBottom: '1px solid #3b4261', textAlign: 'center' }}>
                 <button onClick={() => { setEditingItem(item); setShowForm(true); }}
-                  style={{ background: 'none', border: 'none', color: '#7aa2f7', cursor: 'pointer', fontSize: 11, marginRight: 8 }}>{t("menu_edit")}</button>
+                  style={{ background: 'none', border: 'none', color: '#7aa2f7', cursor: 'pointer', fontSize: 13, marginRight: 8 }}>{t("menu_edit")}</button>
                 <button onClick={() => handleDelete(item.id)}
-                  style={{ background: 'none', border: 'none', color: '#f44747', cursor: 'pointer', fontSize: 11 }}>{t("menu_delete")}</button>
+                  style={{ background: 'none', border: 'none', color: '#f44747', cursor: 'pointer', fontSize: 13 }}>{t("menu_delete")}</button>
               </td>
             </tr>
           ))}

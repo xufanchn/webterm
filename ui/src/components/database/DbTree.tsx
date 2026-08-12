@@ -48,7 +48,7 @@ export default function DbTree({ ws, onQuery }: Props) {
   };
 
   return (
-    <div style={{ fontSize: 11, overflow: 'auto', height: '100%' }}>
+    <div style={{ fontSize: 13, overflow: 'auto', height: '100%' }}>
       <div style={{ padding: '4px 8px', cursor: 'pointer', color: '#7aa2f7', display: 'flex', alignItems: 'center', gap: 4 }} onClick={fetchDbs}>
         <Icon name="refresh-cw" size={12} /> {loading ? t('file_loading') : t('db_refresh')}
       </div>

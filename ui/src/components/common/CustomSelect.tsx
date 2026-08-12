@@ -49,7 +49,7 @@ export default function CustomSelect({ value, onChange, style, children }: Props
         display: 'flex', alignItems: 'center', userSelect: 'none',
       }}>
       <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', ...(optStyle || {}) }}>{label}</span>
-      <span style={{ fontSize: 10, color: '#565f89', marginLeft: 4 }}>{open ? '▲' : '▼'}</span>
+      <span style={{ fontSize: 12, color: '#565f89', marginLeft: 4 }}>{open ? '▲' : '▼'}</span>
       {open && (
         <div style={{
           position: 'fixed', zIndex: 10001,
@@ -68,7 +68,7 @@ export default function CustomSelect({ value, onChange, style, children }: Props
               onClick={(e) => { e.stopPropagation(); selectValue(opt.props.value); }}
               onMouseEnter={() => setFocusIdx(i)}
               style={{
-                padding: '6px 12px', fontSize: 13, cursor: 'pointer',
+                padding: '6px 12px', fontSize: 15, cursor: 'pointer',
                 background: i === focusIdx ? '#7aa2f7' : 'transparent',
                 color: i === focusIdx ? '#1a1b26' : (opt.props.style?.color || '#c0caf5'),
               }}>

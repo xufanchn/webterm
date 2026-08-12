@@ -162,12 +162,12 @@ export default function Sidebar({ collapsed, width }: { collapsed: boolean; widt
           </span>
         </span>
       )}
-      <span style={{ color: (c as any).color || '#ccc', fontSize: 12, lineHeight: 1 }}>●</span>
+      <span style={{ color: (c as any).color || '#ccc', fontSize: 14, lineHeight: 1 }}>●</span>
       <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
       {(c as any).tag && (
         <span onClick={(e) => { e.stopPropagation(); setTagFilter(tagFilter === (c as any).tag ? '' : (c as any).tag); }}
           style={{
-            padding: '1px 4px', borderRadius: 4, fontSize: 9, background: tagFilter === (c as any).tag ? '#7aa2f740' : '#333',
+            padding: '1px 4px', borderRadius: 4, fontSize: 10, background: tagFilter === (c as any).tag ? '#7aa2f740' : '#333',
             color: tagFilter === (c as any).tag ? '#7aa2f7' : '#888', whiteSpace: 'nowrap', flexShrink: 0,
           }}>{(c as any).tag}</span>
       )}
@@ -191,7 +191,7 @@ export default function Sidebar({ collapsed, width }: { collapsed: boolean; widt
               }}
               onBlur={(e) => { handleRenameGroup(g.id, e.currentTarget.value); }}
               autoFocus
-              style={{ flex: 1, padding: '2px 6px', background: '#1f2335', border: '1px solid #3b4261', borderRadius: 4, color: '#fff', fontSize: 11 }} />
+              style={{ flex: 1, padding: '2px 6px', background: '#1f2335', border: '1px solid #3b4261', borderRadius: 4, color: '#fff', fontSize: 13 }} />
           </div>
         ) : (
           <div data-sidebar-item
@@ -208,7 +208,7 @@ export default function Sidebar({ collapsed, width }: { collapsed: boolean; widt
   };
 
   return (
-    <div style={{ width: collapsed ? 0 : width, flexShrink: 0, fontSize: 12, display: 'flex', flexDirection: 'column', background: '#1a1b26', borderRight: '1px solid #3b4261', overflow: 'hidden' }}
+    <div style={{ width: collapsed ? 0 : width, flexShrink: 0, fontSize: 14, display: 'flex', flexDirection: 'column', background: '#1a1b26', borderRight: '1px solid #3b4261', overflow: 'hidden' }}
       onContextMenu={(e) => {
         if ((e.target as HTMLElement).closest('[data-sidebar-item]')) return;
         e.preventDefault();
@@ -232,7 +232,7 @@ export default function Sidebar({ collapsed, width }: { collapsed: boolean; widt
       {!collapsed && (<>
         {tagFilter && (
           <div style={{ padding: '0 8px 4px', display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ fontSize: 10, color: '#7aa2f7', background: '#7aa2f720', padding: '1px 6px', borderRadius: 4 }}>
+            <span style={{ fontSize: 12, color: '#7aa2f7', background: '#7aa2f720', padding: '1px 6px', borderRadius: 4 }}>
               {t("batch_label")} {tagFilter}
               <span onClick={() => setTagFilter('')} style={{ cursor: 'pointer', marginLeft: 4, color: '#888', display: 'flex', alignItems: 'center' }}><Icon name="x" size={10} /></span>
             </span>
@@ -240,15 +240,15 @@ export default function Sidebar({ collapsed, width }: { collapsed: boolean; widt
         )}
         {selectedIds.size > 0 && (
           <div style={{ padding: '4px 8px', background: '#7aa2f720', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-            <span style={{ color: '#7aa2f7', fontSize: 11 }}>{t("multi_selected")} {selectedIds.size} {t("multi_items")}</span>
+            <span style={{ color: '#7aa2f7', fontSize: 13 }}>{t("multi_selected")} {selectedIds.size} {t("multi_items")}</span>
             <CustomSelect value="-1" onChange={(v) => { const n = Number(v); if (n >= 0) handleBatchMove(n); }}
-              style={{ background: '#1f2335', border: '1px solid #3b4261', color: '#ccc', borderRadius: 4, padding: '2px 4px', fontSize: 10 }}>
+              style={{ background: '#1f2335', border: '1px solid #3b4261', color: '#ccc', borderRadius: 4, padding: '2px 4px', fontSize: 12 }}>
               <option value={-1}>{t("multi_move")}</option>
               <option value={0}>{t("conn_ungrouped")}</option>
               {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
             </CustomSelect>
-            <button onClick={handleBatchDelete} style={{ background: '#d32f2f', border: 'none', color: '#fff', borderRadius: 4, padding: '2px 8px', cursor: 'pointer', fontSize: 10 }}>{t("multi_delete")}</button>
-            <button onClick={() => setSelectedIds(new Set())} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: 10, marginLeft: 'auto' }}>{t("multi_cancel")}</button>
+            <button onClick={handleBatchDelete} style={{ background: '#d32f2f', border: 'none', color: '#fff', borderRadius: 4, padding: '2px 8px', cursor: 'pointer', fontSize: 12 }}>{t("multi_delete")}</button>
+            <button onClick={() => setSelectedIds(new Set())} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: 12, marginLeft: 'auto' }}>{t("multi_cancel")}</button>
           </div>
         )}
         <div style={{ overflow: 'auto', flex: 1 }}>
@@ -263,7 +263,7 @@ export default function Sidebar({ collapsed, width }: { collapsed: boolean; widt
         {(isSsh || isDb) && (
           <div style={{ borderTop: '1px solid #3b4261', padding: '4px 8px', marginTop: 'auto' }}>
             <div onClick={() => { if (isSsh) { setEditingConn(null); setShowConnForm(true); } else { setEditingDbConn(null); setShowDbForm(true); } }}
-            style={{ padding: '4px 8px', color: '#ccc', cursor: 'pointer', fontSize: 11 }}>{t("sidebar_new_conn")}</div>
+            style={{ padding: '4px 8px', color: '#ccc', cursor: 'pointer', fontSize: 13 }}>{t("sidebar_new_conn")}</div>
           {showGroupInput ? (
             <div style={{ display: 'flex', gap: 4, padding: '4px 0' }}>
               <input value={newGroupName} onChange={(e) => setNewGroupName(e.target.value)}
@@ -273,15 +273,15 @@ export default function Sidebar({ collapsed, width }: { collapsed: boolean; widt
                 }}
                 onBlur={() => { setShowGroupInput(false); setNewGroupName(''); }}
                 placeholder={t("sidebar_group_name")} autoFocus
-                style={{ flex: 1, padding: '2px 6px', background: '#1f2335', border: '1px solid #3b4261', borderRadius: 4, color: '#fff', fontSize: 10 }} />
+                style={{ flex: 1, padding: '2px 6px', background: '#1f2335', border: '1px solid #3b4261', borderRadius: 4, color: '#fff', fontSize: 12 }} />
               <button onClick={() => handleCreateGroup(newGroupName)}
-                style={{ background: '#7aa2f7', border: 'none', color: '#1a1b26', fontWeight: 600, borderRadius: 4, padding: '2px 6px', cursor: 'pointer', fontSize: 10 }}>{t("config_create")}</button>
+                style={{ background: '#7aa2f7', border: 'none', color: '#1a1b26', fontWeight: 600, borderRadius: 4, padding: '2px 6px', cursor: 'pointer', fontSize: 12 }}>{t("config_create")}</button>
               <button onClick={() => { setShowGroupInput(false); setNewGroupName(''); }}
                 style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', padding: '2px 4px', display: 'flex', alignItems: 'center' }}><Icon name="x" size={10} /></button>
             </div>
           ) : (
             <div onClick={() => setShowGroupInput(true)}
-              style={{ padding: '4px 8px', color: '#888', cursor: 'pointer', fontSize: 11 }}>{t("sidebar_new_group")}</div>
+              style={{ padding: '4px 8px', color: '#888', cursor: 'pointer', fontSize: 13 }}>{t("sidebar_new_group")}</div>
           )}
         </div>
       )}

@@ -37,7 +37,7 @@ export default function LoginPage() {
 
   const inputStyle: React.CSSProperties = {
     padding: '10px 14px', border: '1px solid #3b4261', height: 42,
-    background: 'rgba(31,35,53,0.6)', color: '#c0caf5', fontSize: 14,
+    background: 'rgba(31,35,53,0.6)', color: '#c0caf5', fontSize: 16,
     width: '100%', boxSizing: 'border-box', outline: 'none', borderRadius: 4,
   };
 
@@ -56,19 +56,19 @@ export default function LoginPage() {
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
           <div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: '#7aa2f7', letterSpacing: 1, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ fontSize: 25, fontWeight: 700, color: '#7aa2f7', letterSpacing: 1, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 8 }}>
               <Icon name="terminal" size={22} color="#7aa2f7" /> WebTerm
             </div>
-            <div style={{ color: '#565f89', fontSize: 11, marginTop: 2 }}>{t('app_slogan')}</div>
+            <div style={{ color: '#565f89', fontSize: 13, marginTop: 2 }}>{t('app_slogan')}</div>
           </div>
           <span onClick={() => { const lang = getLang() === 'zh' ? 'en' : 'zh'; setLang(lang); window.location.reload(); }}
-            style={{ color: '#565f89', fontSize: 12, cursor: 'pointer', userSelect: 'none', padding: '2px 6px', borderRadius: 3, background: '#1f2335' }}>
+            style={{ color: '#565f89', fontSize: 14, cursor: 'pointer', userSelect: 'none', padding: '2px 6px', borderRadius: 3, background: '#1f2335' }}>
             {getLang() === 'zh' ? 'EN' : '中'}
           </span>
         </div>
 
         {error && (
-          <div style={{ color: '#f7768e', fontSize: 13, padding: '8px 12px', background: '#f7768e15', borderRadius: 4 }}>
+          <div style={{ color: '#f7768e', fontSize: 15, padding: '8px 12px', background: '#f7768e15', borderRadius: 4 }}>
             {error}
           </div>
         )}
@@ -86,7 +86,7 @@ export default function LoginPage() {
           </span>
         </div>
 
-        <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#565f89', fontSize: 13, cursor: 'pointer' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#565f89', fontSize: 15, cursor: 'pointer' }}>
           <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)}
             style={{ accentColor: '#7aa2f7' }} />
           {t('login_remember')}
@@ -94,7 +94,7 @@ export default function LoginPage() {
 
         <button type="submit" style={{
           padding: '10px', border: 'none', borderRadius: 4, height: 40,
-          background: '#7aa2f7', color: '#1a1b26', cursor: 'pointer', fontSize: 14,
+          background: '#7aa2f7', color: '#1a1b26', cursor: 'pointer', fontSize: 16,
           fontWeight: 600, letterSpacing: 1, boxSizing: 'border-box',
         }}>
           {t('login_submit')}

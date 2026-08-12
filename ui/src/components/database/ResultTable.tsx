@@ -41,32 +41,32 @@ export default function ResultTable({ columns, rows, rowsAffected, onExportCSV }
 
   if (columns.length === 0 && rowsAffected !== undefined) {
     return (
-      <div style={{ padding: 12, color: '#ccc', fontSize: 12 }}>
+      <div style={{ padding: 12, color: '#ccc', fontSize: 14 }}>
         查询成功:{t("db_affected")} {rowsAffected}
       </div>
     );
   }
 
-  const btnStyle = { background: '#3b4261', border: 'none', color: '#fff', padding: '2px 10px', borderRadius: 3, cursor: 'pointer', fontSize: 10 };
+  const btnStyle = { background: '#3b4261', border: 'none', color: '#fff', padding: '2px 10px', borderRadius: 3, cursor: 'pointer', fontSize: 12 };
   const btnDisabled = { ...btnStyle, opacity: 0.4, cursor: 'default' };
 
   return (
-    <div style={{ fontSize: 11, overflow: 'auto', height: '100%' }}>
+    <div style={{ fontSize: 13, overflow: 'auto', height: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 8px', background: '#333', alignItems: 'center' }}>
         <span style={{ color: '#ccc' }}>{rows.length} {t("db_rows")} {columns.length} {t("db_cols")}</span>
         <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
           <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={safePage === 0}
             style={safePage === 0 ? btnDisabled : btnStyle}>{t("db_prev")}</button>
-          <span style={{ color: '#ccc', fontSize: 11 }}>{safePage + 1}/{totalPages}</span>
+          <span style={{ color: '#ccc', fontSize: 13 }}>{safePage + 1}/{totalPages}</span>
           <button onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))} disabled={safePage >= totalPages - 1}
             style={safePage >= totalPages - 1 ? btnDisabled : btnStyle}>{t("db_next")}</button>
           <button onClick={onExportCSV} style={{
-            background: '#007acc', border: 'none', color: '#fff', padding: '2px 10px', borderRadius: 3, cursor: 'pointer', fontSize: 10,
+            background: '#007acc', border: 'none', color: '#fff', padding: '2px 10px', borderRadius: 3, cursor: 'pointer', fontSize: 12,
           }}>{t("db_export")}</button>
         </span>
       </div>
       <div style={{ overflow: 'auto', maxHeight: '300px' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr>
               {columns.map((col) => (

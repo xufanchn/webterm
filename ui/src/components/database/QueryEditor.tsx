@@ -102,7 +102,7 @@ export default function QueryEditor({ connId }: Props) {
         EditorView.theme({
           '&': { height: '100%' },
           '.cm-scroller': { overflow: 'auto' },
-          '.cm-content': { fontFamily: 'Menlo, Monaco, monospace', fontSize: '13px' },
+          '.cm-content': { fontFamily: 'Menlo, Monaco, monospace', fontSize: '15px' },
           '.cm-gutters': { background: '#1e1e1e', color: '#888', border: 'none' },
         }, { dark: true }),
       ],
@@ -144,7 +144,7 @@ export default function QueryEditor({ connId }: Props) {
       </div>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <div style={{ flex: 1, minHeight: 0 }} ref={editorRef} />
-        {error && <div style={{ padding: '8px 12px', color: '#f44747', fontSize: 12, background: '#2d1b1b' }}>{error}</div>}
+        {error && <div style={{ padding: '8px 12px', color: '#f44747', fontSize: 14, background: '#2d1b1b' }}>{error}</div>}
         {result && (
           <div style={{ flex: 1, minHeight: 0, overflow: 'auto', borderTop: '1px solid #3b4261' }}>
             <ResultTable columns={result.columns} rows={result.rows} rowsAffected={result.rowsAffected} onExportCSV={exportCSV} />

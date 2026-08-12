@@ -59,11 +59,11 @@ function NewFolderInput({ value, onChange, onConfirm, onCancel, confirmLabel = t
           if (e.key === 'Escape') onCancel();
         }}
         autoFocus placeholder={t("file_folder_name")}
-        style={{ flex: 1, padding: '2px 6px', background: '#1f2335', border: '1px solid #3b4261', borderRadius: 4, color: '#fff', fontSize: 10 }} />
+        style={{ flex: 1, padding: '2px 6px', background: '#1f2335', border: '1px solid #3b4261', borderRadius: 4, color: '#fff', fontSize: 12 }} />
       <button onClick={onConfirm}
-        style={{ background: '#7aa2f7', border: 'none', color: '#1a1b26', fontWeight: 600, borderRadius: 4, padding: '2px 8px', cursor: 'pointer', fontSize: 10 }}>{confirmLabel}</button>
+        style={{ background: '#7aa2f7', border: 'none', color: '#1a1b26', fontWeight: 600, borderRadius: 4, padding: '2px 8px', cursor: 'pointer', fontSize: 12 }}>{confirmLabel}</button>
       <button onClick={onCancel}
-        style={{ background: '#3b4261', border: 'none', color: '#ccc', borderRadius: 4, padding: '2px 8px', cursor: 'pointer', fontSize: 10 }}>{t("conn_cancel")}</button>
+        style={{ background: '#3b4261', border: 'none', color: '#ccc', borderRadius: 4, padding: '2px 8px', cursor: 'pointer', fontSize: 12 }}>{t("conn_cancel")}</button>
     </div>
   );
 }
@@ -213,9 +213,9 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
           if (e.target.files && e.target.files.length > 0) doUpload(e.target.files);
           e.target.value = '';
         }} />
-      {uploading && <div style={{ padding: '2px 8px', color: '#7aa2f7', fontSize: 10 }}>{t("sftp_uploading")} {uploadProgress}%</div>}
+      {uploading && <div style={{ padding: '2px 8px', color: '#7aa2f7', fontSize: 12 }}>{t("sftp_uploading")} {uploadProgress}%</div>}
       {/* Column headers */}
-      <div style={{ padding: '2px 8px', borderBottom: '1px solid #3b4261', display: 'flex', alignItems: 'center', gap: 4, color: '#888', fontSize: 10, flexShrink: 0 }}>
+      <div style={{ padding: '2px 8px', borderBottom: '1px solid #3b4261', display: 'flex', alignItems: 'center', gap: 4, color: '#888', fontSize: 12, flexShrink: 0 }}>
         <span style={{ width: 16, flexShrink: 0 }} />
         <span onClick={() => toggleSort('name')} style={{ flex: 1, cursor: 'pointer', userSelect: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t('file_name')}{sortArrow('name')}</span>
         <span onClick={() => toggleSort('size')} style={{ width: 55, cursor: 'pointer', userSelect: 'none', textAlign: 'right', flexShrink: 0 }}>{t('file_size')}{sortArrow('size')}</span>
@@ -247,8 +247,8 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
             {f.is_dir ? <Icon name="folder" size={14} color="#7aa2f7" /> : f.is_link ? <Icon name="link" size={14} color="#e0af68" /> : <Icon name="file" size={14} color="#888" />}
           </span>
           <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
-          <span style={{ color: '#888', fontSize: 10, width: 55, textAlign: 'right', flexShrink: 0 }}>{!f.is_dir ? sizeFormat(f.size) : ''}</span>
-          <span style={{ color: '#666', fontSize: 10, width: 105, textAlign: 'right', flexShrink: 0 }}>{timeFormat(f.mod_time)}</span>
+          <span style={{ color: '#888', fontSize: 12, width: 55, textAlign: 'right', flexShrink: 0 }}>{!f.is_dir ? sizeFormat(f.size) : ''}</span>
+          <span style={{ color: '#666', fontSize: 12, width: 105, textAlign: 'right', flexShrink: 0 }}>{timeFormat(f.mod_time)}</span>
         </div>
       ))}
       {showNewFolder && (
@@ -325,7 +325,7 @@ export default function FileList({ files, loading, connId, currentPath, onNaviga
         <div style={{
           position: 'absolute', bottom: 8, left: 8, right: 8,
           background: '#d32f2f', color: '#fff', padding: '6px 12px',
-          borderRadius: 4, fontSize: 11, zIndex: 10,
+          borderRadius: 4, fontSize: 13, zIndex: 10,
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         }}>
           <span>{uploadError || downloadError}</span>

@@ -62,7 +62,7 @@ export default function TabBar({ tabs, activeTabId, onSelectTab, onCloseTab, onA
             }}
             onClick={() => onSelectTab(tab.id)}
             style={{
-              padding: '4px 14px', fontSize: 12, borderRadius: 5, cursor: 'pointer',
+              padding: '4px 14px', fontSize: 14, borderRadius: 5, cursor: 'pointer',
               background: activeTabId === tab.id ? '#7aa2f7' : 'transparent',
               color: activeTabId === tab.id ? '#1a1b26' : '#787e99',
               display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap',
@@ -93,7 +93,7 @@ export default function TabBar({ tabs, activeTabId, onSelectTab, onCloseTab, onA
             {connections.map((c) => (
               <div key={c.id} onClick={() => { onAddTab?.(c.id, c.name, 'ssh'); setShowPicker(false); }}
                 style={{
-                  padding: '6px 12px', cursor: 'pointer', color: '#ccc', fontSize: 11,
+                  padding: '6px 12px', cursor: 'pointer', color: '#ccc', fontSize: 13,
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.background = '#7aa2f740'}
                 onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
@@ -122,7 +122,7 @@ export default function TabBar({ tabs, activeTabId, onSelectTab, onCloseTab, onA
           padding: '4px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
           background: broadcastScope !== 'off' ? '#d32f2f' : 'transparent',
           color: broadcastScope !== 'off' ? '#fff' : '#888',
-          borderRadius: 4, fontSize: 12, flexShrink: 0, alignSelf: 'center',
+          borderRadius: 4, fontSize: 14, flexShrink: 0, alignSelf: 'center',
         }}>
         <Icon name="radio" size={12} /> {scopeLabels[broadcastScope]}
       </span>

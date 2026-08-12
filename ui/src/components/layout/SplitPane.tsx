@@ -383,7 +383,7 @@ function LeafPane({ nodeId, onActiveSshChange, isInSplit }: {
         {tabs.map((tab) => (
           <div key={tab.id} style={{ flex: 1, display: tab.id === activeTabId ? 'flex' : 'none', overflow: 'hidden' }}>
             {tab.type === 'ssh' && tab.connId && (
-              <Suspense fallback={<div style={{ padding: 12, fontSize: 12, color: '#565f89' }}>Loading…</div>}>
+              <Suspense fallback={<div style={{ padding: 12, fontSize: 14, color: '#565f89' }}>Loading…</div>}>
                 <TerminalTab connId={tab.connId} myTabId={tab.id} paneTabs={tabs} extraMenuItems={[
                   { label: t('term_split_h'), action: () => handleSplit('horizontal') },
                   { label: t('term_split_v'), action: () => handleSplit('vertical') },
@@ -393,7 +393,7 @@ function LeafPane({ nodeId, onActiveSshChange, isInSplit }: {
               </Suspense>
             )}
             {tab.type === 'database' && tab.connId && (
-              <Suspense fallback={<div style={{ padding: 12, fontSize: 12, color: '#565f89' }}>Loading…</div>}>
+              <Suspense fallback={<div style={{ padding: 12, fontSize: 14, color: '#565f89' }}>Loading…</div>}>
                 <QueryEditor connId={tab.connId} />
               </Suspense>
             )}
@@ -536,7 +536,7 @@ function SessionWelcome() {
       <div onClick={() => setTick((n) => n + 1)}
         style={{ position: 'absolute', top: '60%', left: '50%', transform: 'translate(-50%, -50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, cursor: 'pointer', zIndex: 1, fontFamily: '"JetBrains Maple Mono", "JetBrains Mono", "Courier New", monospace' }}>
           <pre style={{
-            margin: 0, fontSize: 17, lineHeight: 1.25, fontWeight: 700,
+            margin: 0, fontSize: 20, lineHeight: 1.25, fontWeight: 700,
             color: '#7aa2f7',
             textShadow: `
               1px 1px 0 #bb9af7,
@@ -550,7 +550,7 @@ function SessionWelcome() {
           }}>
             {banner.join('\n')}
           </pre>
-          <div style={{ color: '#565f89', fontSize: 14, letterSpacing: 1 }}>{t('app_slogan')}</div>
+          <div style={{ color: '#565f89', fontSize: 16, letterSpacing: 1 }}>{t('app_slogan')}</div>
         </div>
 
         {!token && (
@@ -558,7 +558,7 @@ function SessionWelcome() {
             style={{
               position: 'absolute', top: '70%', left: '50%', transform: 'translateX(-50%)',
               fontFamily: '"JetBrains Maple Mono", "JetBrains Mono", "Courier New", monospace',
-              fontSize: 14, color: '#c0caf5', width: 320, zIndex: 1,
+              fontSize: 16, color: '#c0caf5', width: 320, zIndex: 1,
               padding: '16px 20px', cursor: 'text',
             }}>
             {lines.map((l, i) => (
@@ -579,7 +579,7 @@ function SessionWelcome() {
                 autoFocus
                 style={{
                   flex: 1, background: 'none', border: 'none', color: '#c0caf5',
-                  fontSize: 14, outline: 'none', fontFamily: 'inherit',
+                  fontSize: 16, outline: 'none', fontFamily: 'inherit',
                   caretColor: '#7aa2f7', caretShape: 'block',
                 }} />
             </div>
@@ -593,7 +593,7 @@ function SessionWelcome() {
               }}>
                 {remember && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#1a1b26" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
               </span>
-              <span style={{ color: '#565f89', fontSize: 12, userSelect: 'none' }}>
+              <span style={{ color: '#565f89', fontSize: 14, userSelect: 'none' }}>
                 remember
               </span>
             </div>

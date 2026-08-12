@@ -68,7 +68,7 @@ export default function ConnectionForm({ connection, onClose, onSaved }: Props) 
   return (
     <Modal title={connection ? t('conn_edit') : t('conn_new')} onClose={onClose} width={520} height={form.auth_method === 'private_key' ? 530 : 410}>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        {error && <div style={{ color: '#f44747', fontSize: 12, padding: '4px 10px', background: '#2d1b1b', borderRadius: 4, margin: '4px 12px 0' }}>{error}</div>}
+        {error && <div style={{ color: '#f44747', fontSize: 14, padding: '4px 10px', background: '#2d1b1b', borderRadius: 4, margin: '4px 12px 0' }}>{error}</div>}
 
         <div style={{ padding: '16px 28px', flex: 1, display: 'flex', flexDirection: 'column', gap: 10, overflow: 'auto' }}>
           {/* All rows use same 4-column grid for perfect vertical alignment */}
@@ -142,7 +142,7 @@ export default function ConnectionForm({ connection, onClose, onSaved }: Props) 
                       {onekeyKvs.map((kv) => (<option key={kv.k} value={kv.k}>{kv.k}</option>))}
                     </CustomSelect>
                   ) : (
-                    <div style={{ color: '#565f89', fontSize: 11, padding: '8px 0' }}>{t("sftp_no_key")}</div>
+                    <div style={{ color: '#565f89', fontSize: 13, padding: '8px 0' }}>{t("sftp_no_key")}</div>
                   )}
                 </div>
                 <div style={{ gridColumn: '3 / 4' }}><FormField label={t("conn_username")} value={form.username} onChange={(v) => update('username', v)} placeholder="root" readOnly={onekeyKvs.length > 0} /></div>
@@ -168,7 +168,7 @@ export default function ConnectionForm({ connection, onClose, onSaved }: Props) 
             <div>
               <label style={labelStyle}>{t("conn_private_key")}</label>
               <textarea value={form.private_key} onChange={(e) => update('private_key', e.target.value)}
-                style={{ ...inputStyle, height: 80, fontFamily: 'Consolas, monospace', fontSize: 11, resize: 'none' }}
+                style={{ ...inputStyle, height: 80, fontFamily: 'Consolas, monospace', fontSize: 13, resize: 'none' }}
                 placeholder="-----BEGIN OPENSSH PRIVATE KEY-----" />
             </div>
           )}
@@ -218,9 +218,9 @@ function FormField({ label, value, onChange, type = 'text', placeholder, require
 
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '10px 12px', background: 'rgba(31,35,53,0.5)', border: '1px solid #3b4261',
-  borderRadius: 4, color: '#c0caf5', fontSize: 14, boxSizing: 'border-box', outline: 'none',
+  borderRadius: 4, color: '#c0caf5', fontSize: 16, boxSizing: 'border-box', outline: 'none',
 };
 const selectStyle: React.CSSProperties = { ...inputStyle };
-const btnSecondary: React.CSSProperties = { padding: '8px 20px', background: 'transparent', border: '1px solid #3b4261', color: '#c0caf5', borderRadius: 4, cursor: 'pointer', fontSize: 14 };
-const btnPrimary: React.CSSProperties = { padding: '8px 20px', background: '#7aa2f7', border: 'none', color: '#1a1b26', borderRadius: 4, cursor: 'pointer', fontSize: 14, fontWeight: 600 };
-const labelStyle: React.CSSProperties = { color: '#565f89', fontSize: 12, display: 'block', marginBottom: 4 };
+const btnSecondary: React.CSSProperties = { padding: '8px 20px', background: 'transparent', border: '1px solid #3b4261', color: '#c0caf5', borderRadius: 4, cursor: 'pointer', fontSize: 16 };
+const btnPrimary: React.CSSProperties = { padding: '8px 20px', background: '#7aa2f7', border: 'none', color: '#1a1b26', borderRadius: 4, cursor: 'pointer', fontSize: 16, fontWeight: 600 };
+const labelStyle: React.CSSProperties = { color: '#565f89', fontSize: 14, display: 'block', marginBottom: 4 };

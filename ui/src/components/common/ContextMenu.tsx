@@ -32,7 +32,7 @@ export default function ContextMenu({ x, y, items, onClose }: Props) {
       {items.map((item, i) => (
         <div key={i} onClick={() => { item.action(); onClose(); }}
           style={{
-            padding: '8px 16px', fontSize: 12, color: '#c0caf5', cursor: 'pointer',
+            padding: '8px 16px', fontSize: 14, color: '#c0caf5', cursor: 'pointer',
           }}
           onMouseEnter={(e) => (e.currentTarget.style.background = '#3b4261')}
           onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>

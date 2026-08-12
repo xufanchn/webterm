@@ -70,7 +70,7 @@ export default function HeaderSearch() {
         <input ref={inputRef} className="header-search" value={query} onChange={(e) => { setQuery(e.target.value); setActiveIdx(0); }}
           onFocus={() => setFocus(true)} onKeyDown={onKey}
           placeholder="Search..."
-          style={{ flex: 1, background: 'none', border: 'none', color: '#c0caf5', fontSize: 12, outline: 'none', marginLeft: 6 }} />
+          style={{ flex: 1, background: 'none', border: 'none', color: '#c0caf5', fontSize: 14, outline: 'none', marginLeft: 6 }} />
         {query && (
           <span onClick={() => { setQuery(''); setFocus(false); }}
             style={{ cursor: 'pointer', color: '#565f89', display: 'flex' }}><Icon name="x" size={12} /></span>
@@ -91,8 +91,8 @@ export default function HeaderSearch() {
                 borderBottom: i < results.length - 1 ? '1px solid #3b4261' : 'none',
               }}>
               <Icon name={r.icon} size={14} color="#7aa2f7" />
-              <span style={{ color: '#c0caf5', fontSize: 12, flex: 1 }}>{r.label}</span>
-              <span style={{ color: '#565f89', fontSize: 10 }}>{r.sub}</span>
+              <span style={{ color: '#c0caf5', fontSize: 14, flex: 1 }}>{r.label}</span>
+              <span style={{ color: '#565f89', fontSize: 12 }}>{r.sub}</span>
             </div>
           ))}
         </div>

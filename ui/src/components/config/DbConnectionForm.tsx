@@ -58,7 +58,7 @@ export default function DbConnectionForm({ connection, onClose, onSaved }: Props
   return (
     <Modal title={connection ? t('db_conn_edit') : t('db_conn_new')} onClose={onClose} width={550} height={420}>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        {error && <div style={{ color: '#f44747', fontSize: 12, padding: '6px 10px', background: '#2d1b1b', borderRadius: 4, margin: '8px 16px 0' }}>{error}</div>}
+        {error && <div style={{ color: '#f44747', fontSize: 14, padding: '6px 10px', background: '#2d1b1b', borderRadius: 4, margin: '8px 16px 0' }}>{error}</div>}
 
         <div style={{ flex: 1, overflow: 'auto', padding: '12px 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <FormField label={t("conn_name")} value={form.name} onChange={(v) => update('name', v)} required />
@@ -80,7 +80,7 @@ export default function DbConnectionForm({ connection, onClose, onSaved }: Props
             </CustomSelect>
           </div>
 
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#ccc', fontSize: 12, paddingBottom: 8 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#ccc', fontSize: 14, paddingBottom: 8 }}>
             <input type="checkbox" checked={form.shared} onChange={(e) => update('shared', e.target.checked)} />
             共享连接
           </label>
@@ -110,10 +110,10 @@ function FormField({ label, value, onChange, type = 'text', placeholder, require
   );
 }
 
-const labelStyle: React.CSSProperties = { color: '#565f89', fontSize: 12, display: 'block', marginBottom: 4 };
+const labelStyle: React.CSSProperties = { color: '#565f89', fontSize: 14, display: 'block', marginBottom: 4 };
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '10px 12px', background: 'rgba(31,35,53,0.5)', border: '1px solid #3b4261',
-  borderRadius: 4, color: '#c0caf5', fontSize: 14, boxSizing: 'border-box',
+  borderRadius: 4, color: '#c0caf5', fontSize: 16, boxSizing: 'border-box',
 };
-const btnSecondary: React.CSSProperties = { padding: '8px 20px', background: 'transparent', border: '1px solid #3b4261', color: '#c0caf5', borderRadius: 4, cursor: 'pointer', fontSize: 14 };
-const btnPrimary: React.CSSProperties = { padding: '8px 20px', background: '#7aa2f7', border: 'none', color: '#1a1b26', borderRadius: 4, cursor: 'pointer', fontSize: 14, fontWeight: 600 };
+const btnSecondary: React.CSSProperties = { padding: '8px 20px', background: 'transparent', border: '1px solid #3b4261', color: '#c0caf5', borderRadius: 4, cursor: 'pointer', fontSize: 16 };
+const btnPrimary: React.CSSProperties = { padding: '8px 20px', background: '#7aa2f7', border: 'none', color: '#1a1b26', borderRadius: 4, cursor: 'pointer', fontSize: 16, fontWeight: 600 };

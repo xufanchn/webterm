@@ -32,7 +32,7 @@ export default function Modal({ title, onClose, children, width = 600, height = 
       }} onClick={(e) => e.stopPropagation()}>
         <div style={{
           padding: '16px 24px 8px', display: 'flex',
-          justifyContent: 'space-between', alignItems: 'center', fontSize: 16,
+          justifyContent: 'space-between', alignItems: 'center', fontSize: 18,
         }}>
           <span style={{ color: '#7aa2f7', fontWeight: 600 }}>{title}</span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#565f89', cursor: 'pointer', display: 'flex', alignItems: 'center' }}><Icon name="x" size={18} /></button>

@@ -37,8 +37,8 @@ export default function Workspace() {
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ height: 36, padding: '0 12px', background: '#1a1b26', borderBottom: '1px solid #3b4261', display: 'flex', alignItems: 'center', flexShrink: 0, fontSize: 12 }}>
-        <span style={{ color: '#7aa2f7', fontWeight: 700, fontSize: 13, fontFamily: '"JetBrains Mono", "JetBrains Maple Mono", Consolas, monospace', textShadow: '0 0 8px #7aa2f766', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div style={{ height: 36, padding: '0 12px', background: '#1a1b26', borderBottom: '1px solid #3b4261', display: 'flex', alignItems: 'center', flexShrink: 0, fontSize: 14 }}>
+        <span style={{ color: '#7aa2f7', fontWeight: 700, fontSize: 15, fontFamily: '"JetBrains Mono", "JetBrains Maple Mono", Consolas, monospace', textShadow: '0 0 8px #7aa2f766', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
           <Icon name="terminal" size={16} color="#7aa2f7" style={{ filter: 'drop-shadow(0 0 6px #7aa2f766)' }} /> WEBTERM
         </span>
         <HeaderSearch />
@@ -93,7 +93,7 @@ export default function Workspace() {
       <div style={{
         height: 22, flexShrink: 0, background: '#1a1b26', borderTop: '1px solid #3b4261',
         display: 'flex', alignItems: 'center', padding: '0 10px',
-        fontSize: 11, color: '#7aa2f7', gap: 10, lineHeight: '22px',
+        fontSize: 13, color: '#7aa2f7', gap: 10, lineHeight: '22px',
       }}>
         <span style={{ opacity: 0.7, flexShrink: 0 }}>webterm</span>
         <span style={{ flex: 1 }} />

@@ -92,7 +92,7 @@ export default function MainArea() {
               style={{
                 width: 20, flexShrink: 0, background: '#1a1b26', border: 'none',
                 borderLeft: '1px solid #3b4261', color: '#999', cursor: 'pointer',
-                fontSize: 10, padding: 0,
+                fontSize: 12, padding: 0,
               }}>
               <Icon name={sftpCollapsed ? 'chevron-left' : 'chevron-right'} size={12} color="#999" />
             </button>
@@ -132,7 +132,7 @@ export default function MainArea() {
         <TabBar tabs={dbTabs} activeTabId={dbActiveTabId} onSelectTab={setDbActiveTabId} onCloseTab={dbCloseTab} filterType="database" />
         <div style={{ flex: 1, overflow: 'hidden' }}>
           {dbActiveTab?.type === 'database' && dbActiveTab.connId ? (
-            <Suspense fallback={<div style={{ padding: 12, fontSize: 12, color: '#565f89' }}>Loading…</div>}>
+            <Suspense fallback={<div style={{ padding: 12, fontSize: 14, color: '#565f89' }}>Loading…</div>}>
               <QueryEditor connId={dbActiveTab.connId} />
             </Suspense>
           ) : null}

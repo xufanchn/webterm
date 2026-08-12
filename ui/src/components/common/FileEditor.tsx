@@ -81,7 +81,7 @@ export default function FileEditor({ filePath, fileName, ws, onClose, onSaved }:
       EditorView.theme({
         '&': { height: '100%' },
         '.cm-scroller': { overflow: 'auto' },
-        '.cm-content': { fontFamily: 'Menlo, Monaco, monospace', fontSize: '13px' },
+        '.cm-content': { fontFamily: 'Menlo, Monaco, monospace', fontSize: '15px' },
         '.cm-gutters': { background: '#1e1e1e', color: '#888', border: 'none' },
       }, { dark: true }),
     ];
@@ -142,14 +142,14 @@ export default function FileEditor({ filePath, fileName, ws, onClose, onSaved }:
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
         {loading && <div style={{ padding: 16, color: '#888' }}>{t("file_loading")}</div>}
         {error && (
-          <div style={{ padding: '6px 12px', color: '#f44747', background: '#2d1b1b', fontSize: 12 }}>{error}</div>
+          <div style={{ padding: '6px 12px', color: '#f44747', background: '#2d1b1b', fontSize: 14 }}>{error}</div>
         )}
         <div ref={editorRef} style={{ flex: 1, minHeight: 0 }} />
         <div style={{
           padding: '8px 16px', background: '#333', display: 'flex',
           justifyContent: 'space-between', alignItems: 'center',
         }}>
-          <span style={{ color: '#888', fontSize: 11, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ color: '#888', fontSize: 13, display: 'flex', alignItems: 'center', gap: 10 }}>
             <span>{filePath} — Ctrl+S {t("conn_save")}</span>
             <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
               <input type="checkbox" checked={backup} onChange={(e) => setBackup(e.target.checked)} />
@@ -158,7 +158,7 @@ export default function FileEditor({ filePath, fileName, ws, onClose, onSaved }:
           </span>
           <button onClick={handleSave} disabled={saving} style={{
             background: saving ? '#3b4261' : '#007acc', border: 'none',
-            color: '#fff', padding: '6px 16px', borderRadius: 4, cursor: 'pointer', fontSize: 12,
+            color: '#fff', padding: '6px 16px', borderRadius: 4, cursor: 'pointer', fontSize: 14,
           }}>
             {saving ? t('conn_saving') : t('conn_save')}
           </button>
