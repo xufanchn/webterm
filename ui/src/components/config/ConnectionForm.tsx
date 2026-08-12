@@ -67,7 +67,7 @@ export default function ConnectionForm({ connection, onClose, onSaved }: Props) 
   const update = (key: string, value: any) => setForm((prev) => ({ ...prev, [key]: value }));
 
   return (
-    <Modal title={connection ? t('conn_edit') : t('conn_new')} onClose={onClose} width={520} height={form.auth_method === 'private_key' ? 530 : 410}>
+    <Modal title={connection ? t('conn_edit') : t('conn_new')} onClose={onClose} width={520} height={form.auth_method === 'private_key' ? 530 : 410} unscaled>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
         {error && <div style={{ color: colors.danger, fontSize: font.md, padding: '4px 10px', background: colors.bgError, borderRadius: 4, margin: '4px 12px 0' }}>{error}</div>}
 

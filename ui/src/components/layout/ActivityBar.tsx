@@ -34,7 +34,7 @@ export default function ActivityBar({ onOpenSettings, sidebarCollapsed, onToggle
       width: 44, background: colors.bg, display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--c-border)',
       alignItems: 'center', paddingTop: 4, gap: 4, flexShrink: 0,
     }}>
-      <div className="activity-btn" title={sidebarCollapsed ? t('sidebar_expand') : t('sidebar_collapse')} onClick={onToggleSidebar}
+      <div className="activity-btn" title={sidebarCollapsed ? t('sidebar_expand') : t('sidebar_collapse')} onClick={() => { if (token) onToggleSidebar(); }}
         style={btnStyle(false)}>
         {sidebarCollapsed ? <Icon name="panel-left-open" size={14} /> : <Icon name="panel-left-close" size={14} />}
       </div>
@@ -45,7 +45,7 @@ export default function ActivityBar({ onOpenSettings, sidebarCollapsed, onToggle
         </div>
       ))}
       <div style={{ flex: 1 }} />
-      <div className="activity-btn" title="个人设置" onClick={onOpenSettings}
+      <div className="activity-btn" title="个人设置" onClick={() => { if (token) onOpenSettings(); }}
         style={{ ...btnStyle(false), marginBottom: 8, flexShrink: 0 }}>
         <Icon name="settings" size={16} />
       </div>

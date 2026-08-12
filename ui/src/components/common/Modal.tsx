@@ -9,9 +9,10 @@ interface Props {
   children: React.ReactNode;
   width?: number;
   height?: number;
+  unscaled?: boolean;
 }
 
-export default function Modal({ title, onClose, children, width = 600, height = 400 }: Props) {
+export default function Modal({ title, onClose, children, width = 600, height = 400, unscaled }: Props) {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -27,7 +28,7 @@ export default function Modal({ title, onClose, children, width = 600, height = 
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }} onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div style={{
-        background: 'rgba(26,27,38,0.88)', borderRadius: 12, width, height,
+        background: 'rgba(26,27,38,0.88)', borderRadius: 12, width, height, ['--ui-scale' as any]: unscaled ? 1 : undefined,
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
         boxShadow: '0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px var(--c-border)',
       }} onClick={(e) => e.stopPropagation()}>

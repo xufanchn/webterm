@@ -125,17 +125,17 @@ function GroupManager() {
       </div>
       {error && <div style={{ color: colors.danger, fontSize: font.md, padding: '6px 10px', background: colors.bgError, borderRadius: 4, marginBottom: 12 }}>{error}</div>}
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center', flexWrap: 'nowrap' }}>
         <input value={newName} onChange={(e) => setNewName(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-          placeholder={t("sidebar_group_name")} style={{ padding: '6px 10px', background: colors.bgInput, border: '1px solid var(--c-border)', borderRadius: 4, color: colors.textLight, fontSize: font.md, width: 200 }} />
+          placeholder={t("sidebar_group_name")} style={{ padding: '6px 10px', background: colors.bgInput, border: '1px solid var(--c-border)', borderRadius: 4, color: colors.textLight, fontSize: font.md, flex: 1, minWidth: 100, maxWidth: 240 }} />
         <CustomSelect value={newType} onChange={(v) => setNewType(v)}
-          style={{ padding: '6px 10px', background: colors.bgInput, border: '1px solid var(--c-border)', borderRadius: 4, color: colors.textLight, fontSize: font.md }}>
+          style={{ padding: '6px 10px', background: colors.bgInput, border: '1px solid var(--c-border)', borderRadius: 4, color: colors.textLight, fontSize: font.md, flexShrink: 0 }}>
           <option value="ssh">SSH</option>
           <option value="database">{t("config_database")}</option>
           <option value="sftp_bookmark">{t("config_sftp_bookmark")}</option>
         </CustomSelect>
-        <button onClick={handleCreate} style={{ padding: '6px 16px', background: colors.accent, border: 'none', color: colors.bg, borderRadius: 4, cursor: 'pointer', fontSize: font.md }}>{t("config_create")}</button>
+        <button onClick={handleCreate} style={{ padding: '6px 16px', background: colors.accent, border: 'none', color: colors.bg, borderRadius: 4, cursor: 'pointer', fontSize: font.md, flexShrink: 0, whiteSpace: 'nowrap' }}>{t("config_create")}</button>
       </div>
 
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: font.md }}>
