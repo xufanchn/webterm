@@ -94,7 +94,7 @@ export default function Workspace() {
       <div style={{
         height: 26, flexShrink: 0, background: colors.bg, borderTop: '1px solid var(--c-border)',
         display: 'flex', alignItems: 'center', padding: '0 10px',
-        fontSize: font.sm, color: colors.accent, gap: 10, lineHeight: '22px',
+        fontSize: font.sm, color: colors.accent, gap: 10, lineHeight: '26px',
       }}>
         <span style={{ opacity: 0.7, flexShrink: 0 }}>webterm</span>
         <span style={{ flex: 1 }} />
@@ -103,8 +103,8 @@ export default function Workspace() {
             <span style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
               background: statusConn.connected ? colors.success : colors.danger,
             }} />
-            <span style={{ width: 40, textAlign: 'center', flexShrink: 0 }}>{statusConn.connected ? t('status_connected') : t('status_disconnected')}</span>
-            <span style={{ flexShrink: 0 }}>{statusConn.name}{statusConn.host ? ` (${statusConn.host})` : ''}</span>
+            <span style={{ minWidth: 64, textAlign: 'center', flexShrink: 0, whiteSpace: 'nowrap' }}>{statusConn.connected ? t('status_connected') : t('status_disconnected')}</span>
+            <span style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>{statusConn.name}{statusConn.host ? ` (${statusConn.host})` : ''}</span>
           </>
         ) : (
           <span style={{ color: colors.textDim, flexShrink: 0 }}>{t('status_disconnected')}</span>
