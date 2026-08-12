@@ -121,9 +121,10 @@ func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 	// ECHO is off in PTY modes, so this line is not echoed; stty echo re-enables it
 	stdinPipe.Write([]byte("PROMPT_COMMAND='printf \"\\033]7;file://%s%s\\033\\\\\" \"$HOSTNAME\" \"$PWD\"'; stty echo\n"))
 
-	h.Store.CreateSessionLog(&store.SessionLog{
+	logID, _ := h.Store.CreateSessionLog(&store.SessionLog{
 		UserID: user.UserID, ConnectionID: connID, Type: "ssh",
 	})
+	defer h.Store.EndSessionLog(logID)
 
 	go func() {
 		for {
@@ -192,9 +193,10 @@ func (h *WSHandler) HandleDB(conn *websocket.Conn) {
 	}
 	defer client.Close()
 
-	h.Store.CreateSessionLog(&store.SessionLog{
+	logID, _ := h.Store.CreateSessionLog(&store.SessionLog{
 		UserID: user.UserID, ConnectionID: connID, Type: "db",
 	})
+	defer h.Store.EndSessionLog(logID)
 
 	var msg struct {
 		Action   string `json:"action"`
@@ -318,9 +320,10 @@ func (h *WSHandler) HandleSFTP(conn *websocket.Conn) {
 	defer sftpClient.Close()
 	defer h.Pool.Release(connID)
 
-	h.Store.CreateSessionLog(&store.SessionLog{
+	logID, _ := h.Store.CreateSessionLog(&store.SessionLog{
 		UserID: user.UserID, ConnectionID: connID, Type: "sftp",
 	})
+	defer h.Store.EndSessionLog(logID)
 
 	var msg struct {
 		Action  string `json:"action"`

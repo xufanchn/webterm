@@ -2,7 +2,10 @@ package handler
 
 import (
 	"encoding/json"
+	"net"
 	"net/http"
+	"sync"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -14,7 +17,66 @@ type AuthHandler struct {
 	Store *store.Store
 }
 
+const (
+	maxLoginFailures = 10
+	loginWindow      = 15 * time.Minute
+)
+
+var (
+	loginMu     sync.Mutex
+	loginFailed = map[string]*loginFailEntry{}
+)
+
+type loginFailEntry struct {
+	count int
+	until time.Time
+}
+
+func loginAllowed(ip string) bool {
+	loginMu.Lock()
+	defer loginMu.Unlock()
+	e := loginFailed[ip]
+	if e == nil {
+		return true
+	}
+	if time.Now().After(e.until) {
+		delete(loginFailed, ip)
+		return true
+	}
+	return e.count < maxLoginFailures
+}
+
+func recordLoginFailure(ip string) {
+	loginMu.Lock()
+	defer loginMu.Unlock()
+	e := loginFailed[ip]
+	if e == nil || time.Now().After(e.until) {
+		loginFailed[ip] = &loginFailEntry{count: 1, until: time.Now().Add(loginWindow)}
+		return
+	}
+	e.count++
+}
+
+func recordLoginSuccess(ip string) {
+	loginMu.Lock()
+	defer loginMu.Unlock()
+	delete(loginFailed, ip)
+}
+
+func clientIP(r *http.Request) string {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return host
+}
+
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
+	ip := clientIP(r)
+	if !loginAllowed(ip) {
+		http.Error(w, `{"error":"too many attempts, please try again later"}`, http.StatusTooManyRequests)
+		return
+	}
 	var req struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
@@ -25,14 +87,17 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 	user, err := h.Store.GetUserByUsername(req.Username)
 	if err != nil {
+		recordLoginFailure(ip)
 		http.Error(w, `{"error":"invalid credentials"}`, http.StatusUnauthorized)
 		return
 	}
 	if user.Disabled {
+		recordLoginFailure(ip)
 		http.Error(w, `{"error":"account disabled"}`, http.StatusForbidden)
 		return
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
+		recordLoginFailure(ip)
 		http.Error(w, `{"error":"invalid credentials"}`, http.StatusUnauthorized)
 		return
 	}
@@ -41,6 +106,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, `{"error":"internal error"}`, http.StatusInternalServerError)
 		return
 	}
+	recordLoginSuccess(ip)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"token": token,
 		"user":  map[string]interface{}{"id": user.ID, "username": user.Username, "role": user.Role},

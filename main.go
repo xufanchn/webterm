@@ -10,6 +10,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/xufanchn/webterm/auth"
@@ -41,6 +42,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to load config: %v", err)
 	}
+	if cfg.EncryptionKey == "" || strings.Trim(cfg.EncryptionKey, "0") == "" {
+		log.Println("warning: encryption key is default/empty — set a random 64-char hex key in config.yaml")
+	}
+	sshmgr.SetStrictHostKeyCheck(cfg.SSHHostKeyCheck)
 
 	st, err := store.New("webterm.db")
 	if err != nil {
