@@ -8,6 +8,7 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/xufanchn/webterm/auth"
 	"github.com/xufanchn/webterm/store"
 )
 
@@ -80,6 +81,11 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	user := auth.GetUser(r)
+	if user != nil && id == user.UserID {
+		http.Error(w, `{"error":"cannot delete yourself"}`, http.StatusBadRequest)
+		return
+	}
 	if err := h.Store.DeleteUser(id); err != nil {
 		http.Error(w, `{"error":"internal error"}`, http.StatusInternalServerError)
 		return

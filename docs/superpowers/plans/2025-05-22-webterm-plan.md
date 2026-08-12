@@ -136,7 +136,7 @@ func Load(path string) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	cfg := &Config{Port: 8443, LogLevel: "info"}
+	cfg := &Config{Port: 8888, LogLevel: "info"}
 	if err := yaml.Unmarshal(data, cfg); err != nil {
 		return nil, err
 	}
@@ -190,7 +190,7 @@ func main() {
 
 `config.yaml`:
 ```yaml
-port: 8443
+port: 8888
 encryption_key: "0000000000000000000000000000000000000000000000000000000000000000"
 log_level: "info"
 ```
@@ -199,7 +199,7 @@ log_level: "info"
 
 ```bash
 cd /home/xf/code/github/webterm && go run . -config config.yaml &
-sleep 1 && curl http://localhost:8443/api/health && kill %1
+sleep 1 && curl http://localhost:8888/api/health && kill %1
 ```
 预期：`{"status":"ok"}`
 
@@ -973,9 +973,9 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/api': 'http://localhost:8443',
+      '/api': 'http://localhost:8888',
       '/ws': {
-        target: 'ws://localhost:8443',
+        target: 'ws://localhost:8888',
         ws: true,
       },
     },

@@ -18,7 +18,7 @@
 
 ```bash
 make build          # 构建前端 + Go 二进制
-./webterm            # 默认监听 :8443（参见 config.yaml）
+./webterm            # 默认监听 :8888（参见 config.yaml）
 ```
 
 默认管理员：`admin` / `admin`
@@ -51,7 +51,7 @@ make build          # 构建前端 + Go 二进制
 
 `config.yaml`:
 ```yaml
-port: 8443
+port: 8888
 encryption_key: "64位十六进制字符串"
 log_level: "info"
 ```

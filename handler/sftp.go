@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/xufanchn/webterm/auth"
 	"github.com/xufanchn/webterm/crypto"
 	"github.com/xufanchn/webterm/sftpmgr"
 	"github.com/xufanchn/webterm/sshmgr"
@@ -15,11 +16,21 @@ import (
 
 func friendlyErr(err error) string {
 	msg := err.Error()
-	if strings.Contains(msg, "unable to authenticate") { return "认证失败，请检查用户名和密码" }
-	if strings.Contains(msg, "connection refused") { return "连接被拒绝，请检查主机地址和端口" }
-	if strings.Contains(msg, "no route to host") { return "无法访问主机，请检查网络" }
-	if strings.Contains(msg, "timeout") { return "连接超时，请检查主机可达性" }
-	if strings.Contains(msg, "handshake failed") { return "SSH 握手失败，请检查主机配置" }
+	if strings.Contains(msg, "unable to authenticate") {
+		return "认证失败，请检查用户名和密码"
+	}
+	if strings.Contains(msg, "connection refused") {
+		return "连接被拒绝，请检查主机地址和端口"
+	}
+	if strings.Contains(msg, "no route to host") {
+		return "无法访问主机，请检查网络"
+	}
+	if strings.Contains(msg, "timeout") {
+		return "连接超时，请检查主机可达性"
+	}
+	if strings.Contains(msg, "handshake failed") {
+		return "SSH 握手失败，请检查主机配置"
+	}
 	return msg
 }
 
@@ -73,6 +84,10 @@ func (h *SftpHandler) Upload(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, `{"error":"connection not found"}`, http.StatusNotFound)
 		return
 	}
+	if !canUseConnection(auth.GetUser(r), connInfo) {
+		http.Error(w, `{"error":"forbidden"}`, http.StatusForbidden)
+		return
+	}
 
 	sshClient, err := h.Pool.AcquireOrCreate(connID, h.makeSSHFactory(connInfo))
 	if err != nil {
@@ -107,6 +122,10 @@ func (h *SftpHandler) Download(w http.ResponseWriter, r *http.Request) {
 	connInfo, err := h.Store.GetConnection(connID)
 	if err != nil {
 		http.Error(w, `{"error":"connection not found"}`, http.StatusNotFound)
+		return
+	}
+	if !canUseConnection(auth.GetUser(r), connInfo) {
+		http.Error(w, `{"error":"forbidden"}`, http.StatusForbidden)
 		return
 	}
 

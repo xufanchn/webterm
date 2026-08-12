@@ -1,7 +1,7 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { lazy, Suspense, useEffect, useState, useCallback, useRef } from 'react';
 import FileList from './FileList';
 import { t } from '../../i18n';
-import FileEditor from '../common/FileEditor';
+const FileEditor = lazy(() => import('../common/FileEditor'));
 import { useLayoutStore } from '../../store/layout';
 import Icon from '../common/Icon';
 
@@ -279,11 +279,13 @@ export default function SftpPanel({ connId, tabId, localMode, currentPath, onPat
           onToggleFollow={() => setFollowCd(!followCd)} followCd={followCd}
         />
         {editFile && (
-          <FileEditor
-            filePath={editFile.path} fileName={editFile.name}
-            ws={wsRef.current}
-            onClose={() => setEditFile(null)} onSaved={() => fetchDir(path)}
-          />
+          <Suspense fallback={<div style={{ padding: 12, fontSize: 12, color: '#565f89' }}>Loading…</div>}>
+            <FileEditor
+              filePath={editFile.path} fileName={editFile.name}
+              ws={wsRef.current}
+              onClose={() => setEditFile(null)} onSaved={() => fetchDir(path)}
+            />
+          </Suspense>
         )}
       </>)}
     </div>

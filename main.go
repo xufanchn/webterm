@@ -10,6 +10,8 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/xufanchn/webterm/auth"
 	"github.com/xufanchn/webterm/config"
@@ -40,6 +42,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to load config: %v", err)
 	}
+	if cfg.EncryptionKey == "" || strings.Trim(cfg.EncryptionKey, "0") == "" {
+		log.Println("warning: encryption key is default/empty — set a random 64-char hex key in config.yaml")
+	}
+	sshmgr.SetStrictHostKeyCheck(cfg.SSHHostKeyCheck)
 
 	st, err := store.New("webterm.db")
 	if err != nil {
@@ -100,7 +106,7 @@ func main() {
 	mux.Handle("/ws/ssh/{conn_id}", websocket.Handler(wsH.HandleSSH))
 	mux.Handle("/ws/sftp/{conn_id}", websocket.Handler(wsH.HandleSFTP))
 	mux.Handle("/ws/db/{conn_id}", websocket.Handler(wsH.HandleDB))
-		mux.Handle("/ws/local-fs", websocket.Handler(handler.HandleLocalFS))
+	mux.Handle("/ws/local-fs", auth.Middleware(websocket.Handler(handler.HandleLocalFS)))
 
 	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`{"status":"ok"}`))
@@ -112,7 +118,13 @@ func main() {
 
 	addr := fmt.Sprintf(":%d", cfg.Port)
 	log.Printf("webterm starting on %s", addr)
-	if err := http.ListenAndServe(addr, mux); err != nil {
+	srv := &http.Server{
+		Addr:              addr,
+		Handler:           mux,
+		ReadHeaderTimeout: 10 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+	if err := srv.ListenAndServe(); err != nil {
 		log.Fatalf("server error: %v", err)
 	}
 }

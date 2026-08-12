@@ -96,7 +96,7 @@ RUN CGO_ENABLED=0 go build -ldflags "-s -w -X main.version={{.Version}}" -o webt
 
 FROM alpine:3.21
 RUN apk add --no-cache ca-certificates tzdata
-EXPOSE 8443
+EXPOSE 8888
 COPY --from=backend /src/webterm /usr/local/bin/webterm
 ENTRYPOINT ["webterm"]
 ```
@@ -165,7 +165,7 @@ tar xzf webterm_v1.0.0_linux_amd64.tar.gz
 ### Docker 部署
 
 ```bash
-docker run -d -p 8443:8443 \
+docker run -d -p 8888:8888 \
   -v ./config.yaml:/config.yaml \
   ghcr.io/xufanchn/webterm:v1.0.0
 ```

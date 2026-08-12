@@ -1,10 +1,10 @@
-import { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { lazy, Suspense, useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useLayoutStore } from '../../store/layout';
 import type { Tab } from '../../store/layout';
 import { useConnectionStore } from '../../store/connections';
 import TabBar from './TabBar';
-import TerminalTab from '../terminal/TerminalTab';
-import QueryEditor from '../database/QueryEditor';
+const TerminalTab = lazy(() => import('../terminal/TerminalTab'));
+const QueryEditor = lazy(() => import('../database/QueryEditor'));
 import { t } from '../../i18n';
 import MatrixRain from '../common/MatrixRain';
 import { useAuthStore } from '../../store/auth';
@@ -382,14 +382,20 @@ function LeafPane({ nodeId, onActiveSshChange, isInSplit }: {
         {tabs.map((tab) => (
           <div key={tab.id} style={{ flex: 1, display: tab.id === activeTabId ? 'flex' : 'none', overflow: 'hidden' }}>
             {tab.type === 'ssh' && tab.connId && (
-              <TerminalTab connId={tab.connId} myTabId={tab.id} paneTabs={tabs} extraMenuItems={[
-                { label: t('term_split_h'), action: () => handleSplit('horizontal') },
-                { label: t('term_split_v'), action: () => handleSplit('vertical') },
-                { label: t('term_split_quad'), action: handleQuadSplit },
-                ...(isInSplit ? [{ label: t('term_close_pane'), action: handleClosePane }] : []),
-              ]} />
+              <Suspense fallback={<div style={{ padding: 12, fontSize: 12, color: '#565f89' }}>Loading…</div>}>
+                <TerminalTab connId={tab.connId} myTabId={tab.id} paneTabs={tabs} extraMenuItems={[
+                  { label: t('term_split_h'), action: () => handleSplit('horizontal') },
+                  { label: t('term_split_v'), action: () => handleSplit('vertical') },
+                  { label: t('term_split_quad'), action: handleQuadSplit },
+                  ...(isInSplit ? [{ label: t('term_close_pane'), action: handleClosePane }] : []),
+                ]} />
+              </Suspense>
             )}
-            {tab.type === 'database' && tab.connId && <QueryEditor connId={tab.connId} />}
+            {tab.type === 'database' && tab.connId && (
+              <Suspense fallback={<div style={{ padding: 12, fontSize: 12, color: '#565f89' }}>Loading…</div>}>
+                <QueryEditor connId={tab.connId} />
+              </Suspense>
+            )}
           </div>
         ))}
         {tabs.length === 0 && <SessionWelcome />}

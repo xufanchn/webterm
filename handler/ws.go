@@ -37,6 +37,10 @@ func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 		sendErr(conn, "connection not found")
 		return
 	}
+	if !canUseConnection(user, connInfo) {
+		sendErr(conn, "forbidden")
+		return
+	}
 
 	// Reuse existing client from pool if alive
 	var client *sshmgr.Client
@@ -100,7 +104,7 @@ func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 		ssh.TTY_OP_OSPEED: 14400,
 	}
 	if err := session.RequestPty("xterm-256color", 120, 40, modes); err != nil {
-		sendErr(conn, "pty failed: " + err.Error())
+		sendErr(conn, "pty failed: "+err.Error())
 		return
 	}
 
@@ -109,18 +113,18 @@ func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 	stderrPipe, _ := session.StderrPipe()
 
 	if err := session.Shell(); err != nil {
-		sendErr(conn, "shell failed: " + err.Error())
+		sendErr(conn, "shell failed: "+err.Error())
 		return
 	}
 
-		
-			// Configure shell to report PWD via OSC 7 for SFTP sync
-			// ECHO is off in PTY modes, so this line is not echoed; stty echo re-enables it
-			stdinPipe.Write([]byte("PROMPT_COMMAND='printf \"\\033]7;file://%s%s\\033\\\\\" \"$HOSTNAME\" \"$PWD\"'; stty echo\n"))
+	// Configure shell to report PWD via OSC 7 for SFTP sync
+	// ECHO is off in PTY modes, so this line is not echoed; stty echo re-enables it
+	stdinPipe.Write([]byte("PROMPT_COMMAND='printf \"\\033]7;file://%s%s\\033\\\\\" \"$HOSTNAME\" \"$PWD\"'; stty echo\n"))
 
-		h.Store.CreateSessionLog(&store.SessionLog{
-			UserID: user.UserID, ConnectionID: connID, Type: "ssh",
+	logID, _ := h.Store.CreateSessionLog(&store.SessionLog{
+		UserID: user.UserID, ConnectionID: connID, Type: "ssh",
 	})
+	defer h.Store.EndSessionLog(logID)
 
 	go func() {
 		for {
@@ -133,14 +137,15 @@ func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 				Rows int `json:"rows"`
 			}
 			if err := json.Unmarshal(raw, &resizeMsg); err == nil && resizeMsg.Cols > 0 {
-				if err := session.WindowChange(resizeMsg.Rows, resizeMsg.Cols); err != nil { log.Printf("SSH resize failed: %v", err) }
+				if err := session.WindowChange(resizeMsg.Rows, resizeMsg.Cols); err != nil {
+					log.Printf("SSH resize failed: %v", err)
+				}
 				continue
 			}
 			var dataMsg struct {
 				Data string `json:"data"`
 			}
 			if err := json.Unmarshal(raw, &dataMsg); err == nil && dataMsg.Data != "" {
-				log.Printf("SSH stdin: %q", dataMsg.Data)
 				stdinPipe.Write([]byte(dataMsg.Data))
 			}
 		}
@@ -174,19 +179,24 @@ func (h *WSHandler) HandleDB(conn *websocket.Conn) {
 		sendErr(conn, "db connection not found")
 		return
 	}
+	if !canUseDbConnection(user, dbInfo) {
+		sendErr(conn, "forbidden")
+		return
+	}
 
 	password, _ := h.AESCipher.Decrypt(dbInfo.PasswordEncrypted)
 
 	client, err := dbmgr.NewClient(dbInfo.Host, dbInfo.Port, dbInfo.Username, password, dbInfo.DatabaseName)
 	if err != nil {
-		sendErr(conn, "db connect failed: " + err.Error())
+		sendErr(conn, "db connect failed: "+err.Error())
 		return
 	}
 	defer client.Close()
 
-	h.Store.CreateSessionLog(&store.SessionLog{
+	logID, _ := h.Store.CreateSessionLog(&store.SessionLog{
 		UserID: user.UserID, ConnectionID: connID, Type: "db",
 	})
+	defer h.Store.EndSessionLog(logID)
 
 	var msg struct {
 		Action   string `json:"action"`
@@ -258,6 +268,10 @@ func (h *WSHandler) HandleSFTP(conn *websocket.Conn) {
 		sendErr(conn, "connection not found")
 		return
 	}
+	if !canUseConnection(user, connInfo) {
+		sendErr(conn, "forbidden")
+		return
+	}
 
 	// Get or create SSH client (with retry if existing client is stale)
 	var sshClient *sshmgr.Client
@@ -306,9 +320,10 @@ func (h *WSHandler) HandleSFTP(conn *websocket.Conn) {
 	defer sftpClient.Close()
 	defer h.Pool.Release(connID)
 
-	h.Store.CreateSessionLog(&store.SessionLog{
+	logID, _ := h.Store.CreateSessionLog(&store.SessionLog{
 		UserID: user.UserID, ConnectionID: connID, Type: "sftp",
 	})
+	defer h.Store.EndSessionLog(logID)
 
 	var msg struct {
 		Action  string `json:"action"`

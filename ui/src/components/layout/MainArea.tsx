@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { lazy, Suspense, useState, useEffect, useCallback, useRef } from 'react';
 import { useLayoutStore } from '../../store/layout';
 import { t } from '../../i18n';
 import type { Tab } from '../../store/layout';
@@ -8,7 +8,7 @@ import SplitPane from './SplitPane';
 import DualPaneSftp from '../sftp/DualPaneSftp';
 import SftpPanel from '../sftp/SftpPanel';
 import ConfigPage from '../config/ConfigPage';
-import QueryEditor from '../database/QueryEditor';
+const QueryEditor = lazy(() => import('../database/QueryEditor'));
 import TabBar from './TabBar';
 
 export default function MainArea() {
@@ -132,7 +132,9 @@ export default function MainArea() {
         <TabBar tabs={dbTabs} activeTabId={dbActiveTabId} onSelectTab={setDbActiveTabId} onCloseTab={dbCloseTab} filterType="database" />
         <div style={{ flex: 1, overflow: 'hidden' }}>
           {dbActiveTab?.type === 'database' && dbActiveTab.connId ? (
-            <QueryEditor connId={dbActiveTab.connId} />
+            <Suspense fallback={<div style={{ padding: 12, fontSize: 12, color: '#565f89' }}>Loading…</div>}>
+              <QueryEditor connId={dbActiveTab.connId} />
+            </Suspense>
           ) : null}
         </div>
       </div>

@@ -14,7 +14,7 @@ export function useWebSocket({ url, onMessage, onClose, onOpen }: UseWsOptions) 
   const retryCountRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const bufferRef = useRef<string[]>([]);
-  const wasOpenRef = useRef(false);
+  const disposedRef = useRef(false);
 
   // Keep latest callbacks in refs to avoid reconnect on re-render
   const onMessageRef = useRef(onMessage);
@@ -25,11 +25,11 @@ export function useWebSocket({ url, onMessage, onClose, onOpen }: UseWsOptions) 
   onOpenRef.current = onOpen;
 
   const connect = useCallback(() => {
+    if (disposedRef.current) return;
     const ws = new WebSocket(url);
     wsRef.current = ws;
 
     ws.onopen = () => {
-      wasOpenRef.current = true;
       retryCountRef.current = 0;
       if (bufferRef.current.length > 0) {
         for (const msg of bufferRef.current) {
@@ -45,10 +45,7 @@ export function useWebSocket({ url, onMessage, onClose, onOpen }: UseWsOptions) 
     };
 
     ws.onclose = () => {
-      if (wasOpenRef.current) {
-        onCloseRef.current?.(true);
-        return;
-      }
+      if (disposedRef.current) return;
       if (retryCountRef.current >= MAX_RETRIES) {
         onCloseRef.current?.(true);
         return;
@@ -65,8 +62,10 @@ export function useWebSocket({ url, onMessage, onClose, onOpen }: UseWsOptions) 
   }, [url]);
 
   useEffect(() => {
+    disposedRef.current = false;
     connect();
     return () => {
+      disposedRef.current = true;
       clearTimeout(timerRef.current);
       wsRef.current?.close();
     };

@@ -3,7 +3,7 @@ setlocal enabledelayedexpansion
 cd /d "%~dp0"
 
 for /f "tokens=2" %%a in ('findstr /r "port:" config.yaml 2^>nul') do set PORT=%%a
-if "%PORT%"=="" set PORT=8443
+if "%PORT%"=="" set PORT=8888
 
 if "%~1"=="stop" goto stop
 if "%~1"=="restart" goto restart

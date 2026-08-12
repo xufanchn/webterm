@@ -3,15 +3,35 @@ package sshmgr
 import (
 	"fmt"
 	"net"
+	"os"
+	"path/filepath"
 	"time"
 
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/knownhosts"
 )
 
 type Client struct {
 	conn   *ssh.Client
 	config *ssh.ClientConfig
 	addr   string
+}
+
+var strictHostKeyCheck bool
+
+// SetStrictHostKeyCheck enables verification of SSH host keys against ~/.ssh/known_hosts.
+func SetStrictHostKeyCheck(strict bool) { strictHostKeyCheck = strict }
+
+func knownHostsCallback() (ssh.HostKeyCallback, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return nil, err
+	}
+	path := filepath.Join(home, ".ssh", "known_hosts")
+	if _, err := os.Stat(path); err != nil {
+		return nil, fmt.Errorf("ssh_host_key_check enabled but %s not found", path)
+	}
+	return knownhosts.New(path)
 }
 
 func NewClient(host string, port int, username, password, privateKey, passphrase string) (*Client, error) {
@@ -32,10 +52,18 @@ func NewClient(host string, port int, username, password, privateKey, passphrase
 		}
 		authMethods = append(authMethods, ssh.PublicKeys(signer))
 	}
+	hostKeyCallback := ssh.InsecureIgnoreHostKey()
+	if strictHostKeyCheck {
+		cb, err := knownHostsCallback()
+		if err != nil {
+			return nil, err
+		}
+		hostKeyCallback = cb
+	}
 	config := &ssh.ClientConfig{
 		User:            username,
 		Auth:            authMethods,
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		HostKeyCallback: hostKeyCallback,
 		Timeout:         10 * time.Second,
 	}
 	return &Client{

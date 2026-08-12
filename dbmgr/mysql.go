@@ -151,7 +151,9 @@ func (c *Client) DescribeTable(database, table string) ([]ColumnInfo, error) {
 		var null sql.NullString
 		var def sql.NullString
 		var comment sql.NullString
-		if err := rows.Scan(&col.Name, &col.Type, &null, &col.Key, &def, &col.Extra, &sql.NullString{}, &comment); err != nil {
+		var priv sql.NullString
+		var collation sql.NullString
+		if err := rows.Scan(&col.Name, &col.Type, &collation, &null, &col.Key, &def, &col.Extra, &priv, &comment); err != nil {
 			return nil, err
 		}
 		if null.Valid {
