@@ -274,11 +274,11 @@ export default function Sidebar({ collapsed, width }: { collapsed: boolean; widt
                 }}
                 onBlur={() => { setShowGroupInput(false); setNewGroupName(''); }}
                 placeholder={t("sidebar_group_name")} autoFocus
-                style={{ flex: 1, padding: '2px 6px', background: colors.bgInput, border: '1px solid var(--c-border)', borderRadius: 4, color: colors.white, fontSize: font.xs }} />
+                style={{ flex: 1, minWidth: 0, padding: '2px 6px', background: colors.bgInput, border: '1px solid var(--c-border)', borderRadius: 4, color: colors.white, fontSize: font.xs }} />
               <button onClick={() => handleCreateGroup(newGroupName)}
-                style={{ background: colors.accent, border: 'none', color: colors.bg, fontWeight: 600, borderRadius: 4, padding: '2px 6px', cursor: 'pointer', fontSize: font.xs }}>{t("config_create")}</button>
+                style={{ background: colors.accent, border: 'none', color: colors.bg, fontWeight: 600, borderRadius: 4, padding: '2px 6px', cursor: 'pointer', fontSize: font.xs, flexShrink: 0, whiteSpace: 'nowrap' }}>{t("config_create")}</button>
               <button onClick={() => { setShowGroupInput(false); setNewGroupName(''); }}
-                style={{ background: 'none', border: 'none', color: colors.textDim, cursor: 'pointer', padding: '2px 4px', display: 'flex', alignItems: 'center' }}><Icon name="x" size={10} /></button>
+                style={{ background: 'none', border: 'none', color: colors.textDim, cursor: 'pointer', padding: '2px 4px', display: 'flex', alignItems: 'center', flexShrink: 0 }}><Icon name="x" size={10} /></button>
             </div>
           ) : (
             <div onClick={() => setShowGroupInput(true)}

@@ -57,7 +57,7 @@ export default function DbConnectionForm({ connection, onClose, onSaved }: Props
   const update = (key: string, value: any) => setForm({ ...form, [key]: value });
 
   return (
-    <Modal title={connection ? t('db_conn_edit') : t('db_conn_new')} onClose={onClose} width={550} height={420}>
+    <Modal title={connection ? t('db_conn_edit') : t('db_conn_new')} onClose={onClose} width={550} height={420} unscaled>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
         {error && <div style={{ color: colors.danger, fontSize: font.md, padding: '6px 10px', background: colors.bgError, borderRadius: 4, margin: '8px 16px 0' }}>{error}</div>}
 
