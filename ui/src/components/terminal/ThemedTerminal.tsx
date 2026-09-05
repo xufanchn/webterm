@@ -46,6 +46,54 @@ function highlightText(text: string, rules: HighlightRule[]): string {
   return text;
 }
 
+const ZMODEM_SEND_CHUNK = 65536;
+
+// Upload files over a ZMODEM "send" session (remote ran `rz`). Deliberately not
+// Zmodem.Browser.send_files: its reader.onload drops the final chunk whenever
+// progress events fired, and it never sends ZFIN, leaving remote `rz` hanging.
+async function zmodemSendFiles(session: any, files: File[], show: (s: string) => void): Promise<void> {
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const xfer = await session.send_offer({
+      name: file.name,
+      size: file.size,
+      mtime: Math.floor(file.lastModified / 1000),
+      files_remaining: files.length - i,
+    });
+    if (!xfer) {
+      show(`\x1b[33m[ZMODEM] ${file.name}: skipped by remote\x1b[0m\r\n`);
+      continue;
+    }
+    const data = new Uint8Array(await file.arrayBuffer());
+    let offset = Math.min(xfer.get_offset() || 0, data.length); // ZRPOS resume point
+    let lastPct = -1;
+    while (offset < data.length) {
+      const end = Math.min(offset + ZMODEM_SEND_CHUNK, data.length);
+      const chunk = data.subarray(offset, end);
+      if (end >= data.length) {
+        await xfer.end(chunk); // final chunk + ZEOF; resolves on rz's ack
+      } else {
+        xfer.send(chunk);
+      }
+      offset = end;
+      const pct = Math.floor((offset / data.length) * 100);
+      if (pct !== lastPct) {
+        lastPct = pct;
+        show(`\r\x1b[K\x1b[33m[ZMODEM] ${file.name} ${pct}%\x1b[0m`);
+      }
+    }
+    if (data.length === 0) {
+      await xfer.end([]);
+    }
+    show(`\r\x1b[K\x1b[33m[ZMODEM] ${file.name}: done\x1b[0m\r\n`);
+  }
+  try {
+    await session.close(); // ZFIN: remote rz exits instead of waiting forever
+  } catch {
+    try { session.abort(); } catch {}
+  }
+}
+
 export default function ThemedTerminal({ connId, themeName: _themeName, onStatus, onResizeDim, extraMenuItems, tabs,  myTabId }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
@@ -239,6 +287,10 @@ export default function ThemedTerminal({ connId, themeName: _themeName, onStatus
       }
     },
     onClose: (final) => {
+      // The SSH session (and any in-flight ZMODEM transfer) dies with the socket
+      zsessionRef.current = null;
+      zmodemActiveRef.current = false;
+      pendingUploadRef.current = null;
       if (final) {
         onStatusRef.current?.(false);
         setStatusConn(null);
@@ -387,15 +439,18 @@ export default function ThemedTerminal({ connId, themeName: _themeName, onStatus
           const files = input.files ? Array.from(input.files) : [];
           try {
             if (files.length) {
-              await Zmodem.Browser.send_files(session, files);
+              await zmodemSendFiles(session, files, (s) => termRef.current?.write(s));
             } else {
               try { session.abort(); } catch {}
             }
           } catch (e) {
             termRef.current?.write(`\r\n\x1b[31mZMODEM: ${e}\x1b[0m\r\n`);
+            try { session.abort(); } catch {} // unhang remote rz
           }
-          zmodemActiveRef.current = false;
-          zsessionRef.current = null;
+        };
+        // Dialog dismissed without choosing: abort so rz doesn't wait forever
+        input.oncancel = () => {
+          try { session.abort(); } catch {}
         };
         input.click();
         return;
