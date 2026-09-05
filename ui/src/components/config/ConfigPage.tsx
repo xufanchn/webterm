@@ -30,7 +30,7 @@ export default function ConfigPage() {
             )}
             <div onClick={() => setActiveTab(tab.key)}
               style={{
-                padding: '4px 14px', cursor: 'pointer', fontSize: font.md, borderRadius: 5,
+                padding: '4px 14px', cursor: 'pointer', fontSize: font.md, borderRadius: 4,
                 color: activeTab === tab.key ? colors.bg : colors.textMuted2,
                 background: activeTab === tab.key ? colors.accent : 'transparent',
                 height: 28, display: 'flex', alignItems: 'center',

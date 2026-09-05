@@ -22,7 +22,7 @@ export default function DualPaneSftp({ connections }: Props) {
         }}>
           <span style={{ color: colors.textLight, display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="monitor" size={12} /> {t('sftp_remote')}</span>
           <CustomSelect value={String(leftConnId || '')} onChange={(v) => setLeftConnId(Number(v) || null)}
-            style={{ background: colors.bgHeader, color: colors.textLight, border: '1px solid var(--c-border)', borderRadius: 3, fontSize: font.sm, padding: '2px 4px' }}>
+            style={{ background: colors.bgHeader, color: colors.textLight, border: '1px solid var(--c-border)', borderRadius: 4, fontSize: font.sm, padding: '2px 4px' }}>
             {connections.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
@@ -50,7 +50,7 @@ export default function DualPaneSftp({ connections }: Props) {
           </span>
           <CustomSelect value={rightConnId === null ? 'local' : String(rightConnId)}
             onChange={(v) => setRightConnId(v === 'local' ? null : Number(v))}
-            style={{ background: colors.bgHeader, color: colors.textLight, border: '1px solid var(--c-border)', borderRadius: 3, fontSize: font.sm, padding: '2px 4px' }}>
+            style={{ background: colors.bgHeader, color: colors.textLight, border: '1px solid var(--c-border)', borderRadius: 4, fontSize: font.sm, padding: '2px 4px' }}>
             <option value="local">本机</option>
             {connections.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>

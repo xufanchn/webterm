@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import Icon from '../common/Icon';
 import { useLayoutStore } from '../../store/layout';
 import { useConnectionStore } from '../../store/connections';
-import { colors, font } from '../../theme/tokens';
+import { colors, font, shadow } from '../../theme/tokens';
 
 export default function HeaderSearch() {
   const [query, setQuery] = useState('');
@@ -80,8 +80,8 @@ export default function HeaderSearch() {
       {focus && results.length > 0 && (
         <div style={{
           position: 'absolute', top: 30, left: '50%', transform: 'translateX(-50%)', width: 360, zIndex: 5000,
-          background: colors.bgInput, border: '1px solid var(--c-border)', borderRadius: 6,
-          boxShadow: '0 8px 24px rgba(0,0,0,0.5)', overflow: 'hidden',
+          background: colors.bgInput, border: '1px solid var(--c-border-soft)', borderRadius: 6,
+          boxShadow: shadow.menu, overflow: 'hidden',
         }}>
           {results.map((r, i) => (
             <div key={i} onMouseDown={(e) => { e.preventDefault(); open(r); }}

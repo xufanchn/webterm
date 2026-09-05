@@ -218,10 +218,10 @@ function FormField({ label, value, onChange, type = 'text', placeholder, require
 }
 
 const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '10px 12px', background: 'rgba(31,35,53,0.5)', border: '1px solid var(--c-border)',
-  borderRadius: 4, color: colors.text, fontSize: font.xl, boxSizing: 'border-box', outline: 'none',
+  width: '100%', padding: '10px 12px', background: 'rgba(31,35,53,0.5)', border: '1px solid var(--c-border-soft)',
+  borderRadius: 4, color: colors.text, fontSize: font.xl, boxSizing: 'border-box', transition: 'border-color 0.1s ease', outline: 'none',
 };
 const selectStyle: React.CSSProperties = { ...inputStyle };
-const btnSecondary: React.CSSProperties = { padding: '8px 20px', background: 'transparent', border: '1px solid var(--c-border)', color: colors.text, borderRadius: 4, cursor: 'pointer', fontSize: font.xl };
-const btnPrimary: React.CSSProperties = { padding: '8px 20px', background: colors.accent, border: 'none', color: colors.bg, borderRadius: 4, cursor: 'pointer', fontSize: font.xl, fontWeight: 600 };
+const btnSecondary: React.CSSProperties = { padding: '8px 20px', background: 'transparent', border: '1px solid var(--c-border-soft)', color: colors.text, borderRadius: 4, cursor: 'pointer', fontSize: font.xl, transition: 'background 0.1s ease, border-color 0.1s ease' };
+const btnPrimary: React.CSSProperties = { padding: '8px 20px', background: colors.accent, border: 'none', color: colors.bg, borderRadius: 4, cursor: 'pointer', fontSize: font.xl, fontWeight: 600, transition: 'background 0.1s ease' };
 const labelStyle: React.CSSProperties = { color: colors.textMuted, fontSize: font.md, display: 'block', marginBottom: 4 };

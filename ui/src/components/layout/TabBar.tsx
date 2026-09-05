@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useLayoutStore } from '../../store/layout';
 import type { Tab, BroadcastScope } from '../../store/layout';
 import Icon from '../common/Icon';
-import { colors, font } from '../../theme/tokens';
+import { colors, font, radius, shadow, transition } from '../../theme/tokens';
 
 interface Props {
   tabs: Tab[];
@@ -63,17 +63,18 @@ export default function TabBar({ tabs, activeTabId, onSelectTab, onCloseTab, onA
             }}
             onClick={() => onSelectTab(tab.id)}
             style={{
-              padding: '4px 14px', fontSize: font.md, borderRadius: 5, cursor: 'pointer',
-              background: activeTabId === tab.id ? colors.accent : 'transparent',
-              color: activeTabId === tab.id ? colors.bg : colors.textMuted2,
+              padding: '4px 14px', fontSize: font.md, borderRadius: radius.sm, cursor: 'pointer',
+              background: activeTabId === tab.id ? colors.bgHeader : 'transparent',
+              boxShadow: activeTabId === tab.id ? `inset 0 -2px 0 ${colors.accent}` : 'none',
+              color: activeTabId === tab.id ? colors.text : colors.textMuted2,
               display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap',
               height: 28, marginBottom: 0,
-              transition: 'background 0.1s',
+              transition: `background ${transition.fast}, color ${transition.fast}`,
             }}>
             {tab.title}
             <span onClick={(e) => { e.stopPropagation(); onCloseTab(tab.id); }}
-              style={{ color: colors.textMuted, cursor: 'pointer', borderRadius: '50%', width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = colors.border; e.currentTarget.style.color = colors.bg; }}
+              style={{ color: colors.textMuted, cursor: 'pointer', borderRadius: '50%', width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: `background ${transition.fast}` }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = colors.bgHover; e.currentTarget.style.color = colors.text; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = colors.textMuted; }}><Icon name="x" size={11} /></span>
           </div>
         </React.Fragment>
@@ -87,16 +88,16 @@ export default function TabBar({ tabs, activeTabId, onSelectTab, onCloseTab, onA
         {showPicker && connections && connections.length > 0 && (
           <div ref={pickerRef} style={{
             position: 'absolute', top: '100%', left: 0, zIndex: 1000,
-            background: colors.bgInput, border: '1px solid var(--c-border)', borderRadius: 4,
+            background: colors.bgInput, border: '1px solid var(--c-border-soft)', borderRadius: radius.sm,
             minWidth: 160, maxHeight: 200, overflow: 'auto', padding: '4px 0',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+            boxShadow: shadow.menu,
           }}>
             {connections.map((c) => (
-              <div key={c.id} onClick={() => { onAddTab?.(c.id, c.name, 'ssh'); setShowPicker(false); }}
+              <div key={c.id} className="wt-menu-item" onClick={() => { onAddTab?.(c.id, c.name, 'ssh'); setShowPicker(false); }}
                 style={{
                   padding: '6px 12px', cursor: 'pointer', color: colors.textLight, fontSize: font.sm,
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.background = colors.accentSoft}
+                onMouseEnter={(e) => e.currentTarget.style.background = colors.bgHover}
                 onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
                 <Icon name="circle" size={8} fill={colors.success} color={colors.success} style={{ marginRight: 4 }} /> {c.name}
               </div>

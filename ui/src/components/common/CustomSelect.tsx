@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { colors, font } from '../../theme/tokens';
+import { colors, font, shadow } from '../../theme/tokens';
 
 interface Props {
   value: string;
@@ -54,8 +54,8 @@ export default function CustomSelect({ value, onChange, style, children }: Props
       {open && (
         <div style={{
           position: 'fixed', zIndex: 10001,
-          background: colors.bgInput, border: '1px solid var(--c-border)', borderRadius: 4,
-          overflow: 'overlay', maxHeight: 200, boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+          background: colors.bgInput, border: '1px solid var(--c-border-soft)', borderRadius: 4,
+          overflow: 'overlay', maxHeight: 200, boxShadow: shadow.menu,
         }} ref={(el) => {
           if (el && ref.current) {
             const rect = ref.current.getBoundingClientRect();
@@ -68,10 +68,11 @@ export default function CustomSelect({ value, onChange, style, children }: Props
             <div key={i}
               onClick={(e) => { e.stopPropagation(); selectValue(opt.props.value); }}
               onMouseEnter={() => setFocusIdx(i)}
+              onMouseLeave={() => setFocusIdx((cur) => (cur === i ? -1 : cur))}
               style={{
                 padding: '6px 12px', fontSize: font.lg, cursor: 'pointer',
-                background: i === focusIdx ? colors.accent : 'transparent',
-                color: i === focusIdx ? colors.bg : (opt.props.style?.color || colors.text),
+                background: i === focusIdx ? colors.accentSoft : 'transparent',
+                color: i === focusIdx ? colors.accent : (opt.props.style?.color || colors.text),
               }}>
               {opt.props.children}
             </div>

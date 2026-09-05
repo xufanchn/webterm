@@ -48,7 +48,7 @@ export default function ResultTable({ columns, rows, rowsAffected, onExportCSV }
     );
   }
 
-  const btnStyle = { background: colors.border, border: 'none', color: colors.white, padding: '2px 10px', borderRadius: 3, cursor: 'pointer', fontSize: font.xs };
+  const btnStyle = { background: colors.border, border: 'none', color: colors.white, padding: '2px 10px', borderRadius: 4, cursor: 'pointer', fontSize: font.xs };
   const btnDisabled = { ...btnStyle, opacity: 0.4, cursor: 'default' };
 
   return (
@@ -62,7 +62,7 @@ export default function ResultTable({ columns, rows, rowsAffected, onExportCSV }
           <button onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))} disabled={safePage >= totalPages - 1}
             style={safePage >= totalPages - 1 ? btnDisabled : btnStyle}>{t("db_next")}</button>
           <button onClick={onExportCSV} style={{
-            background: colors.info, border: 'none', color: colors.white, padding: '2px 10px', borderRadius: 3, cursor: 'pointer', fontSize: font.xs,
+            background: colors.info, border: 'none', color: colors.white, padding: '2px 10px', borderRadius: 4, cursor: 'pointer', fontSize: font.xs,
           }}>{t("db_export")}</button>
         </span>
       </div>

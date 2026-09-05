@@ -77,7 +77,7 @@ export default function SettingsPanel({ onClose }: Props) {
               }} />
             )}
             <div onClick={() => setActiveSection(s.key)} style={{
-              padding: '4px 14px', cursor: 'pointer', fontSize: font.md, borderRadius: 5,
+              padding: '4px 14px', cursor: 'pointer', fontSize: font.md, borderRadius: 4,
               color: activeSection === s.key ? colors.bg : colors.textMuted2,
               background: activeSection === s.key ? colors.accent : 'transparent',
               height: 28, display: 'flex', alignItems: 'center',

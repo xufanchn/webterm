@@ -139,7 +139,7 @@ export default function UserManager() {
               <label style={{ color: colors.textLight, fontSize: font.md, display: 'block', marginBottom: 4 }}>{t("config_user")}</label>
               <input value={formData.username} onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                 style={{
-                  width: '100%', padding: '6px 10px', background: colors.bgInput, border: '1px solid var(--c-border)',
+                  width: '100%', padding: '6px 10px', background: colors.bgInput, border: '1px solid var(--c-border-soft)',
                   borderRadius: 4, color: colors.textLight, fontSize: font.md, boxSizing: 'border-box',
                 }} />
             </div>
@@ -149,7 +149,7 @@ export default function UserManager() {
               </label>
               <input type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 style={{
-                  width: '100%', padding: '6px 10px', background: colors.bgInput, border: '1px solid var(--c-border)',
+                  width: '100%', padding: '6px 10px', background: colors.bgInput, border: '1px solid var(--c-border-soft)',
                   borderRadius: 4, color: colors.textLight, fontSize: font.md, boxSizing: 'border-box',
                 }} />
             </div>
@@ -157,7 +157,7 @@ export default function UserManager() {
               <label style={{ color: colors.textLight, fontSize: font.md, display: 'block', marginBottom: 4 }}>{t("config_role")}</label>
               <CustomSelect value={formData.role} onChange={(v) => setFormData({ ...formData, role: v })}
                 style={{
-                  width: '100%', padding: '6px 10px', background: colors.bgInput, border: '1px solid var(--c-border)',
+                  width: '100%', padding: '6px 10px', background: colors.bgInput, border: '1px solid var(--c-border-soft)',
                   borderRadius: 4, color: colors.textLight, fontSize: font.md,
                 }}>
                 <option value="user">user</option>

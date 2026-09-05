@@ -5,7 +5,7 @@ import { apiPost } from '../../api/client';
 import { t, getLang, setLang } from '../../i18n';
 import MatrixRain from '../common/MatrixRain';
 import Icon from '../common/Icon';
-import { colors, font } from '../../theme/tokens';
+import { colors, font, radius, shadow, transition } from '../../theme/tokens';
 
 export default function LoginPage() {
   const [username, setUsername] = useState(localStorage.getItem('webterm-rm-user') || '');
@@ -37,9 +37,10 @@ export default function LoginPage() {
   };
 
   const inputStyle: React.CSSProperties = {
-    padding: '10px 14px', border: '1px solid var(--c-border)', height: 42,
+    padding: '10px 14px', border: '1px solid var(--c-border-soft)', height: 42,
     background: 'rgba(31,35,53,0.6)', color: colors.text, fontSize: font.xl,
-    width: '100%', boxSizing: 'border-box', outline: 'none', borderRadius: 4,
+    width: '100%', boxSizing: 'border-box', outline: 'none', borderRadius: radius.sm,
+    transition: `border-color ${transition.fast}`,
   };
 
   return (
@@ -49,10 +50,10 @@ export default function LoginPage() {
     }} onClick={() => setTick((n) => n + 1)}>
       <MatrixRain key={tick} fontSize={22} radial />
       <form onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()} style={{
-        background: 'rgba(36,40,59,0.82)', borderRadius: 12, backdropFilter: 'blur(8px)',
+        background: 'rgba(36,40,59,0.82)', borderRadius: radius.xl, backdropFilter: 'blur(8px)',
         padding: 44, width: 400, height: 400,
         display: 'flex', flexDirection: 'column', gap: 16,
-        boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+        boxShadow: shadow.overlay,
         boxSizing: 'border-box', zIndex: 1,
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
@@ -63,7 +64,7 @@ export default function LoginPage() {
             <div style={{ color: colors.textMuted, fontSize: font.sm, marginTop: 2 }}>{t('app_slogan')}</div>
           </div>
           <span onClick={() => { const lang = getLang() === 'zh' ? 'en' : 'zh'; setLang(lang); window.location.reload(); }}
-            style={{ color: colors.textMuted, fontSize: font.md, cursor: 'pointer', userSelect: 'none', padding: '2px 6px', borderRadius: 3, background: colors.bgInput }}>
+            style={{ color: colors.textMuted, fontSize: font.md, cursor: 'pointer', userSelect: 'none', padding: '2px 6px', borderRadius: radius.sm, background: colors.bgInput }}>
             {getLang() === 'zh' ? 'EN' : '中'}
           </span>
         </div>
@@ -94,10 +95,13 @@ export default function LoginPage() {
         </label>
 
         <button type="submit" style={{
-          padding: '10px', border: 'none', borderRadius: 4, height: 40,
+          padding: '10px', border: 'none', borderRadius: radius.sm, height: 40,
           background: colors.accent, color: colors.bg, cursor: 'pointer', fontSize: font.xl,
           fontWeight: 600, letterSpacing: 1, boxSizing: 'border-box',
-        }}>
+          transition: `background ${transition.fast}`,
+        }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = colors.accent80; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = colors.accent; }}>
           {t('login_submit')}
         </button>
       </form>

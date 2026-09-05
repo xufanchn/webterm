@@ -8,14 +8,17 @@
   --c-accent-mid: #7aa2f766;
   --c-accent-soft: #7aa2f740;
   --c-bg: #1a1b26;
-  --c-bg-bar: #333;
-  --c-bg-deep: #1e1e1e;
+  --c-bg-bar: #16161e;
+  --c-bg-deep: #16161e;
   --c-bg-error: #2d1b1b;
-  --c-bg-header: #2d2d2d;
+  --c-bg-header: #1f2335;
+  --c-bg-hover: #292e42;
   --c-bg-input: #1f2335;
   --c-bg-input-alt: #2a2e42;
-  --c-bg-raised: #252526;
+  --c-bg-overlay: rgba(26,27,38,0.88);
+  --c-bg-raised: #1f2335;
   --c-border: #3b4261;
+  --c-border-soft: #292e42;
   --c-danger: #f44747;
   --c-danger-bg: #d32f2f;
   --c-danger-bright: #f7768e;
@@ -45,28 +48,77 @@
   --f-xl5: calc(24px * var(--ui-scale));
   --f-xs: calc(10px * var(--ui-scale));
   --f-xxs: calc(9px * var(--ui-scale));
+  --r-xs: 3px;
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 10px;
+  --r-xl: 12px;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.35);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.45);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
+  --shadow-menu: 0 4px 16px rgba(0,0,0,0.5), 0 0 0 1px var(--c-border);
+  --shadow-overlay: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px var(--c-border);
+  --t-fast: 0.1s ease;
+  --t-normal: 0.15s ease;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body, #root { height: 100%; width: 100%; overflow: hidden; }
 body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #1a1b26; color: #c0caf5; font-size: 14px; }
 select:focus, input:focus, textarea:focus { outline: none; border-color: #7aa2f7 !important; box-shadow: 0 0 0 1px #7aa2f7; }
+button:focus-visible, [role="button"]:focus-visible { outline: 2px solid #7aa2f7; outline-offset: 1px; }
 .header-search:focus { border-color: transparent !important; box-shadow: none !important; }
 .login-input:focus { border-color: transparent !important; box-shadow: none !important; }
 ::selection { background: #7aa2f7; color: #1a1b26; }
 @keyframes blink { 50% { opacity: 0; } }
+@keyframes wt-modal-in { from { opacity: 0; transform: scale(0.97) translateY(4px); } to { opacity: 1; transform: none; } }
 .terminal-cursor { display: inline-block; width: 8px; height: 14px; background: #7aa2f7; margin-left: 4px; vertical-align: middle; animation: blink 1s step-end infinite; }
+
+/* ---- Shared control primitives (wt-*) ---- */
+.wt-input, .wt-select {
+  background: var(--c-bg-input);
+  border: 1px solid var(--c-border-soft);
+  border-radius: var(--r-sm);
+  color: var(--c-text);
+  font-size: var(--f-md);
+  padding: 6px 10px;
+  transition: border-color var(--t-fast), box-shadow var(--t-fast);
+}
+.wt-input:hover, .wt-select:hover { border-color: var(--c-border); }
+.wt-input::placeholder { color: var(--c-text-muted); }
+
+.wt-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  background: var(--c-bg-input-alt);
+  border: 1px solid var(--c-border-soft);
+  border-radius: var(--r-sm);
+  color: var(--c-text);
+  font-size: var(--f-md);
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast);
+  white-space: nowrap;
+}
+.wt-btn:hover { background: var(--c-bg-hover); border-color: var(--c-border); }
+.wt-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.wt-btn-primary { background: var(--c-accent); border-color: var(--c-accent); color: var(--c-bg); font-weight: 600; }
+.wt-btn-primary:hover { background: var(--c-accent80); border-color: var(--c-accent80); }
+.wt-btn-danger { background: transparent; border-color: var(--c-danger-bright); color: var(--c-danger-bright); }
+.wt-btn-danger:hover { background: rgba(247,119,142,0.12); }
 
 .header-btn:hover { border-color: #7aa2f7 !important; color: #c0caf5 !important; }
 .header-btn.logout-btn:hover { border-color: #f7768e !important; color: #f7768e !important; background: rgba(247,119,142,0.1) !important; }
 
 .activity-btn:hover { background: rgba(122,162,247,0.15); }
 
-/* Global scrollbar */
+/* ---- Menu / dropdown item (shared hover behaviour) ---- */
+.wt-menu-item { cursor: pointer; transition: background var(--t-fast); }
+.wt-menu-item:hover { background: var(--c-bg-hover); }
+
+/* ---- Scrollbars ---- */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #3b4261; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #565f89; }
 ::-webkit-scrollbar-corner { background: transparent; }
 * { scrollbar-width: thin; scrollbar-color: #3b4261 transparent; }
-

@@ -1,5 +1,6 @@
-// Global design tokens - single source of truth for UI colors and font sizes.
-// Adjust values here (or in App.css :root) to restyle the whole app.
+// Global design tokens - single source of truth for UI colors, spacing,
+// radii, shadows and font sizes. Adjust values here (or in App.css :root)
+// to restyle the whole app. Palette: Tokyo Night.
 
 export const colors = {
   accent: '#7aa2f7',
@@ -10,14 +11,17 @@ export const colors = {
   accentMid: '#7aa2f766',
   accentSoft: '#7aa2f740',
   bg: '#1a1b26',
-  bgBar: '#333',
-  bgDeep: '#1e1e1e',
+  bgBar: '#16161e',
+  bgDeep: '#16161e',
   bgError: '#2d1b1b',
-  bgHeader: '#2d2d2d',
+  bgHeader: '#1f2335',
+  bgHover: '#292e42',
   bgInput: '#1f2335',
   bgInputAlt: '#2a2e42',
-  bgRaised: '#252526',
+  bgOverlay: 'rgba(26,27,38,0.88)',
+  bgRaised: '#1f2335',
   border: '#3b4261',
+  borderSoft: '#292e42',
   danger: '#f44747',
   dangerBg: '#d32f2f',
   dangerBright: '#f7768e',
@@ -50,4 +54,38 @@ export const font = {
   xl5: 'var(--f-xl5)',
   xs: 'var(--f-xs)',
   xxs: 'var(--f-xxs)',
+} as const;
+
+// Spacing scale — use instead of ad-hoc px values where practical.
+export const space = {
+  xs: 2,
+  sm: 4,
+  md: 8,
+  lg: 12,
+  xl: 16,
+  xxl: 24,
+} as const;
+
+// Corner radii. sm is the default for controls/menus, xl for modals.
+export const radius = {
+  xs: 3,
+  sm: 4,
+  md: 6,
+  lg: 10,
+  xl: 12,
+  round: 999,
+} as const;
+
+// Elevation. All shadows are on-dark, subtle; menu/overlay add a hairline ring.
+export const shadow = {
+  sm: '0 2px 8px rgba(0,0,0,0.35)',
+  md: '0 4px 16px rgba(0,0,0,0.45)',
+  lg: '0 8px 32px rgba(0,0,0,0.5)',
+  menu: '0 4px 16px rgba(0,0,0,0.5), 0 0 0 1px var(--c-border)',
+  overlay: '0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px var(--c-border)',
+} as const;
+
+export const transition = {
+  fast: '0.1s ease',
+  normal: '0.15s ease',
 } as const;

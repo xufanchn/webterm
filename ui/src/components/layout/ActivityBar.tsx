@@ -3,7 +3,7 @@ import { useLayoutStore } from '../../store/layout';
 import { useAuthStore } from '../../store/auth';
 import type { ModuleType } from '../../store/layout';
 import Icon from '../common/Icon';
-import { colors } from '../../theme/tokens';
+import { colors, radius, transition } from '../../theme/tokens';
 
 const modules: { type: ModuleType; label: string; icon: string }[] = [
   { type: 'ssh', label: 'SSH', icon: 'terminal' },
@@ -15,9 +15,11 @@ const modules: { type: ModuleType; label: string; icon: string }[] = [
 const btnStyle = (active: boolean): React.CSSProperties => ({
   width: 32, height: 32, display: 'flex', alignItems: 'center',
   justifyContent: 'center', cursor: 'pointer',
-  borderRadius: 4, color: active ? colors.bg : colors.textMuted,
-  background: active ? colors.accent : 'transparent',
-  borderLeft: active ? '2px solid var(--c-bg)' : '2px solid transparent',
+  borderRadius: radius.sm,
+  color: active ? colors.accent : colors.textMuted,
+  background: active ? colors.accentSoft : 'transparent',
+  borderLeft: active ? `2px solid ${colors.accent}` : '2px solid transparent',
+  transition: `background ${transition.fast}, color ${transition.fast}`,
 });
 
 export default function ActivityBar({ onOpenSettings, sidebarCollapsed, onToggleSidebar }: {
