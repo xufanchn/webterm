@@ -19,6 +19,42 @@ type LocalFileInfo struct {
 	IsLink  bool   `json:"is_link"`
 }
 
+// localHomeDir returns the default directory for the local file pane:
+// the Windows user profile when running under WSL (so the pane opens on the
+// Windows home), otherwise the process user's home.
+func localHomeDir() string {
+	if entries, err := os.ReadDir("/mnt/c/Users"); err == nil {
+		linuxUser := ""
+		if home, err := os.UserHomeDir(); err == nil {
+			linuxUser = filepath.Base(home)
+		}
+		fallback := ""
+		for _, e := range entries {
+			if !e.IsDir() {
+				continue
+			}
+			n := e.Name()
+			switch strings.ToLower(n) {
+			case "public", "default", "default user", "all users":
+				continue
+			}
+			if linuxUser != "" && strings.EqualFold(n, linuxUser) {
+				return filepath.Join("/mnt/c/Users", n)
+			}
+			if fallback == "" {
+				fallback = n
+			}
+		}
+		if fallback != "" {
+			return filepath.Join("/mnt/c/Users", fallback)
+		}
+	}
+	if home, err := os.UserHomeDir(); err == nil {
+		return home
+	}
+	return "/"
+}
+
 func HandleLocalFS(conn *websocket.Conn) {
 	var msg struct {
 		Action  string `json:"action"`
@@ -33,12 +69,7 @@ func HandleLocalFS(conn *websocket.Conn) {
 		}
 		switch msg.Action {
 		case "getwd":
-			wd, err := os.Getwd()
-			if err != nil {
-				websocket.JSON.Send(conn, map[string]interface{}{"type": "error", "error": err.Error()})
-			} else {
-				websocket.JSON.Send(conn, map[string]interface{}{"type": "pwd", "path": wd})
-			}
+			websocket.JSON.Send(conn, map[string]interface{}{"type": "pwd", "path": localHomeDir()})
 		case "list":
 			path := msg.Path
 			if path == "" {

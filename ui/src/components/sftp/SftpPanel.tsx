@@ -3,6 +3,7 @@ import FileList from './FileList';
 import { t } from '../../i18n';
 const FileEditor = lazy(() => import('../common/FileEditor'));
 import { useLayoutStore } from '../../store/layout';
+import { useAuthStore } from '../../store/auth';
 import Icon from '../common/Icon';
 import { colors, font } from '../../theme/tokens';
 
@@ -30,19 +31,26 @@ interface Props {
 export default function SftpPanel({ connId, tabId, localMode, currentPath, onPathChange, style }: Props) {
   const defaultPath = currentPath || (localMode ? '/home' : '/');
   const [path, setPath] = useState(defaultPath);
+  const [homePath, setHomePath] = useState(defaultPath);
   const [files, setFiles] = useState<SftpFile[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [disconnected, setDisconnected] = useState(false);
   const [followCd, setFollowCd] = useState(true);
   const [editFile, setEditFile] = useState<{ path: string; name: string } | null>(null);
-  const sessionKey = tabId || String(connId);
+  const sessionKey = tabId || String(connId ?? 'local');
   const cacheRef = useRef<Map<string, { path: string; files: SftpFile[] }>>(new Map());
   const navRef = useRef({ history: [defaultPath], index: 0 });
   const [, setNavTick] = useState(0);
 
   const wsRef = useRef<WebSocket | null>(null);
+  const authToken = useAuthStore((s) => s.token);
   const [wsNonce, setWsNonce] = useState(0);
+  // Auto-reconnect: at most SFTP_MAX_RETRIES attempts after an unexpected close
+  const SFTP_MAX_RETRIES = 3;
+  const retryRef = useRef(0);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const [retryAttempt, setRetryAttempt] = useState(0);
   const pathRef = useRef(path);
   pathRef.current = path;
   const prevKeyRef = useRef(sessionKey);
@@ -80,14 +88,21 @@ export default function SftpPanel({ connId, tabId, localMode, currentPath, onPat
 
   // Create or reuse WebSocket for current connId
   useEffect(() => {
-    if (connId == null) return;
+    if (connId == null && !localMode) return;
+    const poolKey = localMode || connId == null ? -1 : connId; // local pane shares one pooled socket
     const prevId = connKeyRef.current;
-    connKeyRef.current = connId;
+    connKeyRef.current = poolKey;
+    if (prevId !== poolKey) {
+      // switching connection: fresh reconnect budget, drop any pending retry
+      retryRef.current = 0;
+      setRetryAttempt(0);
+      clearTimeout(retryTimerRef.current);
+    }
 
     // If we have a socket for the new connId, reuse it
-    const existing = poolRef.current.get(connId);
+    const existing = poolRef.current.get(poolKey);
     if (existing && existing.readyState !== WebSocket.OPEN) {
-      poolRef.current.delete(connId);
+      poolRef.current.delete(poolKey);
     }
     if (existing && existing.readyState === WebSocket.OPEN) {
       wsRef.current = existing;
@@ -112,6 +127,7 @@ export default function SftpPanel({ connId, tabId, localMode, currentPath, onPat
       }
     }
 
+    if (!authToken) return; // panels mount pre-login (modules stay mounted); reconnect once auth arrives
     setDisconnected(false);
     const cached = cacheRef.current.get(sessionKey);
     const cdPaths = useLayoutStore.getState().sftpCdPaths;
@@ -122,10 +138,9 @@ export default function SftpPanel({ connId, tabId, localMode, currentPath, onPat
     setLoading(!cached);
     setError('');
 
-    const token = localStorage.getItem('token') || '';
     const wsUrl = localMode
-      ? `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws/local-fs?token=${token}`
-      : `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws/sftp/${connId}?token=${token}`;
+      ? `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws/local-fs?token=${authToken}`
+      : `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws/sftp/${connId}?token=${authToken}`;
     const socket = new WebSocket(wsUrl);
     wsRef.current = socket;
 
@@ -137,12 +152,26 @@ export default function SftpPanel({ connId, tabId, localMode, currentPath, onPat
         socket.send(JSON.stringify({ action: 'getwd' }));
       }
     };
-    socket.onclose = () => { setDisconnected(true); setLoading(false); };
+    socket.onclose = () => {
+      setDisconnected(true);
+      setLoading(false);
+      // auto-reconnect with backoff, capped at SFTP_MAX_RETRIES attempts
+      if (authToken && retryRef.current < SFTP_MAX_RETRIES) {
+        const attempt = retryRef.current + 1;
+        retryRef.current = attempt;
+        setRetryAttempt(attempt);
+        retryTimerRef.current = setTimeout(() => setWsNonce((n) => n + 1), 1000 * attempt);
+      } else {
+        setRetryAttempt(0); // budget exhausted: fall back to the manual button
+      }
+    };
     socket.onerror = () => socket.close();
     socket.onmessage = (event) => {
       try {
         const msg = JSON.parse(event.data);
         if (msg.type === 'file_list') {
+          retryRef.current = 0; // server answered: session proven alive, restore retry budget
+          setRetryAttempt(0);
           setFiles(msg.files || []);
           setPath(msg.path || path);
           setLoading(false);
@@ -150,14 +179,17 @@ export default function SftpPanel({ connId, tabId, localMode, currentPath, onPat
           setError(msg.error);
           setLoading(false);
         } else if (msg.type === 'pwd') {
+          retryRef.current = 0; // server answered: session proven alive
+          setRetryAttempt(0);
           setPath(msg.path);
+          setHomePath(msg.path); // server-reported home (Windows profile for local mode under WSL)
           fetchDir(msg.path);
         } else if (msg.type === 'delete_done' || msg.type === 'mkdir_done' || msg.type === 'rename_done') {
           fetchDir(pathRef.current, true);
         }
       } catch {}
     };
-  }, [connId, wsNonce]);
+  }, [connId, wsNonce, authToken]);
 
   // Prune a specific connId from the pool when all its SSH tabs are gone
   const sftpPruneConn = useLayoutStore((s) => s.sftpPruneConn);
@@ -174,6 +206,7 @@ export default function SftpPanel({ connId, tabId, localMode, currentPath, onPat
   // Clean up pool on unmount
   useEffect(() => {
     return () => {
+      clearTimeout(retryTimerRef.current);
       poolRef.current.forEach((s) => { try { s.close(); } catch {} });
       poolRef.current.clear();
     };
@@ -229,7 +262,7 @@ export default function SftpPanel({ connId, tabId, localMode, currentPath, onPat
     const nav = navRef.current;
     if (nav.index < nav.history.length - 1) { nav.index++; navigateTo(nav.history[nav.index], false); }
   };
-  const handleHome = () => navigateTo(defaultPath, true);
+  const handleHome = () => navigateTo(homePath, true);
   const handleGoParent = () => {
     if (path === '/') return;
     const parent = path.substring(0, path.lastIndexOf('/')) || '/';
@@ -255,32 +288,53 @@ export default function SftpPanel({ connId, tabId, localMode, currentPath, onPat
     wsRef.current?.send(JSON.stringify({ action: 'chmod', path: filePath, mode }));
   };
 
+  // Toolbar action signals forwarded into FileList (which owns the input row / file picker)
+  const [uploadTick, setUploadTick] = useState(0);
+  const [newFolderTick, setNewFolderTick] = useState(0);
+
+  const toolBtn = (icon: string, title: string, onClick: () => void, opts?: { disabled?: boolean; active?: boolean }) => (
+    <button onClick={onClick} title={title} disabled={opts?.disabled}
+      style={{
+        background: opts?.active ? colors.accentSoft : 'none', border: 'none',
+        color: opts?.disabled ? colors.border : opts?.active ? colors.accent : colors.textGray,
+        cursor: opts?.disabled ? 'default' : 'pointer', padding: 4, borderRadius: 4,
+        display: 'flex', alignItems: 'center', transition: 'background 0.1s ease, color 0.1s ease',
+      }}
+      onMouseEnter={(e) => { if (!opts?.disabled) { e.currentTarget.style.background = colors.bgHover; e.currentTarget.style.color = colors.text; } }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = opts?.active ? colors.accentSoft : 'none'; e.currentTarget.style.color = opts?.disabled ? colors.border : opts?.active ? colors.accent : colors.textGray; }}>
+      <Icon name={icon} size={15} />
+    </button>
+  );
+
   return (
     <div style={{ background: colors.bg, fontSize: font.sm, display: 'flex', flexDirection: 'column', height: '100%', ...style }}>
-      <div style={{ height: 36, padding: '0 4px', background: colors.bg, display: 'flex', gap: 2, alignItems: 'center', borderBottom: '1px solid var(--c-border)', flexShrink: 0 }}>
-        <button onClick={handleBack} title={t("sftp_back")}
-          style={{ background: 'none', border: 'none', color: canGoBack ? colors.textLight : colors.border, cursor: canGoBack ? 'pointer' : 'default', padding: '2px', display: 'flex', alignItems: 'center' }}><Icon name="chevron-left" size={14} /></button>
-        <button onClick={handleForward} title={t("sftp_forward")}
-          style={{ background: 'none', border: 'none', color: canGoForward ? colors.textLight : colors.border, cursor: canGoForward ? 'pointer' : 'default', padding: '2px', display: 'flex', alignItems: 'center' }}><Icon name="chevron-right" size={14} /></button>
-        <button onClick={handleGoParent} title={t("sftp_parent")}
-          style={{ background: 'none', border: 'none', color: colors.textLight, cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}><Icon name="corner-left-up" size={14} /></button>
-        <button onClick={handleHome} title={t("sftp_home")}
-          style={{ background: 'none', border: 'none', color: colors.textLight, cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}><Icon name="home" size={14} /></button>
+      <div style={{ height: 38, padding: '0 6px', background: colors.bg, display: 'flex', gap: 1, alignItems: 'center', borderBottom: '1px solid var(--c-border-soft)', flexShrink: 0 }}>
+        {toolBtn('chevron-left', t('sftp_back'), handleBack, { disabled: !canGoBack })}
+        {toolBtn('chevron-right', t('sftp_forward'), handleForward, { disabled: !canGoForward })}
+        {toolBtn('corner-left-up', t('sftp_parent'), handleGoParent)}
+        {toolBtn('home', t('sftp_home'), handleHome)}
         <input value={path} onChange={(e) => setPath(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleNavigate(path); }}
-          style={{ flex: 1, padding: '2px 6px', background: colors.bg, border: '1px solid var(--c-border)', borderRadius: 4, color: colors.white, fontSize: font.sm, fontFamily: 'Consolas, monospace', minWidth: 0 }} />
-
-
+          spellCheck={false}
+          style={{ flex: 1, padding: '4px 8px', margin: '0 4px', background: colors.bgInput, border: '1px solid var(--c-border-soft)', borderRadius: 4, color: colors.text, fontSize: font.sm, fontFamily: '"JetBrains Mono", Consolas, monospace', minWidth: 0 }} />
+        {toolBtn('refresh-cw', t('sftp_refresh'), () => fetchDir(path, true))}
+        {connId != null && toolBtn('upload', t('sftp_upload'), () => setUploadTick((n) => n + 1))}
+        {toolBtn('folder-plus', t('sftp_new_folder'), () => setNewFolderTick((n) => n + 1))}
+        {toolBtn('link', followCd ? t('sftp_fixed') : t('sftp_follow'), () => setFollowCd(!followCd), { active: followCd })}
       </div>
-      {error && <div style={{ padding: '4px 8px', color: colors.danger, fontSize: font.xs }}>{error}</div>}
+      {error && <div style={{ padding: '4px 10px', color: colors.dangerBright, fontSize: font.xs, background: colors.dangerSoft }}>{error}</div>}
       {disconnected ? (
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8, color: colors.textDim }}>
-          <div style={{ fontSize: font.xl5, opacity: 0.3 }}>◧</div>
-          <div style={{ fontSize: font.md }}>{t("sftp_disconnected")}</div>
-          <button onClick={() => { setError(''); setFiles([]); setDisconnected(false); setWsNonce((n) => n + 1); }} style={{
-            background: colors.accent, border: 'none', color: colors.bg, fontWeight: 600, padding: '4px 12px',
-            borderRadius: 4, cursor: 'pointer', fontSize: font.sm,
-          }}>{t("sftp_reconnect")}</button>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 10, color: colors.textDim }}>
+          <Icon name="folder-open" size={30} />
+          <div style={{ fontSize: font.md }}>{t('sftp_disconnected')}</div>
+          {retryAttempt > 0 ? (
+            <div style={{ color: colors.textMuted, fontSize: font.sm }}>{t('sftp_reconnecting')} ({retryAttempt}/{SFTP_MAX_RETRIES})</div>
+          ) : (
+            <button onClick={() => { retryRef.current = 0; setRetryAttempt(0); setError(''); setFiles([]); setDisconnected(false); setWsNonce((n) => n + 1); }} style={{
+              background: colors.accent, border: 'none', color: colors.bg, fontWeight: 600, padding: '5px 16px',
+              borderRadius: 4, cursor: 'pointer', fontSize: font.sm,
+            }}>{t('sftp_reconnect')}</button>
+          )}
         </div>
       ) : (<>
         <FileList
@@ -290,6 +344,7 @@ export default function SftpPanel({ connId, tabId, localMode, currentPath, onPat
           onUpload={() => fetchDir(path)} onEdit={handleEditFile} onChmod={handleChmod}
           onMkdir={(name) => handleMkdir(name)} onGoParent={handleGoParent}
           onToggleFollow={() => setFollowCd(!followCd)} followCd={followCd}
+          uploadTick={uploadTick} newFolderTick={newFolderTick}
         />
         {editFile && (
           <Suspense fallback={<div style={{ padding: 12, fontSize: font.md, color: colors.textMuted }}>Loading…</div>}>
