@@ -53,10 +53,12 @@ interface PreferencesState {
   fontSize: number;
   onekeyPwd: string;
   highlightRules: HighlightRule[];
+  terminalRain: boolean;
   setThemeName: (name: string) => void;
   setFontSize: (size: number) => void;
   setOnekeyPwd: (pwd: string) => void;
   setHighlightRules: (rules: HighlightRule[]) => void;
+  setTerminalRain: (on: boolean) => void;
 }
 
 export const usePreferencesStore = create<PreferencesState>((set) => ({
@@ -64,6 +66,7 @@ export const usePreferencesStore = create<PreferencesState>((set) => ({
   fontSize: Number(localStorage.getItem('webterm-fontSize')) || 16,
   onekeyPwd: localStorage.getItem('webterm-onekey') || '[]',
   highlightRules: loadHighlightRules(),
+  terminalRain: localStorage.getItem('webterm-terminal-rain') !== '0',
   setThemeName: (name) => {
     localStorage.setItem('webterm-theme', name);
     set({ themeName: name });
@@ -79,6 +82,10 @@ export const usePreferencesStore = create<PreferencesState>((set) => ({
   setHighlightRules: (rules) => {
     persistHighlightRules(rules);
     set({ highlightRules: rules });
+  },
+  setTerminalRain: (on) => {
+    localStorage.setItem('webterm-terminal-rain', on ? '1' : '0');
+    set({ terminalRain: on });
   },
 }));
 

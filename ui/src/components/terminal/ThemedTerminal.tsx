@@ -12,6 +12,7 @@ import { usePreferencesStore } from '../../store/preferences';
 import '@xterm/xterm/css/xterm.css';
 import { getTheme } from '../../themes/presets';
 import ContextMenu from '../common/ContextMenu';
+import MatrixRain from '../common/MatrixRain';
 import { colors } from '../../theme/tokens';
 import Zmodem from 'zmodem.js/src/zmodem_browser.js';
 
@@ -113,13 +114,17 @@ export default function ThemedTerminal({ connId, themeName: _themeName, onStatus
   onResizeDimRef.current = onResizeDim;
   const themeName = usePreferencesStore((s) => s.themeName);
   const fontSize = usePreferencesStore((s) => s.fontSize);
+  const terminalRain = usePreferencesStore((s) => s.terminalRain);
+  const [rainTick, setRainTick] = useState(0);
 
   useEffect(() => {
     const themeConfig = getTheme(themeName || 'Dracula');
+    const rain = terminalRain;
     const term = new Terminal({
       cursorBlink: true, fontSize: fontSize, fontFamily: '"JetBrains Mono", "JetBrains Maple Mono", Consolas, monospace',
+      allowTransparency: rain,
       theme: {
-        background: themeConfig.background,
+        background: rain ? themeConfig.background + '00' : themeConfig.background,
         foreground: themeConfig.foreground,
         scrollbarSliderBackground: colors.border,
         scrollbarSliderHoverBackground: colors.textMuted,
@@ -252,7 +257,7 @@ export default function ThemedTerminal({ connId, themeName: _themeName, onStatus
       resizeObserver.disconnect();
       window.removeEventListener('resize', handleResize);
     };
-  }, [themeName, fontSize]);
+  }, [themeName, fontSize, terminalRain]);
 
   const token = localStorage.getItem('token') || '';
   const wsUrl = `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws/ssh/${connId}?token=${token}`;
@@ -481,11 +486,17 @@ export default function ThemedTerminal({ connId, themeName: _themeName, onStatus
   }, [send, broadcastScope, broadcastSourceId, myTabId, tabs, terminalRegistry, termKey]);
 
   return (
-    <div ref={ref} style={{ flex: 1, overflow: 'hidden', padding: '0 6px' }}
+    <div ref={ref} style={{ flex: 1, overflow: 'hidden', padding: '0 6px', position: 'relative' }}
+      onClick={() => { if (terminalRain) setRainTick((n) => n + 1); }}
       onContextMenu={(e) => {
         e.preventDefault();
         setContextMenu({ x: e.clientX, y: e.clientY });
       }}>
+      {terminalRain && (
+        <div style={{ position: 'absolute', inset: 6, pointerEvents: 'none' }} aria-hidden>
+          <MatrixRain key={rainTick} fontSize={22} columns={12} opacity={0.6} />
+        </div>
+      )}
       {contextMenu && (
         <ContextMenu x={contextMenu.x} y={contextMenu.y}
           items={[

@@ -16,6 +16,8 @@ export default function SettingsPanel({ onClose }: Props) {
   const fontSize = usePreferencesStore((s) => s.fontSize);
   const setThemeName = usePreferencesStore((s) => s.setThemeName);
   const setFontSize = usePreferencesStore((s) => s.setFontSize);
+  const terminalRain = usePreferencesStore((s) => s.terminalRain);
+  const setTerminalRain = usePreferencesStore((s) => s.setTerminalRain);
   const onekeyPwd = usePreferencesStore((s) => s.onekeyPwd);
   const setOnekeyPwd = usePreferencesStore((s) => s.setOnekeyPwd);
   const highlightRules = usePreferencesStore((s) => s.highlightRules);
@@ -107,6 +109,14 @@ export default function SettingsPanel({ onClose }: Props) {
               <input type="range" min="10" max="24" value={fontSize}
                 onChange={(e) => setFontSize(Number(e.target.value))}
                 style={{ width: '100%', accentColor: colors.accent }} />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: colors.textMuted, fontSize: font.md, cursor: 'pointer' }}>
+                <input type="checkbox" checked={terminalRain} onChange={(e) => setTerminalRain(e.target.checked)}
+                  style={{ accentColor: colors.accent }} />
+                {t("settings_terminal_rain")}
+              </label>
+              <div style={{ color: colors.textFaint, fontSize: font.sm, marginTop: 4 }}>{t("settings_terminal_rain_hint")}</div>
             </div>
           </div>
         )}

@@ -111,6 +111,13 @@ button:focus-visible, [role="button"]:focus-visible { outline: 2px solid #7aa2f7
 
 .activity-btn:hover { background: rgba(122,162,247,0.15); }
 
+/* xterm ships a #000 default on the scroll viewport; make it transparent so
+   theme surfaces and the matrix-rain layer behind the terminal show through
+   when allowTransparency is on. With rain off, opaque text rows cover it.
+   !important: xterm.css is injected by the lazy-loaded terminal chunk AFTER
+   this file, so equal-specificity rules would lose. */
+.xterm .xterm-viewport { background-color: transparent !important; }
+
 /* ---- Menu / dropdown item (shared hover behaviour) ---- */
 .wt-menu-item { cursor: pointer; transition: background var(--t-fast); }
 .wt-menu-item:hover { background: var(--c-bg-hover); }
