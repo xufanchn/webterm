@@ -119,6 +119,9 @@ func (h *WSHandler) HandleSSH(conn *websocket.Conn) {
 		sendErr(conn, "shell failed: "+err.Error())
 		return
 	}
+	// Tell the client the SSH session is truly up: it resets its reconnect
+	// budget on this frame, not on the bare WebSocket handshake.
+	websocket.JSON.Send(conn, map[string]string{"type": "ready"})
 
 	// Configure shell to report PWD via OSC 7 for SFTP sync
 	// ECHO is off in PTY modes, so this line is not echoed; stty echo re-enables it

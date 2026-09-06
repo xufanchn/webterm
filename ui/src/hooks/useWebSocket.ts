@@ -30,17 +30,28 @@ export function useWebSocket({ url, onMessage, onClose, onOpen }: UseWsOptions) 
     wsRef.current = ws;
 
     ws.onopen = () => {
-      retryCountRef.current = 0;
       if (bufferRef.current.length > 0) {
         for (const msg of bufferRef.current) {
           ws.send(msg);
         }
         bufferRef.current = [];
       }
-      onOpenRef.current?.();
+      // onOpen fires on {"type":"ready"} (session truly established), not here
     };
 
     ws.onmessage = (event) => {
+      // {"type":"ready"} = the backend confirmed the real session is up
+      // (e.g. SSH shell started). Only now does the reconnect budget reset —
+      // the bare WS handshake succeeding must NOT clear it, or a live server
+      // with a dead SSH target would retry forever.
+      try {
+        const m = JSON.parse(event.data);
+        if (m && m.type === 'ready') {
+          retryCountRef.current = 0;
+          onOpenRef.current?.();
+          return;
+        }
+      } catch { /* not JSON — regular payload */ }
       onMessageRef.current(typeof event.data === 'string' ? event.data : '');
     };
 
