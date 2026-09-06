@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { apiGet, apiDelete } from '../../api/client';
 import { useAuthStore } from '../../store/auth';
 import ConnectionForm from './ConnectionForm';
-import DbConnectionForm from './DbConnectionForm';
 import { colors, font } from '../../theme/tokens';
 
 interface Column {
@@ -14,7 +13,7 @@ interface Column {
 }
 
 interface Props {
-  type: 'ssh' | 'db';
+  type: 'ssh';
   title: string;
   apiPrefix: string;
   groupType: string;
@@ -70,7 +69,7 @@ export default function ConnectionTable({ type, title, apiPrefix, groupType, col
         <h3 style={{ color: colors.textLight, margin: 0, fontSize: font.xl2 }}>{title} <span style={{ color: colors.textMuted, fontSize: font.md, fontWeight: 400 }}>{t("config_total")} {items.length} {t("config_items")}</span></h3>
         <button onClick={() => { setEditingItem(null); setShowForm(true); }}
           style={{ padding: '6px 16px', background: colors.accent, border: 'none', color: colors.bg, borderRadius: 4, cursor: 'pointer', fontSize: font.md }}>
-          {t("config_create")}{type === 'ssh' ? 'SSH' : t("config_database")}{t("config_conn")}
+          {t("config_create")}{type === 'ssh' ? 'SSH' : ''}{t("config_conn")}
         </button>
       </div>
 
@@ -110,9 +109,6 @@ export default function ConnectionTable({ type, title, apiPrefix, groupType, col
 
       {showForm && type === 'ssh' && (
         <ConnectionForm connection={editingItem} onClose={() => { setShowForm(false); setEditingItem(null); }} onSaved={fetchData} />
-      )}
-      {showForm && type === 'db' && (
-        <DbConnectionForm connection={editingItem} onClose={() => { setShowForm(false); setEditingItem(null); }} onSaved={fetchData} />
       )}
     </div>
   );

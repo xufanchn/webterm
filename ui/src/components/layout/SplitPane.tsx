@@ -4,7 +4,6 @@ import type { Tab } from '../../store/layout';
 import { useConnectionStore } from '../../store/connections';
 import TabBar from './TabBar';
 const TerminalTab = lazy(() => import('../terminal/TerminalTab'));
-const QueryEditor = lazy(() => import('../database/QueryEditor'));
 import { t } from '../../i18n';
 import MatrixRain from '../common/MatrixRain';
 import { useAuthStore } from '../../store/auth';
@@ -393,11 +392,6 @@ function LeafPane({ nodeId, onActiveSshChange, isInSplit }: {
                 ]} />
               </Suspense>
             )}
-            {tab.type === 'database' && tab.connId && (
-              <Suspense fallback={<div style={{ padding: 12, fontSize: font.md, color: colors.textMuted }}>Loading…</div>}>
-                <QueryEditor connId={tab.connId} />
-              </Suspense>
-            )}
           </div>
         ))}
         {tabs.length === 0 && <SessionWelcome />}
@@ -497,7 +491,7 @@ function SessionWelcome() {
       setTimeout(() => {
         // Clear all connection state before setting new auth
         useConnectionStore.getState().connections.length > 0 &&
-          useConnectionStore.setState({ connections: [], groups: [], dbConnections: [] });
+          useConnectionStore.setState({ connections: [], groups: [] });
         setAuth(data.user, data.token);
       }, 1000);
     } catch {

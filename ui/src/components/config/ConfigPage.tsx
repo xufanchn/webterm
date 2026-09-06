@@ -10,7 +10,6 @@ import { colors, font } from '../../theme/tokens';
 const tabs = [
   { key: 'users', label: t('config_users') },
   { key: 'ssh', label: t('config_ssh') },
-  { key: 'database', label: t('config_database') },
   { key: 'groups', label: t('config_groups') },
 ];
 
@@ -57,22 +56,6 @@ export default function ConfigPage() {
             ]}
           />
         )}
-        {activeTab === 'database' && (
-          <ConnectionTable
-            type="db"
-            title={t('config_database')}
-            apiPrefix="/api/db_connections"
-            groupType="database"
-            columns={[
-              { key: 'name', label: t('conn_name'), width: '2fr' },
-              { key: 'host', label: t('conn_host'), width: '2fr' },
-              { key: 'port', label: t('conn_port'), width: '1fr' },
-              { key: 'username', label: t('config_user'), width: '1fr' },
-              { key: 'database_name', label: t('db_name'), width: '1fr' },
-              { key: 'shared', label: t('conn_shared'), width: '1fr', render: (v: boolean) => v ? t('config_yes') : t('config_no') },
-            ]}
-          />
-        )}
         {activeTab === 'groups' && <GroupManager />}
       </div>
     </div>
@@ -90,7 +73,7 @@ function GroupManager() {
   const fetchGroups = async () => {
     try {
       const all: any[] = [];
-      for (const t of ['ssh', 'database', 'sftp_bookmark']) {
+      for (const t of ['ssh', 'sftp_bookmark']) {
         const data = await apiGet(`/api/groups?type=${t}`);
         all.push(...(data || []).map((g: any) => ({ ...g, type: t })));
       }
@@ -132,7 +115,6 @@ function GroupManager() {
         <CustomSelect value={newType} onChange={(v) => setNewType(v)}
           style={{ padding: '6px 10px', background: colors.bgInput, border: '1px solid var(--c-border)', borderRadius: 4, color: colors.textLight, fontSize: font.md, flexShrink: 0 }}>
           <option value="ssh">SSH</option>
-          <option value="database">{t("config_database")}</option>
           <option value="sftp_bookmark">{t("config_sftp_bookmark")}</option>
         </CustomSelect>
         <button onClick={handleCreate} style={{ padding: '6px 16px', background: colors.accent, border: 'none', color: colors.bg, borderRadius: 4, cursor: 'pointer', fontSize: font.md, flexShrink: 0, whiteSpace: 'nowrap' }}>{t("config_create")}</button>

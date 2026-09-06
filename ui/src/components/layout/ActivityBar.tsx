@@ -8,7 +8,6 @@ import { colors, radius, transition } from '../../theme/tokens';
 const modules: { type: ModuleType; label: string; icon: string }[] = [
   { type: 'ssh', label: 'SSH', icon: 'terminal' },
   { type: 'sftp', label: 'SFTP', icon: 'folder-open' },
-  { type: 'database', label: t('activity_database'), icon: 'database' },
   { type: 'config', label: t('activity_config'), icon: 'sliders-horizontal' },
 ];
 

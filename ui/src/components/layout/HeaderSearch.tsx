@@ -13,7 +13,6 @@ export default function HeaderSearch() {
   const requestTab = useLayoutStore((s) => s.requestTab);
   const setActiveModule = useLayoutStore((s) => s.setActiveModule);
   const sshConns = useConnectionStore((s) => s.connections);
-  const dbConns = useConnectionStore((s) => s.dbConnections);
 
   useEffect(() => {
     if (!focus) return;
@@ -36,17 +35,12 @@ export default function HeaderSearch() {
         items.push({ label: c.name, sub: `${c.host}:${c.port}`, type: 'ssh', connId: c.id, icon: 'terminal' });
       }
     });
-    dbConns.forEach((c) => {
-      if (c.name.toLowerCase().includes(q) || c.host.toLowerCase().includes(q)) {
-        items.push({ label: c.name, sub: `${c.host}:${c.port}`, type: 'database', connId: c.id, icon: 'database' });
-      }
-    });
     return items.slice(0, 8);
   })();
 
   const open = (item: { type: string; connId: number; label: string }) => {
-    setActiveModule(item.type === 'database' ? 'database' : 'ssh');
-    requestTab({ id: `${item.type}-${item.connId}-${Date.now()}`, title: item.label, type: item.type === 'database' ? 'database' : 'ssh', connId: item.connId });
+    setActiveModule('ssh');
+    requestTab({ id: `ssh-${item.connId}-${Date.now()}`, title: item.label, type: 'ssh', connId: item.connId });
     setQuery('');
     setFocus(false);
     setActiveIdx(0);

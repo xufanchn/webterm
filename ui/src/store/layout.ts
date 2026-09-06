@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type ModuleType = 'ssh' | 'sftp' | 'database' | 'config';
+export type ModuleType = 'ssh' | 'sftp' | 'config';
 export type BroadcastScope = 'off' | 'pane' | 'all';
 
 export interface Tab {
